@@ -12,8 +12,6 @@ Rust 코드는 [Cargo.toml](Cargo.toml)를 보면 알 수 있듯 모듈은 빌�
 
 ## 이 모듈이 개발되기 전 생각한 아이디어
 
-> 2025\. 01. 17 작성
-
 제가 이 모듈을 만들면서 구현하고 싶은 세 가지의 주요 기능이 있습니다.
 
 1. 컴파일러 최적화 방지형의 '보안 제거'
@@ -80,3 +78,13 @@ pub unsafe extern "C" fn entanglement_mask_key(ptr: *mut u8, len: usize, mask_pt
 ```
 
 벌써부터 `Unsafe` 경고가 두려워지는 코드입니다.
+
+## 구현
+
+가장 간단한 [1번 아이디어](#1번-아이디어)부터 구현했습니다. 이 구현의 핵심은 Rust의 `zeroize` 크레이트를 사용하여 컴파일러가
+
+> "어차피 메모리 해제될 건데 0으로 채우는 과정 불필요함"
+
+이라고 판단해 코드를 삭제하는 것을 막는 것입니다.
+
+해당 기능의 구현은 [`modules/secure_wipe.rc`](https://github.com/Quant-Off/entlib-native/tree/main/src/modules/secure_wipe.rs) 파일에서 구현됩니다. 이제 위에서 제시한 아이디어에 대한 기능과 파생된 기능에 대해 `modules` 디렉토리 하위에서 작업하기로 약속합니다.
