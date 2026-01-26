@@ -1,6 +1,5 @@
 mod slh_dsa_params;
 mod adrs;
-mod acvp_harness;
 
 pub mod sign;
 pub mod keygen;
