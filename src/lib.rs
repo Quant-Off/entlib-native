@@ -20,4 +20,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+pub mod acvp_slh_dsa;
+pub mod helper;
 pub mod modules;
