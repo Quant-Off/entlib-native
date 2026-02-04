@@ -1,3 +1,7 @@
+### Custom
+.claude/
+dist/
+
 ### ACVP Research
 src/acvp_slh_dsa/sign/
 *_response.json

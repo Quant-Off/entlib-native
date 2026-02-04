@@ -1,0 +1,49 @@
+# Cross-compilation configuration for entlib-native
+# Supports: Linux (.so), Windows (.dll), macOS (.dylib)
+
+# =============================================================================
+# Linux targets
+# =============================================================================
+[target.x86_64-unknown-linux-gnu]
+linker = "x86_64-linux-gnu-gcc"
+
+[target.aarch64-unknown-linux-gnu]
+linker = "aarch64-linux-gnu-gcc"
+
+# Linux with musl (static linking, more portable)
+[target.x86_64-unknown-linux-musl]
+linker = "x86_64-linux-musl-gcc"
+
+[target.aarch64-unknown-linux-musl]
+linker = "aarch64-linux-musl-gcc"
+
+# =============================================================================
+# Windows targets (using MinGW)
+# =============================================================================
+[target.x86_64-pc-windows-gnu]
+linker = "x86_64-w64-mingw32-gcc"
+
+[target.i686-pc-windows-gnu]
+linker = "i686-w64-mingw32-gcc"
+
+# =============================================================================
+# macOS targets (native on macOS, cross-compile from Linux with osxcross)
+# =============================================================================
+[target.x86_64-apple-darwin]
+# Native compilation on macOS Intel, or use osxcross linker on Linux
+
+[target.aarch64-apple-darwin]
+# Native compilation on macOS Apple Silicon, or use osxcross linker on Linux
+
+# =============================================================================
+# Build settings
+# =============================================================================
+[build]
+# Uncomment to set a default target
+# target = "x86_64-unknown-linux-gnu"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
