@@ -1,9 +1,9 @@
 ### Custom
 .claude/
 dist/
+*.iml
 
 ### ACVP Research
-src/acvp_slh_dsa/sign/
 *_response.json
 
 ### Rust template
