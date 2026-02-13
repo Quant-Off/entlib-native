@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2025-2026 Quant
  *
- * Permission is hereby granted, free of charge, to any person obtaining a 
- * copy of this software and associated documentation files (the “Software”), 
- * to deal in the Software without restriction, including without limitation 
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, 
- * and/or sell copies of the Software, and to permit persons to whom the 
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the “Software”),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included 
+ * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
  *
- * THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS 
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF 
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
- * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY 
- * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, 
- * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
+ * THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+ * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
@@ -28,7 +28,12 @@ use crate::acvp_slh_dsa::slh_dsa_context::SlhContext;
 pub fn fors_sk_gen(ctx: &SlhContext, adrs: &Adrs, idx: u32) -> Vec<u8> {
     let mut sk_adrs = *adrs;
     sk_adrs.set_type_and_clear(FORS_PRF);
-    sk_adrs.set_key_pair_address(adrs.data[20..24].try_into().map(u32::from_be_bytes).unwrap());
+    sk_adrs.set_key_pair_address(
+        adrs.data[20..24]
+            .try_into()
+            .map(u32::from_be_bytes)
+            .unwrap(),
+    );
     sk_adrs.set_tree_index(idx);
     ctx.prf_addr(&sk_adrs)
 }
@@ -74,7 +79,12 @@ pub fn fors_sign(md: &[u8], ctx: &SlhContext, adrs: &mut Adrs) -> Vec<u8> {
         // 5-9: Compute auth path
         for j in 0..ctx.params.a {
             let s_node = (indices[i] >> j) ^ 1;
-            let auth_val = fors_node(ctx, (i as u32) * (1 << (ctx.params.a - j)) + s_node, j as u32, adrs);
+            let auth_val = fors_node(
+                ctx,
+                (i as u32) * (1 << (ctx.params.a - j)) + s_node,
+                j as u32,
+                adrs,
+            );
             sig_fors.extend_from_slice(&auth_val);
         }
     }
@@ -108,13 +118,26 @@ pub fn fors_pk_from_sig(sig_fors: &[u8], md: &[u8], ctx: &SlhContext, adrs: &mut
             // Logic for tree index update
             let current_idx = indices[i] >> j; // leaf index shifted
             if (current_idx % 2) == 0 {
-                adrs.set_tree_index((adrs.data[28..32].try_into().map(u32::from_be_bytes).unwrap()) / 2);
+                adrs.set_tree_index(
+                    (adrs.data[28..32]
+                        .try_into()
+                        .map(u32::from_be_bytes)
+                        .unwrap())
+                        / 2,
+                );
                 let mut input = vec![0u8; 2 * n];
                 input[0..n].copy_from_slice(&node_0);
                 input[n..].copy_from_slice(auth_node);
                 node_0 = hash_h(ctx, adrs, &input);
             } else {
-                adrs.set_tree_index((adrs.data[28..32].try_into().map(u32::from_be_bytes).unwrap() - 1) / 2);
+                adrs.set_tree_index(
+                    (adrs.data[28..32]
+                        .try_into()
+                        .map(u32::from_be_bytes)
+                        .unwrap()
+                        - 1)
+                        / 2,
+                );
                 let mut input = vec![0u8; 2 * n];
                 input[0..n].copy_from_slice(auth_node);
                 input[n..].copy_from_slice(&node_0);
@@ -126,7 +149,12 @@ pub fn fors_pk_from_sig(sig_fors: &[u8], md: &[u8], ctx: &SlhContext, adrs: &mut
 
     let mut fors_pk_adrs = *adrs;
     fors_pk_adrs.set_type_and_clear(FORS_ROOTS);
-    fors_pk_adrs.set_key_pair_address(adrs.data[20..24].try_into().map(u32::from_be_bytes).unwrap());
+    fors_pk_adrs.set_key_pair_address(
+        adrs.data[20..24]
+            .try_into()
+            .map(u32::from_be_bytes)
+            .unwrap(),
+    );
 
     hash_t_l(ctx, &fors_pk_adrs, &root)
 }

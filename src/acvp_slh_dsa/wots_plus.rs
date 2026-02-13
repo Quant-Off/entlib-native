@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2025-2026 Quant
  *
- * Permission is hereby granted, free of charge, to any person obtaining a 
- * copy of this software and associated documentation files (the “Software”), 
- * to deal in the Software without restriction, including without limitation 
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, 
- * and/or sell copies of the Software, and to permit persons to whom the 
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the “Software”),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included 
+ * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
  *
- * THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS 
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF 
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
- * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY 
- * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, 
- * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
+ * THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+ * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
@@ -113,7 +113,12 @@ pub fn wots_sign(m: &[u8], ctx: &SlhContext, adrs: &mut Adrs) -> Vec<u8> {
     let mut sig = vec![0u8; ctx.params.len * n];
     let mut sk_adrs = *adrs;
     sk_adrs.set_type_and_clear(WOTS_PRF);
-    sk_adrs.set_key_pair_address(adrs.data[20..24].try_into().map(u32::from_be_bytes).unwrap_or(0)); // Simplified extraction
+    sk_adrs.set_key_pair_address(
+        adrs.data[20..24]
+            .try_into()
+            .map(u32::from_be_bytes)
+            .unwrap_or(0),
+    ); // Simplified extraction
 
     for i in 0..ctx.params.len {
         sk_adrs.set_chain_address(i as u32);
@@ -148,13 +153,24 @@ pub fn wots_pk_from_sig(sig: &[u8], m: &[u8], ctx: &SlhContext, adrs: &mut Adrs)
     for i in 0..ctx.params.len {
         adrs.set_chain_address(i as u32);
         let sig_block = &sig[i * n..(i + 1) * n];
-        let val = chain(sig_block, full_msg[i], (ctx.params.w as u32) - 1 - full_msg[i], ctx, adrs);
+        let val = chain(
+            sig_block,
+            full_msg[i],
+            (ctx.params.w as u32) - 1 - full_msg[i],
+            ctx,
+            adrs,
+        );
         tmp[i * n..(i + 1) * n].copy_from_slice(&val);
     }
 
     let mut wots_pk_adrs = *adrs;
     wots_pk_adrs.set_type_and_clear(WOTS_PK);
-    wots_pk_adrs.set_key_pair_address(adrs.data[20..24].try_into().map(u32::from_be_bytes).unwrap_or(0));
+    wots_pk_adrs.set_key_pair_address(
+        adrs.data[20..24]
+            .try_into()
+            .map(u32::from_be_bytes)
+            .unwrap_or(0),
+    );
 
     // 15: pk_sig = T_len(PK.seed, wotspkADRS, tmp)
     hash_t_l(ctx, &wots_pk_adrs, &tmp)

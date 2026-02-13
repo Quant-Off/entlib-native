@@ -1,30 +1,30 @@
 /*
  * Copyright (c) 2025-2026 Quant
  *
- * Permission is hereby granted, free of charge, to any person obtaining a 
- * copy of this software and associated documentation files (the “Software”), 
- * to deal in the Software without restriction, including without limitation 
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, 
- * and/or sell copies of the Software, and to permit persons to whom the 
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the “Software”),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included 
+ * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
  *
- * THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS 
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF 
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
- * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY 
- * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, 
- * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
+ * THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+ * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
 use crate::acvp_slh_dsa::adrs::Adrs;
 use crate::acvp_slh_dsa::slh_dsa_context::SlhContext;
-use crate::acvp_slh_dsa::slh_dsa_params::{SLHDSAParams, SHAKE_128F};
-use rand::{rngs::OsRng, TryRngCore};
+use crate::acvp_slh_dsa::slh_dsa_params::{SHAKE_128F, SLHDSAParams};
 use crate::acvp_slh_dsa::xmss::xmss_node;
+use rand::{TryRngCore, rngs::OsRng};
 
 // Figure 16. SLH-DSA public key (dynamic size)
 #[derive(Clone, Debug)]
@@ -54,7 +54,7 @@ pub struct SlhPrivateKey {
 impl SlhPrivateKey {
     pub fn to_bytes(&self) -> Vec<u8> {
         let mut out = Vec::with_capacity(
-            self.sk_seed.len() + self.sk_prf.len() + self.pk_seed.len() + self.pk_root.len()
+            self.sk_seed.len() + self.sk_prf.len() + self.pk_seed.len() + self.pk_root.len(),
         );
         out.extend_from_slice(&self.sk_seed);
         out.extend_from_slice(&self.sk_prf);
@@ -70,7 +70,7 @@ pub fn slh_keygen_internal_with_params(
     params: SLHDSAParams,
     sk_seed: Vec<u8>,
     sk_prf: Vec<u8>,
-    pk_seed: Vec<u8>
+    pk_seed: Vec<u8>,
 ) -> (SlhPrivateKey, SlhPublicKey) {
     // 1: ADRS <- toByte(0, 32)
     let mut adrs = Adrs::new();
@@ -101,10 +101,7 @@ pub fn slh_keygen_internal_with_params(
         pk_root: pk_root.clone(),
     };
 
-    let pk = SlhPublicKey {
-        pk_seed,
-        pk_root,
-    };
+    let pk = SlhPublicKey { pk_seed, pk_root };
 
     (sk, pk)
 }
@@ -115,7 +112,9 @@ pub fn slh_keygen() -> Result<(SlhPrivateKey, SlhPublicKey), &'static str> {
 }
 
 // Algorithm 21 slh_keygen() with custom params
-pub fn slh_keygen_with_params(params: SLHDSAParams) -> Result<(SlhPrivateKey, SlhPublicKey), &'static str> {
+pub fn slh_keygen_with_params(
+    params: SLHDSAParams,
+) -> Result<(SlhPrivateKey, SlhPublicKey), &'static str> {
     let mut rng = OsRng;
     let n = params.n;
 
@@ -138,7 +137,9 @@ pub fn slh_keygen_with_params(params: SLHDSAParams) -> Result<(SlhPrivateKey, Sl
     }
 
     // 7: return slh_keygen_internal(SK.seed, SK.prf, PK.seed)
-    Ok(slh_keygen_internal_with_params(params, sk_seed, sk_prf, pk_seed))
+    Ok(slh_keygen_internal_with_params(
+        params, sk_seed, sk_prf, pk_seed,
+    ))
 }
 
 #[cfg(test)]

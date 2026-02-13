@@ -1,29 +1,32 @@
 /*
  * Copyright (c) 2025-2026 Quant
  *
- * Permission is hereby granted, free of charge, to any person obtaining a 
- * copy of this software and associated documentation files (the “Software”), 
- * to deal in the Software without restriction, including without limitation 
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, 
- * and/or sell copies of the Software, and to permit persons to whom the 
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the “Software”),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included 
+ * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
  *
- * THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS 
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF 
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
- * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY 
- * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, 
- * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
+ * THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+ * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-use sha2::{Sha256, Sha512};
-use sha3::{Shake256, digest::{Update, ExtendableOutput, XofReader}};
 use crate::acvp_slh_dsa::adrs::Adrs;
-use crate::acvp_slh_dsa::slh_dsa_params::{SLHDSAParams, HashType};
+use crate::acvp_slh_dsa::slh_dsa_params::{HashType, SLHDSAParams};
+use sha2::{Sha256, Sha512};
+use sha3::{
+    Shake256,
+    digest::{ExtendableOutput, Update, XofReader},
+};
 
 #[derive(Clone)]
 pub struct SlhContext {
@@ -35,7 +38,12 @@ pub struct SlhContext {
 
 impl SlhContext {
     pub fn new(params: SLHDSAParams, pk_seed: Vec<u8>, sk_seed: Vec<u8>, pk_root: Vec<u8>) -> Self {
-        Self { pk_seed, sk_seed, pk_root, params }
+        Self {
+            pk_seed,
+            sk_seed,
+            pk_root,
+            params,
+        }
     }
 
     /// ADRS SHA2로 압축(22 bytes): FIPS 205 Section 11.2 [cite: 3297]
