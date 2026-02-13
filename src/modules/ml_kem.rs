@@ -47,8 +47,11 @@ pub const ML_KEM_1024_SS_SIZE: usize = 32;
 //
 // ML-KEM-512 - start
 //
+
+/// # Safety
+/// `sk_ptr`은 최소 `ML_KEM_512_DK_SIZE`, `pk_ptr`은 최소 `ML_KEM_512_EK_SIZE` 바이트의 유효한 메모리를 가리켜야 합니다.
 #[unsafe(no_mangle)]
-pub extern "C" fn ml_kem_512_keygen(sk_ptr: *mut u8, pk_ptr: *mut u8) -> i32 {
+pub unsafe extern "C" fn ml_kem_512_keygen(sk_ptr: *mut u8, pk_ptr: *mut u8) -> i32 {
     unsafe {
         let randomness = random_array();
         let key_pair = mlkem512::generate_key_pair(randomness);
@@ -68,8 +71,10 @@ pub extern "C" fn ml_kem_512_keygen(sk_ptr: *mut u8, pk_ptr: *mut u8) -> i32 {
     }
 }
 
+/// # Safety
+/// `ct_ptr`은 최소 `ML_KEM_512_CT_SIZE`, `ss_ptr`은 `ML_KEM_512_SS_SIZE`, `pk_ptr`은 `ML_KEM_512_EK_SIZE` 바이트의 유효한 메모리를 가리켜야 합니다.
 #[unsafe(no_mangle)]
-pub extern "C" fn ml_kem_512_encapsulate(
+pub unsafe extern "C" fn ml_kem_512_encapsulate(
     ct_ptr: *mut u8,
     ss_ptr: *mut u8,
     pk_ptr: *const u8,
@@ -100,8 +105,10 @@ pub extern "C" fn ml_kem_512_encapsulate(
     }
 }
 
+/// # Safety
+/// `ss_ptr`은 최소 `ML_KEM_512_SS_SIZE`, `ct_ptr`은 `ML_KEM_512_CT_SIZE`, `sk_ptr`은 `ML_KEM_512_DK_SIZE` 바이트의 유효한 메모리를 가리켜야 합니다.
 #[unsafe(no_mangle)]
-pub extern "C" fn ml_kem_512_decapsulate(
+pub unsafe extern "C" fn ml_kem_512_decapsulate(
     ss_ptr: *mut u8,
     ct_ptr: *const u8,
     sk_ptr: *const u8,
@@ -138,8 +145,10 @@ pub extern "C" fn ml_kem_512_decapsulate(
 //
 // ML-KEM-768 - start
 //
+/// # Safety
+/// `sk_ptr`은 최소 `ML_KEM_768_DK_SIZE`, `pk_ptr`은 최소 `ML_KEM_768_EK_SIZE` 바이트의 유효한 메모리를 가리켜야 합니다.
 #[unsafe(no_mangle)]
-pub extern "C" fn ml_kem_768_keygen(sk_ptr: *mut u8, pk_ptr: *mut u8) -> i32 {
+pub unsafe extern "C" fn ml_kem_768_keygen(sk_ptr: *mut u8, pk_ptr: *mut u8) -> i32 {
     unsafe {
         let randomness = random_array();
         let key_pair = mlkem768::generate_key_pair(randomness);
@@ -159,8 +168,10 @@ pub extern "C" fn ml_kem_768_keygen(sk_ptr: *mut u8, pk_ptr: *mut u8) -> i32 {
     }
 }
 
+/// # Safety
+/// `ct_ptr`은 최소 `ML_KEM_768_CT_SIZE`, `ss_ptr`은 `ML_KEM_768_SS_SIZE`, `pk_ptr`은 `ML_KEM_768_EK_SIZE` 바이트의 유효한 메모리를 가리켜야 합니다.
 #[unsafe(no_mangle)]
-pub extern "C" fn ml_kem_768_encapsulate(
+pub unsafe extern "C" fn ml_kem_768_encapsulate(
     ct_ptr: *mut u8,
     ss_ptr: *mut u8,
     pk_ptr: *const u8,
@@ -191,8 +202,10 @@ pub extern "C" fn ml_kem_768_encapsulate(
     }
 }
 
+/// # Safety
+/// `ss_ptr`은 최소 `ML_KEM_768_SS_SIZE`, `ct_ptr`은 `ML_KEM_768_CT_SIZE`, `sk_ptr`은 `ML_KEM_768_DK_SIZE` 바이트의 유효한 메모리를 가리켜야 합니다.
 #[unsafe(no_mangle)]
-pub extern "C" fn ml_kem_768_decapsulate(
+pub unsafe extern "C" fn ml_kem_768_decapsulate(
     ss_ptr: *mut u8,
     ct_ptr: *const u8,
     sk_ptr: *const u8,
@@ -229,8 +242,10 @@ pub extern "C" fn ml_kem_768_decapsulate(
 //
 // ML-KEM-1024 - start
 //
+/// # Safety
+/// `sk_ptr`은 최소 `ML_KEM_1024_DK_SIZE`, `pk_ptr`은 최소 `ML_KEM_1024_EK_SIZE` 바이트의 유효한 메모리를 가리켜야 합니다.
 #[unsafe(no_mangle)]
-pub extern "C" fn ml_kem_1024_keygen(sk_ptr: *mut u8, pk_ptr: *mut u8) -> i32 {
+pub unsafe extern "C" fn ml_kem_1024_keygen(sk_ptr: *mut u8, pk_ptr: *mut u8) -> i32 {
     unsafe {
         let randomness = random_array();
         let key_pair = mlkem1024::generate_key_pair(randomness);
@@ -250,8 +265,10 @@ pub extern "C" fn ml_kem_1024_keygen(sk_ptr: *mut u8, pk_ptr: *mut u8) -> i32 {
     }
 }
 
+/// # Safety
+/// `ct_ptr`은 최소 `ML_KEM_1024_CT_SIZE`, `ss_ptr`은 `ML_KEM_1024_SS_SIZE`, `pk_ptr`은 `ML_KEM_1024_EK_SIZE` 바이트의 유효한 메모리를 가리켜야 합니다.
 #[unsafe(no_mangle)]
-pub extern "C" fn ml_kem_1024_encapsulate(
+pub unsafe extern "C" fn ml_kem_1024_encapsulate(
     ct_ptr: *mut u8,
     ss_ptr: *mut u8,
     pk_ptr: *const u8,
@@ -282,8 +299,10 @@ pub extern "C" fn ml_kem_1024_encapsulate(
     }
 }
 
+/// # Safety
+/// `ss_ptr`은 최소 `ML_KEM_1024_SS_SIZE`, `ct_ptr`은 `ML_KEM_1024_CT_SIZE`, `sk_ptr`은 `ML_KEM_1024_DK_SIZE` 바이트의 유효한 메모리를 가리켜야 합니다.
 #[unsafe(no_mangle)]
-pub extern "C" fn ml_kem_1024_decapsulate(
+pub unsafe extern "C" fn ml_kem_1024_decapsulate(
     ss_ptr: *mut u8,
     ct_ptr: *const u8,
     sk_ptr: *const u8,

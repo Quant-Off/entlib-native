@@ -69,16 +69,14 @@ pub fn fors_sign(md: &[u8], ctx: &SlhContext, adrs: &mut Adrs) -> Vec<u8> {
     let indices = base_2b(md, ctx.params.a, ctx.params.k);
 
     // 3: Loop k times
-    for i in 0..ctx.params.k {
-        let idx = indices[i];
-
+    for (i, &idx) in indices.iter().enumerate().take(ctx.params.k) {
         // 4: Get secret key value
         let sk = fors_sk_gen(ctx, adrs, (i as u32) * (1 << ctx.params.a) + idx);
         sig_fors.extend_from_slice(&sk);
 
         // 5-9: Compute auth path
         for j in 0..ctx.params.a {
-            let s_node = (indices[i] >> j) ^ 1;
+            let s_node = (idx >> j) ^ 1;
             let auth_val = fors_node(
                 ctx,
                 (i as u32) * (1 << (ctx.params.a - j)) + s_node,
@@ -117,7 +115,7 @@ pub fn fors_pk_from_sig(sig_fors: &[u8], md: &[u8], ctx: &SlhContext, adrs: &mut
 
             // Logic for tree index update
             let current_idx = indices[i] >> j; // leaf index shifted
-            if (current_idx % 2) == 0 {
+            if current_idx.is_multiple_of(2) {
                 adrs.set_tree_index(
                     (adrs.data[28..32]
                         .try_into()

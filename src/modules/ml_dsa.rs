@@ -44,8 +44,11 @@ pub const ML_DSA_87_SIG_SIZE: usize = 4627;
 //
 // ML-DSA-44 - start
 //
+
+/// # Safety
+/// `sk_ptr`은 최소 `ML_DSA_44_SK_SIZE`, `pk_ptr`은 최소 `ML_DSA_44_PK_SIZE` 바이트의 유효한 메모리를 가리켜야 합니다.
 #[unsafe(no_mangle)]
-pub extern "C" fn ml_dsa_44_keygen(sk_ptr: *mut u8, pk_ptr: *mut u8) -> i32 {
+pub unsafe extern "C" fn ml_dsa_44_keygen(sk_ptr: *mut u8, pk_ptr: *mut u8) -> i32 {
     unsafe {
         let randomness = random_array();
         let key_pair = ml_dsa_44::generate_key_pair(randomness);
@@ -65,8 +68,10 @@ pub extern "C" fn ml_dsa_44_keygen(sk_ptr: *mut u8, pk_ptr: *mut u8) -> i32 {
     }
 }
 
+/// # Safety
+/// `sig_ptr`은 최소 `ML_DSA_44_SIG_SIZE`, `msg_ptr`은 `msg_len`, `sk_ptr`은 `ML_DSA_44_SK_SIZE` 바이트의 유효한 메모리를 가리켜야 합니다.
 #[unsafe(no_mangle)]
-pub extern "C" fn ml_dsa_44_sign(
+pub unsafe extern "C" fn ml_dsa_44_sign(
     sig_ptr: *mut u8,
     msg_ptr: *const u8,
     msg_len: usize,
@@ -100,8 +105,10 @@ pub extern "C" fn ml_dsa_44_sign(
     }
 }
 
+/// # Safety
+/// `msg_ptr`은 `msg_len`, `sig_ptr`은 `ML_DSA_44_SIG_SIZE`, `pk_ptr`은 `ML_DSA_44_PK_SIZE` 바이트의 유효한 메모리를 가리켜야 합니다.
 #[unsafe(no_mangle)]
-pub extern "C" fn ml_dsa_44_verify(
+pub unsafe extern "C" fn ml_dsa_44_verify(
     msg_ptr: *const u8,
     msg_len: usize,
     sig_ptr: *const u8,
@@ -139,8 +146,10 @@ pub extern "C" fn ml_dsa_44_verify(
 //
 // ML-DSA-65 - start
 //
+/// # Safety
+/// `sk_ptr`은 최소 `ML_DSA_65_SK_SIZE`, `pk_ptr`은 최소 `ML_DSA_65_PK_SIZE` 바이트의 유효한 메모리를 가리켜야 합니다.
 #[unsafe(no_mangle)]
-pub extern "C" fn ml_dsa_65_keygen(sk_ptr: *mut u8, pk_ptr: *mut u8) -> i32 {
+pub unsafe extern "C" fn ml_dsa_65_keygen(sk_ptr: *mut u8, pk_ptr: *mut u8) -> i32 {
     unsafe {
         let randomness = random_array();
         let key_pair = ml_dsa_65::generate_key_pair(randomness);
@@ -160,8 +169,10 @@ pub extern "C" fn ml_dsa_65_keygen(sk_ptr: *mut u8, pk_ptr: *mut u8) -> i32 {
     }
 }
 
+/// # Safety
+/// `sig_ptr`은 최소 `ML_DSA_65_SIG_SIZE`, `msg_ptr`은 `msg_len`, `sk_ptr`은 `ML_DSA_65_SK_SIZE` 바이트의 유효한 메모리를 가리켜야 합니다.
 #[unsafe(no_mangle)]
-pub extern "C" fn ml_dsa_65_sign(
+pub unsafe extern "C" fn ml_dsa_65_sign(
     sig_ptr: *mut u8,
     msg_ptr: *const u8,
     msg_len: usize,
@@ -195,8 +206,10 @@ pub extern "C" fn ml_dsa_65_sign(
     }
 }
 
+/// # Safety
+/// `msg_ptr`은 `msg_len`, `sig_ptr`은 `ML_DSA_65_SIG_SIZE`, `pk_ptr`은 `ML_DSA_65_PK_SIZE` 바이트의 유효한 메모리를 가리켜야 합니다.
 #[unsafe(no_mangle)]
-pub extern "C" fn ml_dsa_65_verify(
+pub unsafe extern "C" fn ml_dsa_65_verify(
     msg_ptr: *const u8,
     msg_len: usize,
     sig_ptr: *const u8,
@@ -234,8 +247,10 @@ pub extern "C" fn ml_dsa_65_verify(
 //
 // ML-DSA-87 - start
 //
+/// # Safety
+/// `sk_ptr`은 최소 `ML_DSA_87_SK_SIZE`, `pk_ptr`은 최소 `ML_DSA_87_PK_SIZE` 바이트의 유효한 메모리를 가리켜야 합니다.
 #[unsafe(no_mangle)]
-pub extern "C" fn ml_dsa_87_keygen(sk_ptr: *mut u8, pk_ptr: *mut u8) -> i32 {
+pub unsafe extern "C" fn ml_dsa_87_keygen(sk_ptr: *mut u8, pk_ptr: *mut u8) -> i32 {
     unsafe {
         let randomness = random_array();
         let key_pair = ml_dsa_87::generate_key_pair(randomness);
@@ -255,8 +270,10 @@ pub extern "C" fn ml_dsa_87_keygen(sk_ptr: *mut u8, pk_ptr: *mut u8) -> i32 {
     }
 }
 
+/// # Safety
+/// `sig_ptr`은 최소 `ML_DSA_87_SIG_SIZE`, `msg_ptr`은 `msg_len`, `sk_ptr`은 `ML_DSA_87_SK_SIZE` 바이트의 유효한 메모리를 가리켜야 합니다.
 #[unsafe(no_mangle)]
-pub extern "C" fn ml_dsa_87_sign(
+pub unsafe extern "C" fn ml_dsa_87_sign(
     sig_ptr: *mut u8,
     msg_ptr: *const u8,
     msg_len: usize,
@@ -290,8 +307,10 @@ pub extern "C" fn ml_dsa_87_sign(
     }
 }
 
+/// # Safety
+/// `msg_ptr`은 `msg_len`, `sig_ptr`은 `ML_DSA_87_SIG_SIZE`, `pk_ptr`은 `ML_DSA_87_PK_SIZE` 바이트의 유효한 메모리를 가리켜야 합니다.
 #[unsafe(no_mangle)]
-pub extern "C" fn ml_dsa_87_verify(
+pub unsafe extern "C" fn ml_dsa_87_verify(
     msg_ptr: *const u8,
     msg_len: usize,
     sig_ptr: *const u8,

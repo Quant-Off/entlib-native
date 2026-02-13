@@ -100,10 +100,10 @@ pub fn wots_sign(m: &[u8], ctx: &SlhContext, adrs: &mut Adrs) -> Vec<u8> {
     }
 
     // 6: csum left shift
-    csum = csum << ((8 - ((ctx.params.len2 * ctx.params.lg_w) % 8)) % 8);
+    csum <<= (8 - ((ctx.params.len2 * ctx.params.lg_w) % 8)) % 8;
 
     // 7: msg = msg || base_2b(toByte(csum), lg_w, len2)
-    let len2_bytes = (ctx.params.len2 * ctx.params.lg_w + 7) / 8;
+    let len2_bytes = (ctx.params.len2 * ctx.params.lg_w).div_ceil(8);
     let csum_bytes = to_byte(csum, len2_bytes);
     let csum_base_w = base_2b(&csum_bytes, ctx.params.lg_w, ctx.params.len2);
 
@@ -141,9 +141,9 @@ pub fn wots_pk_from_sig(sig: &[u8], m: &[u8], ctx: &SlhContext, adrs: &mut Adrs)
     for val in &msg_base_w {
         csum += (ctx.params.w as u32) - 1 - val;
     }
-    csum = csum << ((8 - ((ctx.params.len2 * ctx.params.lg_w) % 8)) % 8);
+    csum <<= (8 - ((ctx.params.len2 * ctx.params.lg_w) % 8)) % 8;
 
-    let len2_bytes = (ctx.params.len2 * ctx.params.lg_w + 7) / 8;
+    let len2_bytes = (ctx.params.len2 * ctx.params.lg_w).div_ceil(8);
     let csum_bytes = to_byte(csum, len2_bytes);
     let csum_base_w = base_2b(&csum_bytes, ctx.params.lg_w, ctx.params.len2);
     let full_msg = [msg_base_w, csum_base_w].concat();

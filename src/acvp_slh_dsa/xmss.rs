@@ -94,10 +94,9 @@ pub fn xmss_pk_from_sig(
 
     // 8-18: Compute root
     for k in 0..ctx.params.h_prime {
-        let k_idx = k as usize;
         adrs.set_tree_height((k + 1) as u32);
 
-        let auth_k = &auth[k_idx * n..(k_idx + 1) * n];
+        let auth_k = &auth[k * n..(k + 1) * n];
         let mut input = vec![0u8; 2 * n];
 
         if ((idx >> k) & 1) == 0 {

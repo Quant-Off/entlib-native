@@ -31,7 +31,7 @@ use crate::helper::slice_from_raw_mut;
 /// 이 함수는 FFI 경계에서 호출되기 떄문에 패닉이 발생해도 JVM을 중단시키지 않도록
 /// `catch_unwind`로 감싸져 있습니다. 다만, 여전히 `ptr`은 유효한 메모리 주소여야 합니다.
 #[unsafe(no_mangle)]
-pub extern "C" fn entanglement_secure_wipe(ptr: *mut u8, len: usize) {
+pub unsafe extern "C" fn entanglement_secure_wipe(ptr: *mut u8, len: usize) {
     // Rust 내부 패닉이 JVM으로 전파되지 않도록 차단
     let result = panic::catch_unwind(|| unsafe {
         if let Ok(data) = slice_from_raw_mut(ptr, len) {

@@ -19,7 +19,6 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-
 use crate::helper::{array_from_raw, random_array, slice_from_raw_mut};
 use x25519_dalek::{PublicKey, StaticSecret};
 
@@ -37,8 +36,11 @@ pub const X25519_SS_SIZE: usize = 32;
 /// # Returns
 /// * 0 on success
 /// * -1 on invalid pointer
+///
+/// # Safety
+/// `sk_ptr`과 `pk_ptr`은 각각 최소 32바이트의 유효한 메모리를 가리켜야 합니다.
 #[unsafe(no_mangle)]
-pub extern "C" fn x25519_keygen(sk_ptr: *mut u8, pk_ptr: *mut u8) -> i32 {
+pub unsafe extern "C" fn x25519_keygen(sk_ptr: *mut u8, pk_ptr: *mut u8) -> i32 {
     unsafe {
         let sk_bytes: [u8; X25519_SK_SIZE] = random_array();
         let secret = StaticSecret::from(sk_bytes);
@@ -68,8 +70,11 @@ pub extern "C" fn x25519_keygen(sk_ptr: *mut u8, pk_ptr: *mut u8) -> i32 {
 /// # Returns
 /// * 0 on success
 /// * -1 on invalid pointer
+///
+/// # Safety
+/// `pk_ptr`은 최소 32바이트의 쓰기 가능한 메모리, `sk_ptr`은 최소 32바이트의 읽기 가능한 메모리를 가리켜야 합니다.
 #[unsafe(no_mangle)]
-pub extern "C" fn x25519_sk_to_pk(pk_ptr: *mut u8, sk_ptr: *const u8) -> i32 {
+pub unsafe extern "C" fn x25519_sk_to_pk(pk_ptr: *mut u8, sk_ptr: *const u8) -> i32 {
     unsafe {
         let sk_bytes: [u8; X25519_SK_SIZE] = match array_from_raw(sk_ptr) {
             Ok(s) => s,
@@ -101,8 +106,11 @@ pub extern "C" fn x25519_sk_to_pk(pk_ptr: *mut u8, sk_ptr: *const u8) -> i32 {
 /// # Returns
 /// * 0 on success
 /// * -1 on invalid pointer
+///
+/// # Safety
+/// `ss_ptr`은 최소 32바이트의 쓰기 가능한 메모리, `sk_ptr`과 `pk_ptr`은 각각 최소 32바이트의 읽기 가능한 메모리를 가리켜야 합니다.
 #[unsafe(no_mangle)]
-pub extern "C" fn x25519_dh(ss_ptr: *mut u8, sk_ptr: *const u8, pk_ptr: *const u8) -> i32 {
+pub unsafe extern "C" fn x25519_dh(ss_ptr: *mut u8, sk_ptr: *const u8, pk_ptr: *const u8) -> i32 {
     unsafe {
         let sk_bytes: [u8; X25519_SK_SIZE] = match array_from_raw(sk_ptr) {
             Ok(s) => s,

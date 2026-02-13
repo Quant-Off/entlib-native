@@ -26,8 +26,8 @@ use crate::acvp_slh_dsa::slh_dsa_context::SlhContext;
 // [cite: 2261] Algorithm 2: toInt(X, n)
 pub fn to_int(x: &[u8], n: usize) -> u64 {
     let mut total = 0u64;
-    for i in 0..n {
-        total = (total << 8) + (x[i] as u64);
+    for &byte in &x[..n] {
+        total = (total << 8) + (byte as u64);
     }
     total
 }
@@ -39,14 +39,14 @@ pub fn base_2b(x: &[u8], b: usize, out_len: usize) -> Vec<u32> {
     let mut bits = 0;
     let mut total = 0u32; // Assuming b + 7 <= 32, which is true for standard params
 
-    for i in 0..out_len {
+    for item in out.iter_mut() {
         while bits < b {
             total = (total << 8) + (x[in_idx] as u32);
             in_idx += 1;
             bits += 8;
         }
         bits -= b;
-        out[i] = (total >> bits) & ((1 << b) - 1);
+        *item = (total >> bits) & ((1 << b) - 1);
     }
     out
 }

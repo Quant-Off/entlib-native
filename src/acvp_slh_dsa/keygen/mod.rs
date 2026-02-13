@@ -20,6 +20,8 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#[allow(dead_code)]
 mod slh_dsa_keygen;
+#[allow(dead_code)]
 mod slh_dsa_keygen_harness;
 pub mod slh_dsa_keygen_serde;

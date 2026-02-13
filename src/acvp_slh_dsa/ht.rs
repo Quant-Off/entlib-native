@@ -42,7 +42,7 @@ pub fn ht_sign(m: &[u8], ctx: &SlhContext, idx_tree: u64, idx_leaf: u32) -> Vec<
     // Loop layers
     for j in 1..ctx.params.d {
         curr_idx_leaf = (curr_idx_tree as u32) & ((1 << ctx.params.h_prime) - 1); // mod 2^h'
-        curr_idx_tree = curr_idx_tree >> ctx.params.h_prime;
+        curr_idx_tree >>= ctx.params.h_prime;
 
         adrs.set_layer_address(j as u32);
         adrs.set_tree_address(curr_idx_tree);

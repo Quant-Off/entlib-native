@@ -20,7 +20,9 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#[allow(dead_code)]
 mod adrs;
+#[allow(dead_code)]
 mod slh_dsa_params;
 
 // todo 이거 왜 자꾸 포함됨
