@@ -38,5 +38,5 @@ jobs:
 
       - name: Run Assembly Verification Script
         run: |
-          chmod +x scripts/verify_asm.sh
+          chmod +x scripts/verify_ct_asm.sh
           scripts/verify_ct_asm.sh ${{ matrix.target }}
