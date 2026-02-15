@@ -14,3 +14,4 @@ strip = true
 [workspace.dependencies]
 entlib-native-helper = { path = "./core/helper", version = "1.1.1-Alpha" }
 entlib-native-crypto = { path = "./core/crypto", version = "1.1.1-Alpha" }
+entlib-native-ffi = { path = "./core/ffi", version = "1.1.1-Alpha" }

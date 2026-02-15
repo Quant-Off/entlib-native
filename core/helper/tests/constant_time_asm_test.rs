@@ -1,3 +1,4 @@
+#![cfg(feature = "ct-tests")]
 use entlib_native_helper::constant_time_asm::CtPrimitive;
 
 macro_rules! test_ct_primitive {
