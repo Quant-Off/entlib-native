@@ -5,4 +5,11 @@ edition.workspace = true
 authors.workspace = true
 license.workspace = true
 
+[features]
+ct-tests = []
+
 [dependencies]
+
+[dev-dependencies]
+subtle = "2.6.1"
+proptest = "1.10.0"
