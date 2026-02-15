@@ -3,7 +3,7 @@ members = ["core/*"]
 resolver = "2"
 
 [workspace.package]
-version = "1.1.0-Alpha"
+version = "1.1.1-Alpha"
 edition = "2024"
 authors = ["Q. T. Felix <qtfelix@qu4nt.space>"]
 license = "MIT LICENSE"
@@ -12,5 +12,5 @@ license = "MIT LICENSE"
 strip = true
 
 [workspace.dependencies]
-entlib-native-helper = { path = "./core/helper", version = "1.1.0-Alpha" }
-entlib-native-crypto = { path = "./core/crypto", version = "1.1.0-Alpha" }
+entlib-native-helper = { path = "./core/helper", version = "1.1.1-Alpha" }
+entlib-native-crypto = { path = "./core/crypto", version = "1.1.1-Alpha" }
