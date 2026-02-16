@@ -1,0 +1,3 @@
+[cargo-criterion]
+criterion_home = "./benchmark/criterion"
+ploting_backend = "gnuplot"

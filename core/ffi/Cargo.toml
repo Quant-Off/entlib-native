@@ -6,7 +6,7 @@ authors.workspace = true
 license.workspace = true
 
 [lib]
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "lib"]
 
 # 패닉 발생 시 스택 풀기를 비활성화하여 메모리 상태가
 # 외부에 노출되거나 조작될 가능성을 차단할 필요 있음
@@ -23,3 +23,14 @@ panic = "abort"
 entlib-native-helper.workspace = true
 #libc = "0.2.182"
 #libc_alloc = "1.0.7"
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+
+[[bench]]
+name = "ffi_base64_bench"
+harness = false
+
+[[bench]]
+name = "ffi_wipe_bench"
+harness = false
