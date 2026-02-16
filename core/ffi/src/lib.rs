@@ -1,5 +1,5 @@
 pub mod base64_ffi;
-mod wipe_ffi;
+pub mod wipe_ffi;
 //
 // no_std 유지 - start
 //
