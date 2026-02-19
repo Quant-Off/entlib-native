@@ -1,0 +1,20 @@
+[package]
+name = "entlib-native-sha3"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+entlib-native-helper.workspace = true
+
+[dev-dependencies]
+criterion = { version = "0.8.2", features = ["html_reports"] }
+entlib-native-rng.workspace = true
+
+[[bench]]
+name = "sha3_bench"
+harness = false

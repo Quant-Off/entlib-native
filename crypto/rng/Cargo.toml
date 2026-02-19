@@ -1,12 +1,14 @@
 [package]
-name = "entlib-native-crypto"
+name = "entlib-native-rng"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
 
-[lib]
-crate-type = ["cdylib"]
+#[lib]
+#crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 entlib-native-helper.workspace = true
+
+[dev-dependencies]

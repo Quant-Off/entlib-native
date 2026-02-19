@@ -1,4 +1,4 @@
-use crate::sha2::Sha256State;
+use crate::Sha256State;
 use core::ptr::write_volatile;
 use core::sync::atomic::{Ordering, compiler_fence};
 
@@ -14,7 +14,7 @@ const SHA_256_K: [u32; 64] = [
 ];
 
 impl Sha256State {
-    pub fn new(is_224: bool) -> Self {
+    pub(crate) fn new(is_224: bool) -> Self {
         let state = if is_224 {
             [
                 0xc1059ed8, 0x367cd507, 0x3070dd17, 0xf70e5939, 0xffc00b31, 0x68581511, 0x64f98fa7,
@@ -107,7 +107,7 @@ impl Sha256State {
         compiler_fence(Ordering::SeqCst);
     }
 
-    pub fn update(&mut self, data: &[u8]) {
+    pub(crate) fn update(&mut self, data: &[u8]) {
         self.total_len += (data.len() as u64) * 8;
         let mut i = 0;
 
@@ -130,7 +130,7 @@ impl Sha256State {
         }
     }
 
-    pub fn finalize(mut self) -> Vec<u8> {
+    pub(crate) fn finalize(mut self) -> Vec<u8> {
         // 1비트 '1' 패딩 추가(append 1 bit)
         self.buffer[self.buffer_len] = 0x80;
         self.buffer_len += 1;

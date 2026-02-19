@@ -1,4 +1,4 @@
-use crate::sha2::Sha512State;
+use crate::Sha512State;
 use core::ptr::write_volatile;
 use core::sync::atomic::{Ordering, compiler_fence};
 
@@ -86,7 +86,7 @@ const SHA_512_K: [u64; 80] = [
 ];
 
 impl Sha512State {
-    pub fn new(is_384: bool) -> Self {
+    pub(crate) fn new(is_384: bool) -> Self {
         let state = if is_384 {
             [
                 0xcbbb9d5dc1059ed8,
@@ -198,7 +198,7 @@ impl Sha512State {
     }
 
     /// 임의의 길이 데이터를 내부 버퍼에 누적 및 처리
-    pub fn update(&mut self, data: &[u8]) {
+    pub(crate) fn update(&mut self, data: &[u8]) {
         self.total_len += (data.len() as u128) * 8;
         let mut i = 0;
 
@@ -222,7 +222,7 @@ impl Sha512State {
     }
 
     /// 해시 연산 종료 및 다이제스트(digest) 반환
-    pub fn finalize(mut self) -> Vec<u8> {
+    pub(crate) fn finalize(mut self) -> Vec<u8> {
         // 1비트 '1' 패딩 추가(append 1 bit)
         self.buffer[self.buffer_len] = 0x80;
         self.buffer_len += 1;
