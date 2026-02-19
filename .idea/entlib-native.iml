@@ -11,6 +11,14 @@
       <sourceFolder url="file://$MODULE_DIR$/core/ffi/benches" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/core/ffi/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/core/helper/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/crypto/rng/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crypto/rng/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/crypto/sha2/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/crypto/sha2/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crypto/sha2/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/crypto/sha3/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/crypto/sha3/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crypto/sha3/tests" isTestSource="true" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />
