@@ -1,7 +1,7 @@
-use entlib_native_helper::secure_buffer::SecureBuffer;
 use core::ptr::{self, write_volatile};
 use core::slice;
 use core::sync::atomic::{Ordering, compiler_fence};
+use entlib_native_helper::secure_buffer::SecureBuffer;
 
 /// 보안 버퍼 내 실제 데이터의 메모리 주소 반환 (get immutable data pointer)
 ///
