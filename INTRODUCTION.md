@@ -72,7 +72,7 @@
 
 ## core/ffi
 
-Java 측 FFM API와 직접 맞닿는 C ABI 브릿지 계층입니다. `Base64` 인/디코딩 FFI 엔드포인트(`entlib_b64_encode_secure`, `entlib_b64_decode_secure`)와 메모리 소거 엔드포인트(`entanglement_secure_wipe`), `SecureBuffer`의 포인터 추출 및 해제 함수를 제공합니다. 모든 진입점에서 널 포인터 검증과 오버플로 보호를 수행합니다.
+Java 측 FFM API와 직접 맞닿는 C ABI 브릿지 계층입니다. `Base64` 인/디코딩 FFI 엔드포인트(`entlib_b64_encode_secure`, `entlib_b64_decode_secure`)와 메모리 소거 엔드포인트(`entanglement_secure_wipe`), `SecureBuffer`의 포인터 추출 및 해제 함수를 제공합니다. 모든 진입점에서 `null` 포인터 검증과 오버플로 보호를 수행합니다.
 
 ## crypto/rng
 

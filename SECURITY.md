@@ -36,7 +36,7 @@
 * **메모리 소거 (Memory Erasure):** 민감한 데이터(키, 평문, 난수 시드 등)가 사용 후 즉시, 그리고 확실하게 메모리에서 소거되는지 여부. `Drop` 트레이트와 `write_volatile`을 통한 소거 로직의 무결성
 * **상수 시간 연산 (Constant-Time Operations):** 비밀 키나 데이터에 의존하는 연산이 입력 값에 상관없이 일정한 시간에 수행되는지 여부. 타이밍 공격(Timing Attack)에 대한 저항성
 * **난수 생성 (Random Number Generation):** 하드웨어 엔트로피(`rdseed`, `rdrand`, `rndr`)의 올바른 사용과 `MixedRng`의 비선형 혼합 로직의 안전성
-* **FFI 경계 (FFI Boundaries):** Java와 Rust 간의 데이터 교환 시 발생할 수 있는 메모리 오염, 널 포인터 역참조, 버퍼 오버플로 등의 문제
+* **FFI 경계 (FFI Boundaries):** Java와 Rust 간의 데이터 교환 시 발생할 수 있는 메모리 오염, `null` 포인터 역참조, 버퍼 오버플로 등의 문제
 * **암호학적 정확성 (Cryptographic Correctness):** 구현된 알고리즘(`SHA-2`, `SHA-3`, `Base64` 등)이 표준 명세(`NIST FIPS`, `SP` 등)를 정확히 준수하는지 여부
 
 ## 범위 외 (Out of Scope)
