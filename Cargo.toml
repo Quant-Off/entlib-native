@@ -1,5 +1,5 @@
 [workspace]
-members = ["core/*", "crypto/sha3", "crypto/sha2", "crypto/rng"]
+members = ["core/*", "crypto/*"]
 resolver = "2"
 
 [workspace.package]
@@ -15,4 +15,5 @@ strip = true
 entlib-native-helper = { path = "./core/helper", version = "1.1.1-Alpha3" }
 entlib-native-ffi = { path = "./core/ffi", version = "1.1.1-Alpha3" }
 entlib-native-sha2 = { path = "./crypto/sha2", version = "1.1.1-Alpha3" }
+entlib-native-sha3 = { path = "./crypto/sha3", version = "1.1.1-Alpha3" }
 entlib-native-rng = { path = "./crypto/rng", version = "1.1.1-Alpha3" }

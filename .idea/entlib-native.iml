@@ -11,6 +11,7 @@
       <sourceFolder url="file://$MODULE_DIR$/core/ffi/benches" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/core/ffi/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/core/helper/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/crypto/hkdf/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/crypto/rng/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/crypto/rng/tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/crypto/sha2/benches" isTestSource="true" />

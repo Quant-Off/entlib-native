@@ -1,6 +1,6 @@
 use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
 
-use entlib_native_ffi::wipe_ffi::entanglement_secure_wipe;
+use entlib_native_ffi::secure_buffer::entanglement_secure_wipe;
 
 const SIZES: &[usize] = &[64, 256, 1_024, 4_096, 65_536, 1_048_576];
 

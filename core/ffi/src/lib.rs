@@ -1,5 +1,14 @@
 pub mod base64_ffi;
-pub mod wipe_ffi;
+pub mod secure_buffer;
+pub mod sha2;
+
+/// ffi 작업 중 발생할 수 있는 상태 코드 (status code)
+#[repr(C)]
+pub enum FFIStatus {
+    Success = 0,
+    NullPointerError = -1,
+}
+
 //
 // no_std 유지 - start
 //

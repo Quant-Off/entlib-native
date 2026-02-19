@@ -1,3 +1,20 @@
+//! 이 API는 FFI를 통해 얽힘 라이브러리로 전송됩니다.
+//! 사용자가 Rust Layer에서 직접 구현을 참조할 수도 있지만, 기본적으로
+//! 권장되지 않습니다.
+//!
+//! 이 모듈에 구현에 대해 [Legion of the BouncyCastle의 bc-rust](https://github.com/bcgit/bc-rust)
+//! 저장소에서 많은 영감을 받았지만, 현재 저로선 이 방식의 구현이 최선인 것 같습니다...
+//! 만약 이 구현에 의견이 있다면 [이 곳](https://github.com/Quant-Off/entlib-native/issues/new)을 통해
+//! 이슈를 남겨주시기 바랍니다.
+//!
+//! 이러한 패턴에 대해서는 `sha2` 해시 알고리즘 라이브러리에서도 동일하게 사용됩니다.
+//!
+//! # Authors
+//! Q. T. Felix
+//!
+//! # Since
+//! 1.1.1-Alpha3
+
 #![allow(non_camel_case_types)]
 
 use crate::KeccakState;
