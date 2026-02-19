@@ -1,22 +1,26 @@
+pub mod api;
+mod sha2_256;
+mod sha2_512;
+
 use core::ptr::write_volatile;
 use core::sync::atomic::{Ordering, compiler_fence};
 
 /// SHA-256 및 SHA-224를 위한 32비트 내부 상태 구조체(internal state structure)
-pub struct Sha256State {
-    pub state: [u32; 8],
-    pub buffer: [u8; 64],
-    pub buffer_len: usize,
-    pub total_len: u64,
-    pub is_224: bool,
+pub(crate) struct Sha256State {
+    pub(crate) state: [u32; 8],
+    pub(crate) buffer: [u8; 64],
+    pub(crate) buffer_len: usize,
+    pub(crate) total_len: u64,
+    pub(crate) is_224: bool,
 }
 
 /// SHA-512 및 SHA-384를 위한 64비트 내부 상태 구조체(internal state structure)
-pub struct Sha512State {
-    pub state: [u64; 8],
-    pub buffer: [u8; 128],
-    pub buffer_len: usize,
-    pub total_len: u128,
-    pub is_384: bool,
+pub(crate) struct Sha512State {
+    pub(crate) state: [u64; 8],
+    pub(crate) buffer: [u8; 128],
+    pub(crate) buffer_len: usize,
+    pub(crate) total_len: u128,
+    pub(crate) is_384: bool,
 }
 
 macro_rules! impl_zeroize_drop {
