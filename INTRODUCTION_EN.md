@@ -1,10 +1,10 @@
-# Entanglement Library Native
+# EntanglementLib Native
 
 > [Korean INTRODUCTION](INTRODUCTION.md)
 
-The core logic of the [Entanglement Library](https://github.com/Quant-Off/entanglementlib) is all processed within this [Rust-based native library](https://github.com/Quant-Off/entlib-native). In this document, we will simply refer to it as "Native".
+The core logic of the [EntanglementLib](https://github.com/Quant-Off/entanglementlib) is all processed within this [Rust-based native library](https://github.com/Quant-Off/entlib-native). In this document, we will simply refer to it as "Native".
 
-In this document, I would like to technically pinpoint exactly how this Native works with the Entanglement Library and how it performs security operations, but since this content is extremely vast, I will organize it in detail separately on [our documentation site](https://docs.qu4nt.space/en/docs/projects/entanglementlib/entlib-native).
+In this document, I would like to technically pinpoint exactly how this Native works with the EntanglementLib and how it performs security operations, but since this content is extremely vast, I will organize it in detail separately on [our documentation site](https://docs.qu4nt.space/en/docs/projects/entanglementlib/entlib-native).
 
 # Design Philosophy
 
@@ -24,9 +24,9 @@ Based on this philosophy, Native adheres to the following four principles.
 
 # Interaction
 
-Native is called safely and quickly from the Entanglement Library side via the [FFM API (Linker API)](https://openjdk.org/jeps/454).
+Native is called safely and quickly from the EntanglementLib side via the [FFM API (Linker API)](https://openjdk.org/jeps/454).
 
-When processing sensitive data in the Entanglement Library, the [Sensitive Data Container](https://docs.qu4nt.space/en/docs/projects/entanglementlib/sensitive-data-container) logic transmits the memory address to Native via `MemorySegment`, and Native receives the memory address, performs security operations, completely erases it, and transmits the Raw result to the Entanglement Library. In other words, since there is absolutely no need to store data in Heap memory overall, the Garbage Collector (GC) of the Entanglement Library does not need to make foolish mistakes.
+When processing sensitive data in the EntanglementLib, the [Sensitive Data Container](https://docs.qu4nt.space/en/docs/projects/entanglementlib/sensitive-data-container) logic transmits the memory address to Native via `MemorySegment`, and Native receives the memory address, performs security operations, completely erases it, and transmits the Raw result to the EntanglementLib. In other words, since there is absolutely no need to store data in Heap memory overall, the Garbage Collector (GC) of the EntanglementLib does not need to make foolish mistakes.
 
 # Security of All Operations
 
