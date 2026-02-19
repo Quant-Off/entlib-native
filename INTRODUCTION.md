@@ -1,5 +1,7 @@
 # 얽힘 라이브러리 네이티브
 
+> [English INTRODUCTION](INTRODUCTION_EN.md)
+
 [얽힘 라이브러리](https://github.com/Quant-Off/entanglementlib)의 핵심 로직은 모두 이 [Rust 기반 네이티브 라이브러리](https://github.com/Quant-Off/entlib-native)에서 진행됩니다. 이 문서에선 편하게 "네이티브"라고 부르겠습니다.
 
 이 문서에서, 이 네이티브가 얽힘 라이브러리와 어떻게 동작하는지와, 보안 작업을 어떻게 수행하는지 기술적으로 정확히 짚어드리고 싶지만 이 내용은 매-우 방대하기 떄문에 따로 [우리 문서 사이트](https://docs.qu4nt.space/docs/projects/entanglementlib/entlib-native)에 세밀히 정리해두겠습니다.

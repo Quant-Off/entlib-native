@@ -1,1 +1,3 @@
 프로젝트 초기화 후 진행 예정입니다.
+
+todo: project release and...

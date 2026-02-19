@@ -1,5 +1,7 @@
 # 얽힘 라이브러리: 네이티브 브릿지
 
+> [English README](README_EN.md)
+
 > [이 라이브러리는 무슨 기능을 할까요?](INTRODUCTION.md) 기술에 대한 세부적 설명은 [퀀트 팀 공개 문서](https://docs.qu4nt.space/docs/projects/entanglementlib/entlib-native) 에서 확인할 수 있습니다.
 
 [Rust의 소유권 개념](https://doc.rust-kr.org/ch04-00-understanding-ownership.html)은 저의 흥미를 유발하는 데 완벽하게 성공했고, 복합적인 Rust만의 특색있는 개발 방법(컴파일러의 메모리 안정성, 하드웨어 수준의 제어 등...)을 통해 [얽힘 라이브러리](https://github.com/Quant-Off/entanglementlib)를 안전하게 구현하는 데 목표를 두고자 했습니다.
@@ -8,11 +10,12 @@
 
 > [이 문서](AGES.md)에서 최초 공개 버전부터 이 버전까지의 일대기를 확인하실 수 있습니다.
 
-# 영감
+# 영감 및 기여
 
-마침 존경하는 보안 단체 `Legion of the BouncyCastle Inc`는 [`bc-rust`](https://github.com/bcgit/bc-rust/) 개발을 시작했고 얽힘 라이브러리 브릿징 기술에 유용할 법 한 영감을 많이 얻었습니다. 이들은 제가 얽힘 라이브러리 개발을 시작했을 때 부터 지금까지 언제나 저의 힘이 되어주고 있습니다.
+마침 존경하는 보안 단체 `Legion of the BouncyCastle Inc`는 [`bc-rust`](https://github.com/bcgit/bc-rust/) 개발을 시작했고 얽힘 라이브러리 브릿징 기술에 유용할 법 한 영감을 많이 얻었습니다. 이들은 제가 얽힘 라이브러리 개발을 시작했을 때 부터 지금까지 언제나 저의 힘이 되어주고 있습니다. 어쨌든 저는 이 개발 속도를 유지할 것이며, 향후 업데이트에 따라 이 문서를 지속적으로 수정하겠습니다. 결국 이 목표를 향해 쭉 개발할 예정입니다.
 
-어쨌든 저는 이 개발 속도를 유지할 것이며, 향후 업데이트에 따라 이 문서를 지속적으로 수정하겠습니다. 결국 이 목표를 향해 쭉 개발할 예정입니다. 그리고 언제든 피드백은 환영입니다.
+> [!TIP]
+> 여러분의 피드백은 언제나 아주 큰 힘이 됩니다. 이 프로젝트에 기여하고자 한다면 [이 곳](CONTRIBUTION.md)을 참고해주세요!
 
 # Alpha 버전
 
