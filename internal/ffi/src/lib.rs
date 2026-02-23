@@ -1,7 +1,8 @@
 pub mod base64_ffi;
-mod rng_ffi;
+mod rng_ffi; // todo; 보안강화 및 검증
 pub mod secure_buffer_ffi;
 pub mod sha2_ffi;
+pub mod sha3_ffi;
 
 /// ffi 작업 중 발생할 수 있는 상태 코드 (status code)
 #[repr(C)]
