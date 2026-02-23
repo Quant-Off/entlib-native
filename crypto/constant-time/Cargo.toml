@@ -1,0 +1,24 @@
+[package]
+name = "entlib-native-constant-time"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[features]
+ct-tests = []
+
+[dependencies]
+
+[dev-dependencies]
+subtle = "2.6.1"
+proptest = "1.10.0"
+criterion = { version = "0.8.2", features = ["html_reports"] }
+
+[[bench]]
+name = "ct_ops_security"
+harness = false
+
+[[bench]]
+name = "ct_ops_throughput"
+harness = false

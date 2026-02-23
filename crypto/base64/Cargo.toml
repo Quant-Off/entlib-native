@@ -1,0 +1,16 @@
+[package]
+name = "entlib-native-base64"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+entlib-native-constant-time.workspace = true
+
+[dev-dependencies]
+criterion = { version = "0.8.2", features = ["html_reports"] }
+
+[[bench]]
+name = "base64_bench"
+harness = false

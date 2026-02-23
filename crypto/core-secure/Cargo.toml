@@ -1,0 +1,15 @@
+[package]
+name = "entlib-native-core-secure"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+
+[dev-dependencies]
+criterion = { version = "0.8.2", features = ["html_reports"] }
+
+[[bench]]
+name = "secure_buffer_bench"
+harness = false
