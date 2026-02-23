@@ -13,10 +13,11 @@
 //! # Note
 //! 이 기능은 곧 `chacha20` 모듈로 차별화됩니다.
 
+use crate::anu_qrng::AnuQrngClient;
 use crate::base_rng::{RngError, generate_hardware_random_bytes};
 use core::ptr::{copy_nonoverlapping, write_volatile};
 use core::sync::atomic::{Ordering, compiler_fence};
-use entlib_native_helper::secure_buffer::SecureBuffer;
+use entlib_native_core_secure::secure_buffer::SecureBuffer;
 
 /// 상수 시간(constant-time) 연산을 보장하는 chacha20 쿼터 라운드(quarter round)
 macro_rules! quarter_round {
@@ -36,6 +37,14 @@ macro_rules! quarter_round {
     };
 }
 
+/// 엔트로피 소스(entropy source)를 결정하는 전략(strategy) 열거형
+pub enum EntropyStrategy {
+    /// 로컬 프로세서의 하드웨어 난수 생성기(`rdseed`, `rndr` 등)를 사용합니다.
+    LocalHardware,
+    /// ANU 양자 난수 API를 통해 진공 양자 요동(quantum vacuum fluctuations) 데이터를 가져옵니다.
+    QuantumNetwork,
+}
+
 /// 혼합 난수 생성기(mixed rng) 구조체
 ///
 /// 하드웨어 진난수를 시드(seed)로 사용하여 512-비트(bit) 상태를 초기화합니다.
@@ -44,11 +53,19 @@ pub struct MixedRng {
 }
 
 impl MixedRng {
-    /// 하드웨어 명령어를 호출하여 새로운 혼합 난수 생성기를 인스턴스화합니다.
-    pub fn new() -> Result<Self, RngError> {
-        // 32바이트 키(key) 및 12바이트 논스(nonce) 추출
-        let hw_key = generate_hardware_random_bytes(32)?;
-        let hw_nonce = generate_hardware_random_bytes(12)?;
+    /// 지정된 엔트로피 전략을 사용하여 새로운 혼합 난수 생성기를 인스턴스화합니다.
+    pub fn new(strategy: EntropyStrategy) -> Result<Self, RngError> {
+        // 전략 패턴(strategy pattern)에 따른 시드(seed) 추출 분기
+        let (hw_key, hw_nonce) = match strategy {
+            EntropyStrategy::LocalHardware => (
+                generate_hardware_random_bytes(32)?,
+                generate_hardware_random_bytes(12)?,
+            ),
+            EntropyStrategy::QuantumNetwork => (
+                AnuQrngClient::fetch_secure_bytes(32)?,
+                AnuQrngClient::fetch_secure_bytes(12)?,
+            ),
+        };
 
         let mut state = [0u32; 16];
 
@@ -72,6 +89,9 @@ impl MixedRng {
 
         // 블록 카운터(block counter)
         state[12] = 0;
+
+        // hw_key와 hw_nonce는 SecureBuffer의 Drop 트레이트 구현에 의해
+        // 스코프를 벗어날 때 자동으로 데이터 소거(zeroize)가 수행됨
 
         Ok(Self { state })
     }

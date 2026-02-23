@@ -1,5 +1,5 @@
 use criterion::{Criterion, Throughput, criterion_group, criterion_main};
-use entlib_native_helper::secure_buffer::SecureBuffer;
+use entlib_native_core_secure::secure_buffer::SecureBuffer;
 use entlib_native_rng::base_rng::next_generate;
 use entlib_native_sha2::api::*;
 use std::hint::black_box;

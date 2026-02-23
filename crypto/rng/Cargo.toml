@@ -5,10 +5,12 @@ edition.workspace = true
 authors.workspace = true
 license.workspace = true
 
-#[lib]
-#crate-type = ["cdylib", "rlib"]
-
 [dependencies]
-entlib-native-helper.workspace = true
+entlib-native-core-secure.workspace = true
 
 [dev-dependencies]
+criterion = { version = "0.8.2", features = ["html_reports"] }
+
+[[bench]]
+name = "anu_qrng_bench"
+harness = false

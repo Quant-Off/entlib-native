@@ -9,10 +9,10 @@ license.workspace = true
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-entlib-native-helper.workspace = true
 
 [dev-dependencies]
 criterion = { version = "0.8.2", features = ["html_reports"] }
+entlib-native-core-secure.workspace = true
 entlib-native-rng.workspace = true
 
 [[bench]]
