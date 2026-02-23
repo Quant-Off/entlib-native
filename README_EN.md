@@ -19,7 +19,7 @@ Just in time, the respected security organization `Legion of the BouncyCastle In
 
 # Alpha Version
 
-This native library will not be released immediately even if preparations for the `1.1.0` release are completed. Therefore, to review the code in detail and precisely, and to smoothly build that environment, I will first release it as an alpha version at this point.
+This native library will not be released immediately even if preparations for the `1.1.x` release are completed. Therefore, to review the code in detail and precisely, and to smoothly build that environment, I will first release it as an alpha version at this point.
 
 # Benchmarking
 

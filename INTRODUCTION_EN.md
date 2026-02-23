@@ -64,24 +64,4 @@ The reason this design is necessary is clear. Java's Garbage Collector freely co
 
 # Composition
 
-Native is composed of a workspace based on a virtual manifest, and each crate has clear responsibility boundaries.
-
-## core/helper
-
-A security primitive operation module operating in a `no_std` environment. It provides constant time comparison and selection operations (`ConstantTimeOps` trait), inline assembly implementations per architecture (`CtPrimitive` trait), constant time `Base64` encoding/decoding, and `SecureBuffer`. It is the base layer on which all other crates of Native depend.
-
-## core/ffi
-
-A C ABI bridge layer directly touching the Java side FFM API. It provides `Base64` encoding/decoding FFI endpoints (`entlib_b64_encode_secure`, `entlib_b64_decode_secure`), memory erasure endpoint (`entanglement_secure_wipe`), and pointer extraction and release functions of `SecureBuffer`. It performs null pointer verification and overflow protection at all entry points.
-
-## crypto/rng
-
-A hardware-based random number generation module. It provides a basic generator (`base_rng`) that directly calls the CPU's `rdseed`/`rndr` instructions, and an extended generator (`MixedRng`) that non-linearly mixes hardware entropy with the ChaCha20 core block.
-
-## crypto/sha2
-
-Implementation of SHA-2 family hash functions. It provides four variants: `SHA-224`, `SHA-256`, `SHA-384`, `SHA-512`, and internal state structures (`Sha256State`, `Sha512State`) are automatically erased upon operation completion via the `Drop` trait. Temporary data during operations such as message schedules are also volatilely erased, and then memory barriers are applied.
-
-## crypto/sha3
-
-Implementation of SHA-3 family hash functions and XOF (Extendable Output Functions). It provides `SHA3-224`, `SHA3-256`, `SHA3-384`, `SHA3-512` fixed output variants and `SHAKE128`, `SHAKE256` variable output variants on top of the `Keccak` sponge structure. The 25 64-bit lanes and 200-byte buffer of the internal state (`KeccakState`) are automatically erased by the `Drop` trait, and the temporary state of the Keccak-f[1600] permutation is also volatilely erased at every call.
+Native is composed of a virtual manifest-based workspace, and each crate is granularized to have clear responsibility boundaries. Under `crypto/`, crates for performing `Base64`, `Hash`, or algorithm operations are located, and under `internal/`, crates for `ffi` integration and quantum-related utilities are included.

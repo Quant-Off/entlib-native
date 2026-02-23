@@ -64,24 +64,4 @@
 
 # 구성
 
-네이티브는 가상 매니페스트(virtual manifest) 기반의 워크스페이스로 구성되며, 각 크레이트는 명확한 책임 경계를 가집니다.
-
-## core/helper
-
-`no_std` 환경에서 동작하는 보안 원시 연산 모듈입니다. 상수 시간 비교 및 선택 연산(`ConstantTimeOps` 트레이트), 아키텍처별 인라인 어셈블리 구현(`CtPrimitive` 트레이트), 상수 시간 `Base64` 인코딩/디코딩, 그리고 `SecureBuffer`를 제공합니다. 네이티브의 다른 모든 크레이트가 의존하는 기반 계층입니다.
-
-## core/ffi
-
-Java 측 FFM API와 직접 맞닿는 C ABI 브릿지 계층입니다. `Base64` 인/디코딩 FFI 엔드포인트(`entlib_b64_encode_secure`, `entlib_b64_decode_secure`)와 메모리 소거 엔드포인트(`entanglement_secure_wipe`), `SecureBuffer`의 포인터 추출 및 해제 함수를 제공합니다. 모든 진입점에서 `null` 포인터 검증과 오버플로 보호를 수행합니다.
-
-## crypto/rng
-
-하드웨어 기반 난수 생성 모듈입니다. CPU의 `rdseed`/`rndr` 명령어를 직접 호출하는 기본 생성기(`base_rng`)와, 하드웨어 엔트로피를 ChaCha20 코어 블록으로 비선형 혼합하는 확장 생성기(`MixedRng`)를 제공합니다.
-
-## crypto/sha2
-
-SHA-2 계열 해시 함수 구현입니다. `SHA-224`, `SHA-256`, `SHA-384`, `SHA-512` 네 가지 변형을 제공하며, 내부 상태 구조체(`Sha256State`, `Sha512State`)는 `Drop` 트레이트를 통해 연산 완료 시 자동 소거됩니다. 메시지 스케줄 등 연산 중간의 임시 데이터 역시 휘발성 소거 후 메모리 배리어가 적용됩니다.
-
-## crypto/sha3
-
-SHA-3 계열 해시 함수 및 XOF(확장 출력 함수) 구현입니다. `Keccak` 스펀지 구조 위에 `SHA3-224`, `SHA3-256`, `SHA3-384`, `SHA3-512` 고정 출력 변형과 `SHAKE128`, `SHAKE256` 가변 출력 변형을 제공합니다. 내부 상태(`KeccakState`)의 25개 64비트 레인과 200바이트 버퍼는 `Drop` 트레이트에 의해 자동 소거되며, Keccak-f[1600] 순열의 임시 상태 역시 매 호출마다 휘발성 소거됩니다.
+네이티브는 가상 매니페스트(virtual manifest) 기반의 워크스페이스로 구성되며, 각 크레이트는 세분화되어 명확한 책임 경계를 가집니다. `crypto/` 하위에는 `Base64`, `Hash` 또는 알고리즘 연산을 수행하기 위한 크레이트가 위치해 있고, `internal/` 하위에는 `ffi` 연동 및 양자 관련 유틸리티 크레이트가 포함되어 있습니다.
