@@ -8,7 +8,7 @@ if [ -z "$1" ]; then
 fi
 
 TARGET=$1
-CRATE_NAME="entlib_native"
+CRATE_NAME="entlib_native_constant_time"
 MODULE_PATH="constant_time_asm"
 EXIT_CODE=0
 
@@ -30,7 +30,7 @@ echo "[$TARGET] 상수-시간 어셈블리 검증 시작..."
 
 for TYPE in "${TYPES[@]}"; do
     for METHOD in "${METHODS[@]}"; do
-        # Rust 심볼 경로 조합 (<u64 as entlib_native::constant_time_asm::CtPrimitive>::ct_mux 등)
+        # Rust 심볼 경로 조합 (<u64 as entlib_native_constant_time::constant_time_asm::CtPrimitive>::ct_mux 등)
         SYMBOL="<$TYPE as ${CRATE_NAME}::${MODULE_PATH}::CtPrimitive>::${METHOD}"
 
         echo "검사 중: $SYMBOL"
