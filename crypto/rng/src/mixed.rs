@@ -61,10 +61,19 @@ impl MixedRng {
                 generate_hardware_random_bytes(32)?,
                 generate_hardware_random_bytes(12)?,
             ),
-            EntropyStrategy::QuantumNetwork => (
-                AnuQrngClient::fetch_secure_bytes(32)?,
-                AnuQrngClient::fetch_secure_bytes(12)?,
-            ),
+            EntropyStrategy::QuantumNetwork => {
+                let rt = tokio::runtime::Builder::new_current_thread()
+                    .enable_all()
+                    .build()
+                    .map_err(|e| {
+                        RngError::NetworkFailure(format!("tokio 런타임 빌드 실패: {}", e))
+                    })?;
+                rt.block_on(async {
+                    let key = AnuQrngClient::fetch_secure_bytes(32).await?;
+                    let nonce = AnuQrngClient::fetch_secure_bytes(12).await?;
+                    Ok::<(SecureBuffer, SecureBuffer), RngError>((key, nonce))
+                })?
+            }
         };
 
         let mut state = [0u32; 16];

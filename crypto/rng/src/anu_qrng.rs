@@ -1,6 +1,7 @@
 //! ANU QRNG API(Streaming)
 //!
-//! TLS통신을 통해 작업을 수행하기 떄문에
+//! # Secure Warning
+//! TLS통신을 통해 작업을 수행하기 때문에
 //! 네트워크 지연 등의 문제가 있습니다.
 //!
 //! # Author
@@ -8,34 +9,52 @@
 
 use crate::base_rng::RngError;
 use entlib_native_core_secure::secure_buffer::SecureBuffer;
-use std::process::Command;
+use std::process::Stdio;
 use std::str;
 use std::vec::Vec;
+use tokio::process::Command;
 
 pub struct AnuQrngClient;
 
 impl AnuQrngClient {
-    pub fn fetch_secure_bytes(length: usize) -> Result<SecureBuffer, RngError> {
+    pub async fn fetch_secure_bytes(length: usize) -> Result<SecureBuffer, RngError> {
         if !(1..=1024).contains(&length) {
             return Err(RngError::ParseError);
         }
 
         let url = format!(
-            "https://qrng.anu.edu.au/API/jsonI.php?length={}&type=uint8",
+            "https://api.quantumnumbers.anu.edu.au?length={}&type=uint8",
             length
         );
 
-        // -f (HTTP 오류 시 실패), -L (리다이렉트 추적)
         let output = Command::new("curl")
-            .arg("-s")
-            .arg("-f")
-            .arg("-L")
+            .arg("-sS") // silent (진행률 숨김) + 오류 메시지 표시
+            .arg("-f") // HTTP 오류 시 실패
+            .arg("-L") // 리다이렉트 추적
+            .arg("-X")
+            .arg("GET")
+            .arg("-H")
+            .arg(format!(
+                "x-api-key:{}",
+                std::env::var("QRNG_ANU_KEY").expect("QRNG_ANU_KEY must be set")
+            ))
+            .arg("--connect-timeout")
+            .arg("10") // 연결 타임아웃: 10초
+            .arg("--max-time")
+            .arg("30") // 전체 요청 타임아웃: 30초
             .arg(url)
+            .stdin(Stdio::null()) // JVM FFI 컨텍스트에서의 stdin 상속 차단
             .output()
-            .map_err(|_| RngError::NetworkFailure)?;
+            .await
+            .map_err(|e| RngError::NetworkFailure(format!("curl 실행 실패: {}", e)))?;
 
         if !output.status.success() {
-            return Err(RngError::NetworkFailure);
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            return Err(RngError::NetworkFailure(format!(
+                "HTTP 실패 (code: {}) | stderr: {}",
+                output.status,
+                stderr.trim()
+            )));
         }
 
         let response_str = str::from_utf8(&output.stdout).map_err(|_| RngError::ParseError)?;

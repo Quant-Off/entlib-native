@@ -34,7 +34,7 @@ mod tests {
                         strategy_name
                     );
                 }
-                Err(RngError::NetworkFailure) | Err(RngError::ParseError) => {
+                Err(RngError::NetworkFailure(_)) | Err(RngError::ParseError) => {
                     // 오프라인 환경 또는 방화벽에 의한 네트워크 차단 시 테스트 우회(skip)
                     println!(
                         "[{}] Skipping initialization test: Network or parsing unavailable",
@@ -76,7 +76,7 @@ mod tests {
                 }
             }
             Err(RngError::UnsupportedHardware)
-            | Err(RngError::NetworkFailure)
+            | Err(RngError::NetworkFailure(_))
             | Err(RngError::ParseError) => {
                 println!(
                     "[{}] Skipping length test: Dependency unavailable",
@@ -107,7 +107,7 @@ mod tests {
                     );
                 }
                 Err(RngError::UnsupportedHardware)
-                | Err(RngError::NetworkFailure)
+                | Err(RngError::NetworkFailure(_))
                 | Err(RngError::ParseError) => {
                     println!(
                         "[{}] Skipping randomness test: Dependency unavailable",
@@ -141,7 +141,7 @@ mod tests {
                     );
                 }
                 Err(RngError::UnsupportedHardware)
-                | Err(RngError::NetworkFailure)
+                | Err(RngError::NetworkFailure(_))
                 | Err(RngError::ParseError) => {
                     println!(
                         "[{}] Skipping block counter test: Dependency unavailable",

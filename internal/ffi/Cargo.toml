@@ -20,6 +20,7 @@ strip = true
 panic = "abort"
 
 [dependencies]
+tokio.workspace = true
 entlib-native-base64.workspace = true
 entlib-native-constant-time.workspace = true
 entlib-native-core-secure.workspace = true
