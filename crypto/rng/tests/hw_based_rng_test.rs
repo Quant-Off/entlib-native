@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use entlib_native_helper::secure_buffer::SecureBuffer;
+    use entlib_native_core_secure::secure_buffer::SecureBuffer;
     use entlib_native_rng::base_rng::{RngError, generate_hardware_random_bytes, next_generate};
 
     #[test]

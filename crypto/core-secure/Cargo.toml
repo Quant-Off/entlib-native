@@ -1,20 +1,15 @@
 [package]
-name = "entlib-native-sha2"
+name = "entlib-native-core-secure"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
 
-[lib]
-crate-type = ["cdylib", "rlib"]
-
 [dependencies]
 
 [dev-dependencies]
 criterion = { version = "0.8.2", features = ["html_reports"] }
-entlib-native-core-secure.workspace = true
-entlib-native-rng.workspace = true
 
 [[bench]]
-name = "sha2_bench"
+name = "secure_buffer_bench"
 harness = false

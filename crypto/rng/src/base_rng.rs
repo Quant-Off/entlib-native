@@ -12,7 +12,7 @@
 use core::arch::asm;
 use core::ptr::{copy_nonoverlapping, write_unaligned, write_volatile};
 use core::sync::atomic::compiler_fence;
-use entlib_native_helper::secure_buffer::SecureBuffer;
+use entlib_native_core_secure::secure_buffer::SecureBuffer;
 use std::sync::atomic::Ordering;
 use std::vec::Vec;
 
@@ -23,6 +23,10 @@ pub enum RngError {
     UnsupportedHardware,
     /// 엔트로피 풀 고갈 또는 하드웨어 응답에 실패했습니다.
     EntropyDepletion,
+    /// 양자 난수 네트워크 요청(curl)이 실패했습니다.
+    NetworkFailure,
+    /// 양자 난수 API 응답 데이터 파싱에 실패했습니다.
+    ParseError,
 }
 
 /// 요청한 길이만큼의 진난수를 포함하는 보안 버퍼를 반환합니다.
