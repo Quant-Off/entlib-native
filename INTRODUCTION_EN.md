@@ -2,6 +2,9 @@
 
 > [Korean INTRODUCTION](INTRODUCTION.md)
 
+> [!WARNING]
+> The content of this document may differ significantly from the current functionality of `entlib-native`!
+
 The core logic of the [EntanglementLib](https://github.com/Quant-Off/entanglementlib) is all processed within this [Rust-based native library](https://github.com/Quant-Off/entlib-native). In this document, we will simply refer to it as "Native".
 
 In this document, I would like to technically pinpoint exactly how this Native works with the EntanglementLib and how it performs security operations, but since this content is extremely vast, I will organize it in detail separately on [our documentation site](https://docs.qu4nt.space/en/docs/projects/entanglementlib/entlib-native).
