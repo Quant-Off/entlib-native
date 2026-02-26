@@ -209,15 +209,3 @@ pub unsafe extern "C" fn entlib_rng_mixed_free(rng_ptr: *mut MixedRng) {
         let _ = unsafe { Box::from_raw(rng_ptr) };
     }
 }
-
-//
-// 보안 버퍼 (secure buffer) ffi
-//
-
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn entlib_rng_buffer_free(buf_ptr: *mut SecureBuffer) {
-    if !buf_ptr.is_null() {
-        // drop -> zeroize 보장 및 러스트 힙 메모리 반환
-        let _ = unsafe { Box::from_raw(buf_ptr) };
-    }
-}

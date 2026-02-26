@@ -27,6 +27,7 @@ entlib-native-core-secure.workspace = true
 entlib-native-rng.workspace = true
 entlib-native-sha2.workspace = true
 entlib-native-sha3.workspace = true
+entlib-native-chacha20.workspace = true
 
 [dev-dependencies]
 #criterion = { version = "0.8.2", features = ["html_reports"] }

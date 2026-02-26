@@ -1,4 +1,5 @@
 pub mod base64_ffi;
+mod chacha20_ffi;
 mod rng_ffi; // todo; 보안강화 및 검증
 pub mod secure_buffer_ffi;
 pub mod sha2_ffi;
