@@ -4,12 +4,12 @@ mod tests {
     use entlib_native_rng::base_rng::RngError;
     use std::collections::HashSet;
 
-    #[test]
-    fn test_fetch_secure_bytes_valid() {
+    #[tokio::test]
+    async fn test_fetch_secure_bytes_valid() {
         // 정상적인 길이의 난수 요청이 보안 버퍼(secure buffer)에 올바르게 적재되는지 검증
         let target_length = 32;
 
-        match AnuQrngClient::fetch_secure_bytes(target_length) {
+        match AnuQrngClient::fetch_secure_bytes(target_length).await {
             Ok(buffer) => {
                 assert_eq!(
                     buffer.inner.len(),
@@ -17,7 +17,7 @@ mod tests {
                     "요청한 길이와 반환된 버퍼의 크기가 일치하지 않습니다."
                 );
             }
-            Err(RngError::NetworkFailure) | Err(RngError::ParseError) => {
+            Err(RngError::NetworkFailure(_)) | Err(RngError::ParseError) => {
                 // 폐쇄망 환경이거나 ANU 서버의 정책 변경으로 인한 통신 불가 시 테스트를 안전하게 우회
                 println!(
                     "Skipping network test: ANU QRNG service is currently unreachable or format changed."
@@ -32,12 +32,12 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_fetch_secure_bytes_invalid_bounds() {
+    #[tokio::test]
+    async fn test_fetch_secure_bytes_invalid_bounds() {
         // 버퍼 오버플로 및 비정상적 메모리 할당을 방지하기 위한 경계값 검증
         // api가 허용하는 1~1024 범위를 벗어난 요청 시 명시적 에러반환
-        assert!(AnuQrngClient::fetch_secure_bytes(0).is_err());
-        assert!(AnuQrngClient::fetch_secure_bytes(1025).is_err());
+        assert!(AnuQrngClient::fetch_secure_bytes(0).await.is_err());
+        assert!(AnuQrngClient::fetch_secure_bytes(1025).await.is_err());
     }
 
     #[test]
@@ -66,13 +66,13 @@ mod tests {
         assert!(AnuQrngClient::parse_json_data(invalid_type_json).is_err());
     }
 
-    #[test]
-    fn test_randomness_basic_entropy() {
+    #[tokio::test]
+    async fn test_randomness_basic_entropy() {
         // 생성된 양자 난수(quantum random number)의 기본적인 무작위성(randomness)을 평가
         // 추출된 바이트 시퀀스 내의 고유값(unique values) 개수를 확인하여, 통신 오류로 인해
         // 0으로만 채워진 배열(zeroed array)이 반환되는 치명적 보안 결함을 방지함
         let len = 100;
-        if let Ok(buffer) = AnuQrngClient::fetch_secure_bytes(len) {
+        if let Ok(buffer) = AnuQrngClient::fetch_secure_bytes(len).await {
             let mut unique_values = HashSet::new();
             for &byte in &buffer.inner {
                 unique_values.insert(byte);

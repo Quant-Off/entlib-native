@@ -6,6 +6,7 @@ use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_m
 use entlib_native_rng::anu_qrng::AnuQrngClient;
 use std::hint::black_box; // Q. T. Felix NOTE: std::hint blackbox
 use std::time::Duration;
+use tokio::runtime::Builder;
 
 /// 섀넌 엔트로피(shannon entropy) 계산 함수
 ///
@@ -51,9 +52,13 @@ fn bench_qrng_throughput(c: &mut Criterion) {
             BenchmarkId::new("fetch_secure_bytes", len),
             &len,
             |b, &size| {
+                let rt = Builder::new_current_thread()
+                    .enable_all()
+                    .build()
+                    .expect("tokio 런타임 생성 실패");
                 b.iter(|| {
                     // black_box를 통해 컴파일러의 데드 코드 제거(dead code elimination) 최적화 방지
-                    let result = AnuQrngClient::fetch_secure_bytes(black_box(size));
+                    let result = rt.block_on(AnuQrngClient::fetch_secure_bytes(black_box(size)));
 
                     // 네트워크 실패 시 벤치마크 패닉을 방지하고 에러 코드를 반환하도록 처리
                     if let Ok(buffer) = result {

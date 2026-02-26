@@ -1,18 +1,17 @@
 [package]
-name = "entlib-native-rng"
+name = "entlib-native-chacha20"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
 
 [dependencies]
+entlib-native-constant-time.workspace = true
 entlib-native-core-secure.workspace = true
-tokio.workspace = true
 
 [dev-dependencies]
 criterion = { version = "0.8.2", features = ["html_reports"] }
-tokio = { workspace = true, features = ["macros"] }
 
 [[bench]]
-name = "anu_qrng_bench"
+name = "chacha20_bench"
 harness = false

@@ -24,9 +24,13 @@ pub enum RngError {
     /// 엔트로피 풀 고갈 또는 하드웨어 응답에 실패했습니다.
     EntropyDepletion,
     /// 양자 난수 네트워크 요청(curl)이 실패했습니다.
-    NetworkFailure,
+    NetworkFailure(String),
     /// 양자 난수 API 응답 데이터 파싱에 실패했습니다.
     ParseError,
+    /// 잘못된 포인터를 참조합니다.
+    InvalidPointer,
+    /// 잘못된 파라미터를 전달했거나 받았습니다.
+    InvalidParameter,
 }
 
 /// 요청한 길이만큼의 진난수를 포함하는 보안 버퍼를 반환합니다.

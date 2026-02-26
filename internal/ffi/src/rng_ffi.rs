@@ -1,36 +1,42 @@
 //! 난수 생성기 FFI 브릿지 모듈
 //!
-//! `base_rng` (하드웨어 TRNG)와 `mixed` (ChaCha20 혼합 RNG)를 Java/Kotlin 네이티브 환경으로
-//! 안전하게 노출합니다. ANU QRNG 네트워크 엔트로피도 전략 선택으로 사용 가능.
+//! [entlib_native_rng::base_rng], [entlib_native_rng::mixed], [entlib_native_rng::base_rng::anu_qrng]
+//! 모듈을 모두 Java로 안전하게 노출합니다.
 //!
-//! # Security
+//! # security
 //! - 모든 민감 상태는 `MixedRng::Drop` + `SecureBuffer::Drop`에 의해 강제 zeroize
-//! - FFI 경계에서 철저한 null 체크 + 에러 코드 매핑
-//! - Rust 2024 에디션 완벽 호환 (unsafe-op-in-unsafe-fn 해결)
+//! - anu qrng는 네트워크 호출이므로 `NetworkFailure`/`ParseError` 처리 필수
+//! - heap 메모리 누수를 방지하기 위한 버퍼 해제 함수 추가
 //!
 //! # Author
 //! Q. T. Felix
 
 use core::ptr;
 use entlib_native_core_secure::secure_buffer::SecureBuffer;
+use entlib_native_rng::anu_qrng::AnuQrngClient;
 use entlib_native_rng::base_rng::{RngError, generate_hardware_random_bytes, next_generate};
 use entlib_native_rng::mixed::{EntropyStrategy, MixedRng};
 use std::boxed::Box;
 
-/// FFI 에러 코드 매핑 (모든 RngError variant + FFI 전용 코드 커버)
+/// ffi 에러 코드 매핑
 #[inline(always)]
 fn map_rng_error(err: RngError) -> u8 {
     match err {
         RngError::UnsupportedHardware => 1,
         RngError::EntropyDepletion => 2,
-        RngError::NetworkFailure => 4,
+        RngError::InvalidPointer => 3,
+        RngError::NetworkFailure(msg) => {
+            eprintln!("[ENTLIB] RNG NetworkFailure: {}", msg); // 일단 네트워크 문제 부터 파악
+            4
+        }
         RngError::ParseError => 5,
+        RngError::InvalidParameter => 6,
     }
 }
 
-// ================================================
-// 하드웨어 진난수 생성기 (Hardware TRNG) FFI
-// ================================================
+//
+// 하드웨어 진난수 생성기 (hardware trng) ffi
+//
 
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn entlib_rng_hw_generate(
@@ -59,7 +65,7 @@ pub unsafe extern "C" fn entlib_rng_hw_generate(
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn entlib_rng_hw_next_generate(buf: *mut SecureBuffer) -> u8 {
     if buf.is_null() {
-        return 3; // Invalid pointer
+        return map_rng_error(RngError::InvalidPointer);
     }
 
     let buffer = unsafe { &mut *buf };
@@ -69,9 +75,55 @@ pub unsafe extern "C" fn entlib_rng_hw_next_generate(buf: *mut SecureBuffer) -> 
     }
 }
 
-// ================================================
-// 혼합 난수 생성기 (Mixed RNG with ChaCha20) FFI
-// ================================================
+//
+// anu 양자 난수 생성기 (quantum rng) ffi
+//
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn entlib_rng_anu_generate(
+    len: usize,
+    err_flag: *mut u8,
+) -> *mut SecureBuffer {
+    if !err_flag.is_null() {
+        unsafe {
+            *err_flag = 0;
+        }
+    }
+
+    let rt = match tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+    {
+        Ok(rt) => rt,
+        Err(e) => {
+            if !err_flag.is_null() {
+                unsafe {
+                    *err_flag = map_rng_error(RngError::NetworkFailure(format!(
+                        "tokio 런타임 빌드 실패: {}",
+                        e
+                    )));
+                }
+            }
+            return ptr::null_mut();
+        }
+    };
+
+    match rt.block_on(AnuQrngClient::fetch_secure_bytes(len)) {
+        Ok(buffer) => Box::into_raw(Box::new(buffer)),
+        Err(e) => {
+            if !err_flag.is_null() {
+                unsafe {
+                    *err_flag = map_rng_error(e);
+                }
+            }
+            ptr::null_mut()
+        }
+    }
+}
+
+//
+// 혼합 난수 생성기 (mixed rng with chacha20) ffi
+//
 
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn entlib_rng_mixed_new_with_strategy(
@@ -90,8 +142,8 @@ pub unsafe extern "C" fn entlib_rng_mixed_new_with_strategy(
         _ => {
             if !err_flag.is_null() {
                 unsafe {
-                    *err_flag = 3;
-                } // Invalid strategy
+                    *err_flag = map_rng_error(RngError::InvalidParameter);
+                }
             }
             return ptr::null_mut();
         }
@@ -130,7 +182,7 @@ pub unsafe extern "C" fn entlib_rng_mixed_generate(
     if rng_ptr.is_null() {
         if !err_flag.is_null() {
             unsafe {
-                *err_flag = 3;
+                *err_flag = map_rng_error(RngError::InvalidPointer);
             }
         }
         return ptr::null_mut();
@@ -153,6 +205,7 @@ pub unsafe extern "C" fn entlib_rng_mixed_generate(
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn entlib_rng_mixed_free(rng_ptr: *mut MixedRng) {
     if !rng_ptr.is_null() {
-        let _ = unsafe { Box::from_raw(rng_ptr) }; // Drop → zeroize 보장
+        // drop -> zeroize 보장
+        let _ = unsafe { Box::from_raw(rng_ptr) };
     }
 }

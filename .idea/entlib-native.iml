@@ -30,6 +30,9 @@
       <sourceFolder url="file://$MODULE_DIR$/internal/helper/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/internal/helper/tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/internal/quantum-util/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crypto/chacha20/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/crypto/chacha20/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crypto/chacha20/tests" isTestSource="true" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />
