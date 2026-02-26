@@ -143,8 +143,8 @@ pub fn chacha20_poly1305_decrypt(
 
     // 4. 상수-시간 tag 검증
     let mut xor_diff = 0u8;
-    for i in 0..16 {
-        xor_diff |= expected_tag_secure.inner[i] ^ received_tag[i];
+    for (i, item) in received_tag.iter().enumerate().take(16) {
+        xor_diff |= item ^ received_tag[i]; // Q. T. Felix NOTE: 클리피 수정
     }
     let mask = xor_diff.ct_is_zero(); // valid -> 0xFF, invalid -> 0x00
 
