@@ -123,16 +123,58 @@ impl KeccakState {
     }
 
     /// 메시지 패딩 및 최종 블록 처리
-    fn pad(&mut self) {
-        self.buffer[self.buffer_len] = self.domain;
-        self.buffer[self.buffer_len + 1..self.rate_bytes].fill(0);
+    ///
+    /// # Arguments
+    /// - last_byte_bits 마지막 바이트의 유효 비트 수 (0~7). 0인 경우 8비트(전체)가 유효하거나 바이트 정렬됨을 의미
+    fn pad(&mut self, last_byte_opt: Option<(u8, usize)>) {
+        let mut valid_bits = 0;
+
+        if let Some((last_byte, bits)) = last_byte_opt {
+            valid_bits = bits;
+            let mask = (1u8 << valid_bits) - 1;
+            self.buffer[self.buffer_len] = last_byte & mask;
+        } else {
+            self.buffer[self.buffer_len] = 0;
+        }
+
+        // 도메인 구분자와 패딩 시작 비트(1) 병합
+        let padding = (self.domain as u16) << valid_bits;
+        self.buffer[self.buffer_len] |= (padding & 0xFF) as u8;
+        self.buffer_len += 1;
+
+        // 패딩이 바이트 경계를 넘어가는 경우 (오버플로)
+        if padding > 0xFF {
+            if self.buffer_len == self.rate_bytes {
+                self.process_buffer();
+                self.buffer_len = 0;
+            }
+            self.buffer[self.buffer_len] = (padding >> 8) as u8;
+            self.buffer_len += 1;
+        }
+
+        // Q. T. Felix NOTE: Keccak 10*1 패딩 비트 충돌(Collision) 감지 추가
+        //                   블록이 정확히 가득 찼는데(rate_bytes) 방금 추가한 도메인/시작 패딩이
+        //                   블록의 마지막 비트(0x80)를 점유했다면 즉시 압축하고 새 블록을 생성해야 함
+        if self.buffer_len == self.rate_bytes && (self.buffer[self.rate_bytes - 1] & 0x80) != 0 {
+            self.process_buffer();
+            self.buffer_len = 0;
+        }
+
+        // 남은 공간 0으로 채움
+        self.buffer[self.buffer_len..self.rate_bytes].fill(0);
+
+        // 스펀지 구조의 최종 종료 패딩 비트(0x80) 설정
         self.buffer[self.rate_bytes - 1] |= 0x80;
+
         self.process_buffer();
     }
 
     /// 해시 연산 종료 및 다이제스트(digest) 반환
-    pub(crate) fn finalize(mut self, output_len: usize) -> Vec<u8> {
-        self.pad();
+    ///
+    /// # Arguments
+    /// - last_byte_bits 마지막 바이트의 유효 비트 수 (0 = 바이트 정렬)
+    pub(crate) fn finalize(mut self, output_len: usize, last_byte_opt: Option<(u8, usize)>) -> Vec<u8> {
+        self.pad(last_byte_opt);
 
         let mut out = Vec::with_capacity(output_len);
         while out.len() < output_len {
@@ -141,15 +183,13 @@ impl KeccakState {
                     break;
                 }
                 let word_bytes = self.state[i].to_le_bytes();
-                let take = min(8, output_len - out.len());
+                let take = core::cmp::min(8, output_len - out.len());
                 out.extend_from_slice(&word_bytes[..take]);
             }
             if out.len() < output_len {
                 Self::keccak_f1600(&mut self.state);
             }
         }
-
-        // self가 범위를 벗어나면서 Drop 트레이트에 의해 내부 상태가 자동 소거됨
         out
     }
 }
