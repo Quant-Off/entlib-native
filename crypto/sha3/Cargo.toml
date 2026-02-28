@@ -9,11 +9,32 @@ license.workspace = true
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
+hex = "0.4.3" # 다음 커밋에 제거
 
 [dev-dependencies]
 criterion = { version = "0.8.2", features = ["html_reports"] }
 entlib-native-core-secure.workspace = true
 entlib-native-rng.workspace = true
+
+[[bin]]
+name = "cavp_sha3_bit"
+path = "src/bin/cavp_sha3_bit.rs"
+
+[[bin]]
+name = "cavp_sha3_byte"
+path = "src/bin/cavp_sha3_byte.rs"
+
+[[bin]]
+name = "cavp_shake_xof_bit"
+path = "src/bin/cavp_shake_xof_bit.rs"
+
+[[bin]]
+name = "cavp_shake_xof_byte"
+path = "src/bin/cavp_shake_xof_byte.rs"
+
+[[bin]]
+name = "kcmvp_sha3_byte"
+path = "src/bin/kcmvp_sha3_byte.rs"
 
 [[bench]]
 name = "sha3_bench"
