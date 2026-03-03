@@ -17,7 +17,10 @@ impl DynamicShakeHasher {
         match algo.to_uppercase().as_str() {
             "SHAKE128" | "128" => DynamicShakeHasher::Shake128(SHAKE128::new()),
             "SHAKE256" | "256" => DynamicShakeHasher::Shake256(SHAKE256::new()),
-            _ => panic!("지원하지 않는 알고리즘입니다. (SHAKE128, SHAKE256 중 택일): {}", algo),
+            _ => panic!(
+                "지원하지 않는 알고리즘입니다. (SHAKE128, SHAKE256 중 택일): {}",
+                algo
+            ),
         }
     }
 
@@ -58,7 +61,10 @@ fn compute_shake(algo: &str, msg_data: &[u8], out_len_bytes: usize) -> String {
 fn main() -> io::Result<()> {
     let args: Vec<String> = env::args().collect();
     if args.len() < 3 {
-        eprintln!("사용법: {} <SHAKE128|SHAKE256> <ShortMsg.rsp | Monte.rsp | VariableOut.rsp> [output.rsp]", args[0]);
+        eprintln!(
+            "사용법: {} <SHAKE128|SHAKE256> <ShortMsg.rsp | Monte.rsp | VariableOut.rsp> [output.rsp]",
+            args[0]
+        );
         std::process::exit(1);
     }
 
@@ -66,7 +72,10 @@ fn main() -> io::Result<()> {
     let input_path = &args[2];
     let output_path = args.get(3);
 
-    println!("[NIST FIPS 202] {} Byte-Oriented XOF CAVP 검증 시작", algo_str);
+    println!(
+        "[NIST FIPS 202] {} Byte-Oriented XOF CAVP 검증 시작",
+        algo_str
+    );
 
     let file = File::open(input_path)?;
     let reader = io::BufReader::new(file);
@@ -91,20 +100,44 @@ fn main() -> io::Result<()> {
 
         if line.starts_with("[Outputlen =") {
             output_lines.push(lines[i].clone());
-            let val_str = line.split('=').nth(1).unwrap().strip_suffix("]").unwrap().trim();
+            let val_str = line
+                .split('=')
+                .nth(1)
+                .unwrap()
+                .strip_suffix("]")
+                .unwrap()
+                .trim();
             // 비트 단위로 주어지는 값을 바이트로 변환
             global_output_len_bytes = Some(val_str.parse::<usize>().unwrap() / 8);
         } else if line.starts_with("[Input Length =") {
             output_lines.push(lines[i].clone());
-            let val_str = line.split('=').nth(1).unwrap().strip_suffix("]").unwrap().trim();
+            let val_str = line
+                .split('=')
+                .nth(1)
+                .unwrap()
+                .strip_suffix("]")
+                .unwrap()
+                .trim();
             global_input_len_bytes = Some(val_str.parse::<usize>().unwrap() / 8);
         } else if line.starts_with("[Minimum Output Length") {
             output_lines.push(lines[i].clone());
-            let val_str = line.split('=').nth(1).unwrap().strip_suffix("]").unwrap().trim();
+            let val_str = line
+                .split('=')
+                .nth(1)
+                .unwrap()
+                .strip_suffix("]")
+                .unwrap()
+                .trim();
             global_min_out_bytes = Some(val_str.parse::<usize>().unwrap() / 8);
         } else if line.starts_with("[Maximum Output Length") {
             output_lines.push(lines[i].clone());
-            let val_str = line.split('=').nth(1).unwrap().strip_suffix("]").unwrap().trim();
+            let val_str = line
+                .split('=')
+                .nth(1)
+                .unwrap()
+                .strip_suffix("]")
+                .unwrap()
+                .trim();
             global_max_out_bytes = Some(val_str.parse::<usize>().unwrap() / 8);
         } else if line.starts_with("Msg = ") {
             output_lines.push(lines[i].clone());
@@ -117,18 +150,29 @@ fn main() -> io::Result<()> {
             let len_bytes = len_bits / 8;
 
             i += 1;
-            let msg_hex = lines[i].trim().strip_prefix("Msg = ").unwrap_or("").trim().to_string();
+            let msg_hex = lines[i]
+                .trim()
+                .strip_prefix("Msg = ")
+                .unwrap_or("")
+                .trim()
+                .to_string();
             output_lines.push(lines[i].clone());
 
             i += 1;
             let expected_out = if i < lines.len() && lines[i].trim().starts_with("Output = ") {
-                lines[i].trim().strip_prefix("Output = ").unwrap().trim().to_uppercase()
+                lines[i]
+                    .trim()
+                    .strip_prefix("Output = ")
+                    .unwrap()
+                    .trim()
+                    .to_uppercase()
             } else {
                 i -= 1;
                 String::new()
             };
 
-            let out_bytes = global_output_len_bytes.expect("global [Outputlen =] 가 누락되었습니다.");
+            let out_bytes =
+                global_output_len_bytes.expect("global [Outputlen =] 가 누락되었습니다.");
             let mut msg_data = hex::decode(&msg_hex).unwrap_or_default();
             msg_data.truncate(len_bytes); // 실제 길이만큼 자르기
 
@@ -137,17 +181,32 @@ fn main() -> io::Result<()> {
 
             if !expected_out.is_empty() {
                 total += 1;
-                if computed_out == expected_out { passed += 1; }
-                else { eprintln!("FAIL Short/LongMsg Len = {}", len_bits); }
+                if computed_out == expected_out {
+                    passed += 1;
+                } else {
+                    eprintln!("FAIL Short/LongMsg Len = {}", len_bits);
+                }
             }
         } else if line.starts_with("COUNT = ") {
             // [2] VariableOut / Monte 블록 처리
             output_lines.push(lines[i].clone());
-            let count: usize = line.strip_prefix("COUNT = ").unwrap().trim().parse().unwrap();
+            let count: usize = line
+                .strip_prefix("COUNT = ")
+                .unwrap()
+                .trim()
+                .parse()
+                .unwrap();
 
             i += 1;
             output_lines.push(lines[i].clone());
-            let out_len_bytes_from_file: usize = lines[i].trim().strip_prefix("Outputlen = ").unwrap().trim().parse::<usize>().unwrap() / 8;
+            let out_len_bytes_from_file: usize = lines[i]
+                .trim()
+                .strip_prefix("Outputlen = ")
+                .unwrap()
+                .trim()
+                .parse::<usize>()
+                .unwrap()
+                / 8;
 
             i += 1;
             let mut msg_data = Vec::new();
@@ -155,13 +214,19 @@ fn main() -> io::Result<()> {
 
             if i < lines.len() && lines[i].trim().starts_with("Msg = ") {
                 is_var_out = true;
-                msg_data = hex::decode(lines[i].trim().strip_prefix("Msg = ").unwrap().trim()).unwrap();
+                msg_data =
+                    hex::decode(lines[i].trim().strip_prefix("Msg = ").unwrap().trim()).unwrap();
                 output_lines.push(lines[i].clone());
                 i += 1;
             }
 
             let expected_out = if i < lines.len() && lines[i].trim().starts_with("Output = ") {
-                lines[i].trim().strip_prefix("Output = ").unwrap().trim().to_uppercase()
+                lines[i]
+                    .trim()
+                    .strip_prefix("Output = ")
+                    .unwrap()
+                    .trim()
+                    .to_uppercase()
             } else {
                 i -= 1;
                 String::new()
@@ -170,7 +235,8 @@ fn main() -> io::Result<()> {
             let computed_out: String;
             if is_var_out {
                 // VariableOut 테스트
-                let in_len_bytes = global_input_len_bytes.expect("global [Input Length =] 가 누락되었습니다.");
+                let in_len_bytes =
+                    global_input_len_bytes.expect("global [Input Length =] 가 누락되었습니다.");
                 msg_data.truncate(in_len_bytes);
                 computed_out = compute_shake(algo_str, &msg_data, out_len_bytes_from_file);
             } else {
@@ -224,8 +290,11 @@ fn main() -> io::Result<()> {
 
             if !expected_out.is_empty() {
                 total += 1;
-                if computed_out == expected_out { passed += 1; }
-                else { eprintln!("FAIL COUNT = {}", count); }
+                if computed_out == expected_out {
+                    passed += 1;
+                } else {
+                    eprintln!("FAIL COUNT = {}", count);
+                }
             }
         } else {
             output_lines.push(lines[i].clone());
@@ -240,7 +309,9 @@ fn main() -> io::Result<()> {
 
     if let Some(out_path) = output_path {
         let mut f = File::create(out_path)?;
-        for line in &output_lines { writeln!(f, "{}", line)?; }
+        for line in &output_lines {
+            writeln!(f, "{}", line)?;
+        }
         println!("응답 파일 생성: {}", out_path);
     }
 

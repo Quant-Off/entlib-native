@@ -22,7 +22,10 @@ impl DynamicHasher {
             "256" | "SHA3_256" => DynamicHasher::Sha256(SHA3_256::new()),
             "384" | "SHA3_384" => DynamicHasher::Sha384(SHA3_384::new()),
             "512" | "SHA3_512" => DynamicHasher::Sha512(SHA3_512::new()),
-            _ => panic!("지원하지 않는 알고리즘입니다. (224, 256, 384, 512 중 택일): {}", algo),
+            _ => panic!(
+                "지원하지 않는 알고리즘입니다. (224, 256, 384, 512 중 택일): {}",
+                algo
+            ),
         }
     }
 
@@ -34,7 +37,7 @@ impl DynamicHasher {
             DynamicHasher::Sha512(h) => h.update(data),
         }
     }
-// cargo run --bin cavp_sha3_bit -- 384 test-vectors/sha-3bittestvectors/SHA3_384ShortMsg.rsp && cargo run --bin cavp_sha3_bit -- 384 test-vectors/sha-3bittestvectors/SHA3_384LongMsg.rsp && cargo run --bin cavp_sha3_bit -- 384 test-vectors/sha-3bittestvectors/SHA3_384Monte.rsp && cargo run --bin cavp_sha3_bit -- 512 test-vectors/sha-3bittestvectors/SHA3_512ShortMsg.rsp && cargo run --bin cavp_sha3_bit -- 512 test-vectors/sha-3bittestvectors/SHA3_512LongMsg.rsp && cargo run --bin cavp_sha3_bit -- 512 test-vectors/sha-3bittestvectors/SHA3_512Monte.rsp
+    // cargo run --bin cavp_sha3_bit -- 384 test-vectors/sha-3bittestvectors/SHA3_384ShortMsg.rsp && cargo run --bin cavp_sha3_bit -- 384 test-vectors/sha-3bittestvectors/SHA3_384LongMsg.rsp && cargo run --bin cavp_sha3_bit -- 384 test-vectors/sha-3bittestvectors/SHA3_384Monte.rsp && cargo run --bin cavp_sha3_bit -- 512 test-vectors/sha-3bittestvectors/SHA3_512ShortMsg.rsp && cargo run --bin cavp_sha3_bit -- 512 test-vectors/sha-3bittestvectors/SHA3_512LongMsg.rsp && cargo run --bin cavp_sha3_bit -- 512 test-vectors/sha-3bittestvectors/SHA3_512Monte.rsp
     fn finalize(self) -> Vec<u8> {
         match self {
             DynamicHasher::Sha224(h) => h.finalize(),
@@ -57,7 +60,10 @@ impl DynamicHasher {
 fn main() -> io::Result<()> {
     let args: Vec<String> = env::args().collect();
     if args.len() < 3 {
-        eprintln!("사용법: {} <224|256|384|512> <ShortMsg.rsp | LongMsg.rsp | Monte.rsp> [output.rsp]", args[0]);
+        eprintln!(
+            "사용법: {} <224|256|384|512> <ShortMsg.rsp | LongMsg.rsp | Monte.rsp> [output.rsp]",
+            args[0]
+        );
         std::process::exit(1);
     }
 
@@ -65,7 +71,10 @@ fn main() -> io::Result<()> {
     let input_path = &args[2];
     let output_path = args.get(3);
 
-    println!("[NIST FIPS 202] SHA3-{} Bit-Oriented & Monte Carlo CAVP 검증 시작", algo_str);
+    println!(
+        "[NIST FIPS 202] SHA3-{} Bit-Oriented & Monte Carlo CAVP 검증 시작",
+        algo_str
+    );
 
     let file = File::open(input_path)?;
     let reader = io::BufReader::new(file);
@@ -88,12 +97,21 @@ fn main() -> io::Result<()> {
 
             i += 1;
             let msg_line = lines[i].trim();
-            let msg_hex = msg_line.strip_prefix("Msg = ").unwrap_or("").trim().to_string();
+            let msg_hex = msg_line
+                .strip_prefix("Msg = ")
+                .unwrap_or("")
+                .trim()
+                .to_string();
             output_lines.push(lines[i].clone());
 
             i += 1;
             let expected_md = if i < lines.len() && lines[i].trim().starts_with("MD = ") {
-                lines[i].trim().strip_prefix("MD = ").unwrap().trim().to_uppercase()
+                lines[i]
+                    .trim()
+                    .strip_prefix("MD = ")
+                    .unwrap()
+                    .trim()
+                    .to_uppercase()
             } else {
                 i -= 1;
                 String::new()
@@ -103,9 +121,8 @@ fn main() -> io::Result<()> {
 
             // 동적 해셔 인스턴스 생성
             let mut hasher = DynamicHasher::new(algo_str);
-            let computed_md: String;
 
-            if rem == 0 {
+            let computed_md: String = if rem == 0 {
                 let msg_data: Vec<u8> = if len == 0 {
                     vec![]
                 } else {
@@ -116,9 +133,9 @@ fn main() -> io::Result<()> {
 
                 hasher.update(&msg_data);
                 let digest = hasher.finalize();
-                computed_md = hex::encode(&digest).to_uppercase();
+                hex::encode(&digest).to_uppercase()
             } else {
-                let byte_len = (len + 7) / 8;
+                let byte_len = len.div_ceil(8);
                 let decoded = hex::decode(&msg_hex).expect("Msg hex decode 실패");
                 let mut data = decoded[0..byte_len.min(decoded.len())].to_vec();
 
@@ -130,8 +147,8 @@ fn main() -> io::Result<()> {
                 let last_byte = data[byte_len - 1];
                 let digest = hasher.finalize_bits(last_byte, rem);
 
-                computed_md = hex::encode(&digest).to_uppercase();
-            }
+                hex::encode(&digest).to_uppercase()
+            };
 
             output_lines.push(format!("MD = {}", computed_md));
 
@@ -149,14 +166,18 @@ fn main() -> io::Result<()> {
             output_lines.push(lines[i].clone());
             let seed_hex = line.strip_prefix("Seed = ").unwrap().trim();
             current_mc_md = hex::decode(seed_hex).expect("Seed hex decode 실패");
-
         } else if line.starts_with("COUNT = ") {
             output_lines.push(lines[i].clone());
             let count_str = line.strip_prefix("COUNT = ").unwrap().trim();
 
             i += 1;
             let expected_md = if i < lines.len() && lines[i].trim().starts_with("MD = ") {
-                lines[i].trim().strip_prefix("MD = ").unwrap().trim().to_uppercase()
+                lines[i]
+                    .trim()
+                    .strip_prefix("MD = ")
+                    .unwrap()
+                    .trim()
+                    .to_uppercase()
             } else {
                 i -= 1;
                 String::new()
@@ -205,7 +226,10 @@ fn main() -> io::Result<()> {
     }
 
     if total > 0 && total == passed {
-        println!("\n모든 Bit-Oriented 및 Monte Carlo KAT 통과 (SHA3-{})", algo_str);
+        println!(
+            "\n모든 Bit-Oriented 및 Monte Carlo KAT 통과 (SHA3-{})",
+            algo_str
+        );
     } else {
         println!("\n검증 실패에 따른 해시 처리 로직 및 입력 데이터 재확인 필요");
     }

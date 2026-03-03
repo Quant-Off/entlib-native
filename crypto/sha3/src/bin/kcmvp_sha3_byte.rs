@@ -23,7 +23,10 @@ impl DynamicHasher {
             "256" | "SHA3_256" => DynamicHasher::Sha256(SHA3_256::new()),
             "384" | "SHA3_384" => DynamicHasher::Sha384(SHA3_384::new()),
             "512" | "SHA3_512" => DynamicHasher::Sha512(SHA3_512::new()),
-            _ => panic!("지원하지 않는 알고리즘입니다. (224, 256, 384, 512 중 택일): {}", algo),
+            _ => panic!(
+                "지원하지 않는 알고리즘입니다. (224, 256, 384, 512 중 택일): {}",
+                algo
+            ),
         }
     }
 
@@ -60,7 +63,10 @@ fn get_kcmvp_n(algo: &str) -> usize {
 fn main() -> io::Result<()> {
     let args: Vec<String> = env::args().collect();
     if args.len() < 3 {
-        eprintln!("사용법: {} <224|256|384|512> <SMT.rsp | LMT.rsp | MCT.rsp> [output.rsp]", args[0]);
+        eprintln!(
+            "사용법: {} <224|256|384|512> <SMT.rsp | LMT.rsp | MCT.rsp> [output.rsp]",
+            args[0]
+        );
         std::process::exit(1);
     }
 
@@ -90,12 +96,22 @@ fn main() -> io::Result<()> {
             let len: usize = line.strip_prefix("Len = ").unwrap().trim().parse().unwrap();
 
             i += 1;
-            let msg_hex = lines[i].trim().strip_prefix("Msg = ").unwrap_or("").trim().to_string();
+            let msg_hex = lines[i]
+                .trim()
+                .strip_prefix("Msg = ")
+                .unwrap_or("")
+                .trim()
+                .to_string();
             output_lines.push(lines[i].clone());
 
             i += 1;
             let expected_md = if i < lines.len() && lines[i].trim().starts_with("MD = ") {
-                lines[i].trim().strip_prefix("MD = ").unwrap().trim().to_uppercase()
+                lines[i]
+                    .trim()
+                    .strip_prefix("MD = ")
+                    .unwrap()
+                    .trim()
+                    .to_uppercase()
             } else {
                 i -= 1;
                 String::new()
@@ -118,8 +134,11 @@ fn main() -> io::Result<()> {
 
             if !expected_md.is_empty() {
                 total += 1;
-                if computed_md == expected_md { passed += 1; }
-                else { eprintln!("FAIL  Len = {}", len); }
+                if computed_md == expected_md {
+                    passed += 1;
+                } else {
+                    eprintln!("FAIL  Len = {}", len);
+                }
             }
         } else if line.starts_with("Seed = ") {
             // [2] Monte Carlo Seed 초기화
@@ -133,7 +152,12 @@ fn main() -> io::Result<()> {
 
             i += 1;
             let expected_md = if i < lines.len() && lines[i].trim().starts_with("MD = ") {
-                lines[i].trim().strip_prefix("MD = ").unwrap().trim().to_uppercase()
+                lines[i]
+                    .trim()
+                    .strip_prefix("MD = ")
+                    .unwrap()
+                    .trim()
+                    .to_uppercase()
             } else {
                 i -= 1;
                 String::new()
@@ -165,8 +189,11 @@ fn main() -> io::Result<()> {
 
             if !expected_md.is_empty() {
                 total += 1;
-                if computed_md == expected_md { passed += 1; }
-                else { eprintln!("FAIL  Monte Carlo COUNT = {}", count_str); }
+                if computed_md == expected_md {
+                    passed += 1;
+                } else {
+                    eprintln!("FAIL  Monte Carlo COUNT = {}", count_str);
+                }
             }
         } else {
             output_lines.push(lines[i].clone());
@@ -181,7 +208,9 @@ fn main() -> io::Result<()> {
 
     if let Some(out_path) = output_path {
         let mut f = File::create(out_path)?;
-        for line in &output_lines { writeln!(f, "{}", line)?; }
+        for line in &output_lines {
+            writeln!(f, "{}", line)?;
+        }
         println!("응답 파일 생성: {}", out_path);
     }
 

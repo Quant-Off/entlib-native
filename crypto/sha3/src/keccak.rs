@@ -173,7 +173,11 @@ impl KeccakState {
     ///
     /// # Arguments
     /// - last_byte_bits 마지막 바이트의 유효 비트 수 (0 = 바이트 정렬)
-    pub(crate) fn finalize(mut self, output_len: usize, last_byte_opt: Option<(u8, usize)>) -> Vec<u8> {
+    pub(crate) fn finalize(
+        mut self,
+        output_len: usize,
+        last_byte_opt: Option<(u8, usize)>,
+    ) -> Vec<u8> {
         self.pad(last_byte_opt);
 
         let mut out = Vec::with_capacity(output_len);

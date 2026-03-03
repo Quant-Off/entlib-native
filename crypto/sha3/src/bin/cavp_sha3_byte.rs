@@ -24,7 +24,10 @@ impl DynamicHasher {
             "256" | "SHA3_256" => DynamicHasher::Sha256(SHA3_256::new()),
             "384" | "SHA3_384" => DynamicHasher::Sha384(SHA3_384::new()),
             "512" | "SHA3_512" => DynamicHasher::Sha512(SHA3_512::new()),
-            _ => panic!("지원하지 않는 알고리즘입니다. (224, 256, 384, 512 중 택일): {}", algo),
+            _ => panic!(
+                "지원하지 않는 알고리즘입니다. (224, 256, 384, 512 중 택일): {}",
+                algo
+            ),
         }
     }
 
@@ -50,7 +53,10 @@ impl DynamicHasher {
 fn main() -> io::Result<()> {
     let args: Vec<String> = env::args().collect();
     if args.len() < 3 {
-        eprintln!("사용법: {} <224|256|384|512> <ShortMsg.rsp | LongMsg.rsp | Monte.rsp> [output.rsp]", args[0]);
+        eprintln!(
+            "사용법: {} <224|256|384|512> <ShortMsg.rsp | LongMsg.rsp | Monte.rsp> [output.rsp]",
+            args[0]
+        );
         std::process::exit(1);
     }
 
@@ -58,7 +64,10 @@ fn main() -> io::Result<()> {
     let input_path = &args[2];
     let output_path = args.get(3);
 
-    println!("[NIST FIPS 202] SHA3-{} Byte-Oriented & Monte Carlo CAVP 검증 시작", algo_str);
+    println!(
+        "[NIST FIPS 202] SHA3-{} Byte-Oriented & Monte Carlo CAVP 검증 시작",
+        algo_str
+    );
 
     let file = File::open(input_path)?;
     let reader = io::BufReader::new(file);
@@ -80,18 +89,30 @@ fn main() -> io::Result<()> {
             let len: usize = len_str.parse().expect("Len 파싱 실패");
 
             // Byte-Oriented 제약 조건 확인 (8의 배수)
-            if len % 8 != 0 {
-                eprintln!("경고: 입력된 Len({})이 8의 배수가 아닙니다. 이 모듈은 Byte-Oriented 전용입니다.", len);
+            if !len.is_multiple_of(8) {
+                eprintln!(
+                    "경고: 입력된 Len({})이 8의 배수가 아닙니다. 이 모듈은 Byte-Oriented 전용입니다.",
+                    len
+                );
             }
 
             i += 1;
             let msg_line = lines[i].trim();
-            let msg_hex = msg_line.strip_prefix("Msg = ").unwrap_or("").trim().to_string();
+            let msg_hex = msg_line
+                .strip_prefix("Msg = ")
+                .unwrap_or("")
+                .trim()
+                .to_string();
             output_lines.push(lines[i].clone());
 
             i += 1;
             let expected_md = if i < lines.len() && lines[i].trim().starts_with("MD = ") {
-                lines[i].trim().strip_prefix("MD = ").unwrap().trim().to_uppercase()
+                lines[i]
+                    .trim()
+                    .strip_prefix("MD = ")
+                    .unwrap()
+                    .trim()
+                    .to_uppercase()
             } else {
                 i -= 1;
                 String::new()
@@ -128,14 +149,18 @@ fn main() -> io::Result<()> {
             output_lines.push(lines[i].clone());
             let seed_hex = line.strip_prefix("Seed = ").unwrap().trim();
             current_mc_md = hex::decode(seed_hex).expect("Seed hex decode 실패");
-
         } else if line.starts_with("COUNT = ") {
             output_lines.push(lines[i].clone());
             let count_str = line.strip_prefix("COUNT = ").unwrap().trim();
 
             i += 1;
             let expected_md = if i < lines.len() && lines[i].trim().starts_with("MD = ") {
-                lines[i].trim().strip_prefix("MD = ").unwrap().trim().to_uppercase()
+                lines[i]
+                    .trim()
+                    .strip_prefix("MD = ")
+                    .unwrap()
+                    .trim()
+                    .to_uppercase()
             } else {
                 i -= 1;
                 String::new()
@@ -184,7 +209,10 @@ fn main() -> io::Result<()> {
     }
 
     if total > 0 && total == passed {
-        println!("\n모든 Byte-Oriented 및 Monte Carlo KAT 통과 (SHA3-{})", algo_str);
+        println!(
+            "\n모든 Byte-Oriented 및 Monte Carlo KAT 통과 (SHA3-{})",
+            algo_str
+        );
     } else {
         println!("\n검증 실패에 따른 해시 처리 로직 및 입력 데이터 재확인 필요");
     }
