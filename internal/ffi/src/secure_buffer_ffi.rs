@@ -73,6 +73,78 @@ pub unsafe extern "C" fn entlib_secure_buffer_free(buf: *mut SecureBuffer) {
     }
 }
 
+/// JNI/FFM 환경에서 여러 번의 컨텍스트 스위칭 오버헤드를 줄이기 위해,
+/// 데이터 포인터와 길이를 한 번에 반환하는 구조체입니다.
+#[repr(C)]
+pub struct FfiSecureBufferView {
+    pub data: *const u8,
+    pub len: usize,
+}
+
+/// 보안 버퍼 내 데이터의 메모리 주소와 길이를 동시에 반환합니다.
+/// 기존의 `len` 및 `data` 개별 호출로 인한 병목(FFI 경계 횡단)을 1회로 줄입니다.
+/// Java 측에서는 데이터를 안전하게 복사한 뒤 반드시 `entlib_secure_buffer_free`를 호출해야 합니다.
+///
+/// # Safety
+/// - 반환된 원시 포인터는 `SecureBuffer`가 해제되기 전까지만 유효합니다.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn entlib_secure_buffer_view(
+    buf: *const SecureBuffer,
+) -> FfiSecureBufferView {
+    if buf.is_null() {
+        return FfiSecureBufferView {
+            data: ptr::null(),
+            len: 0,
+        };
+    }
+    // 레퍼런스 차용을 통해 원본 소유권을 유지
+    let buffer = unsafe { &*buf };
+    FfiSecureBufferView {
+        data: buffer.inner.as_ptr(),
+        len: buffer.inner.len(),
+    }
+}
+
+/// Java가 제공한 메모리로 데이터를 복사하고, Rust 버퍼를 즉각 소거합니다.
+/// 기존 (Len 확인 -> Data 매핑 -> Free)의 3회 호출을 **단 1회의 FFI 호출**로 극단적으로 압축합니다.
+///
+/// # Arguments
+/// * `buf` - 해제할 `SecureBuffer`의 가변 포인터
+/// * `dest` - 복사될 Java 측 오프힙 메모리(또는 Secure Array)의 시작 포인터
+/// * `dest_capacity` - 버퍼 오버플로우 방지를 위한 `dest`의 최대 용량
+///
+/// # Returns
+/// 실제 복사된 바이트 길이(usize). 만약 용량 부족 등 에러가 발생하면 0을 반환합니다.
+///
+/// # Safety
+/// - 호출 즉시 `buf`의 `Drop` 트레이트가 실행되어 메모리가 소거됩니다.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn entlib_secure_buffer_copy_and_free(
+    buf: *mut SecureBuffer,
+    dest: *mut u8,
+    dest_capacity: usize,
+) -> usize {
+    if buf.is_null() || dest.is_null() {
+        return 0;
+    }
+
+    // Box::from_raw로 소유권 획득 (스코프 종료 시 자동 소거)
+    let buffer = unsafe { Box::from_raw(buf) };
+    let len = buffer.inner.len();
+
+    // Zero Trust 검증: Java 측 버퍼 용량이 실제 반환할 데이터보다 크거나 같은지 확인
+    if dest_capacity >= len {
+        unsafe {
+            // 메모리 복사 수행
+            ptr::copy_nonoverlapping(buffer.inner.as_ptr(), dest, len);
+        }
+        len
+    } else {
+        // 공간 부족 시 복사를 수행하지 않음 (단, 원본 buffer는 그대로 소멸하여 보안 유지)
+        0
+    }
+}
+
 /// Java 측 `SensitiveDataContainer`가 소유한 네이티브 메모리 세그먼트(memory segment)를
 /// 안전하게 소거(zeroize)하는 ffi 엔드포인트입니다.
 ///
