@@ -9,7 +9,7 @@ license.workspace = true
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-hex = "0.4.3" # 다음 커밋에 제거
+hex = "0.4.3" # Q. T. Felix TODO: 제거
 
 [dev-dependencies]
 criterion = { version = "0.8.2", features = ["html_reports"] }

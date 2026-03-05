@@ -3,7 +3,7 @@ members = ["internal/*", "crypto/*"]
 resolver = "2"
 
 [workspace.package]
-version = "1.1.2-Alpha"
+version = "1.1.2-Alpha1"
 edition = "2024"
 authors = ["Q. T. Felix <qtfelix@qu4nt.space>"]
 license = "MIT LICENSE"
@@ -13,15 +13,17 @@ strip = true
 
 [workspace.dependencies]
 ### INTERNAL CORE DEPENDENCIES ###
-entlib-native-ffi =             { path = "./internal/ffi",            version = "1.1.2-Alpha" }
-entlib-native-quantum-util =    { path = "./internal/quantum-util",   version = "1.1.2-Alpha" }
+entlib-native-ffi =             { path = "./internal/ffi",            version = "1.1.2-Alpha1" }
+entlib-native-quantum-util =    { path = "./internal/quantum-util",   version = "1.1.2-Alpha1" }
 ### EXTERNAL DEPENDENCIES ###
-tokio =                         { version = "1",                       features = ["rt", "process"] }
+tokio = { version = "1",           features = ["rt", "process"] } # Q. T. Felix TODO: 제거
 ### INTERNAL CRYPTO DEPENDENCIES ###
-entlib-native-base64 =          { path = "./crypto/base64",           version = "1.1.2-Alpha" }
-entlib-native-constant-time =   { path = "./crypto/constant-time",    version = "1.1.2-Alpha" }
-entlib-native-core-secure =     { path = "./crypto/core-secure",      version = "1.1.2-Alpha" }
-entlib-native-rng =             { path = "./crypto/rng",              version = "1.1.2-Alpha" }
-entlib-native-sha2 =            { path = "./crypto/sha2",             version = "1.1.2-Alpha" }
-entlib-native-sha3 =            { path = "./crypto/sha3",             version = "1.1.2-Alpha" }
-entlib-native-chacha20 =        { path = "./crypto/chacha20",         version = "1.1.2-Alpha" }
+entlib-native-base64 =              { path = "./crypto/base64",             version = "1.1.2-Alpha1" }
+entlib-native-constant-time =       { path = "./crypto/constant-time",      version = "1.1.2-Alpha1" }
+entlib-native-core-secure =         { path = "./crypto/core-secure",        version = "1.1.2-Alpha1" }
+entlib-native-rng =                 { path = "./crypto/rng",                version = "1.1.2-Alpha1" }
+entlib-native-sha2 =                { path = "./crypto/sha2",               version = "1.1.2-Alpha1" }
+entlib-native-sha3 =                { path = "./crypto/sha3",               version = "1.1.2-Alpha1" }
+entlib-native-chacha20 =            { path = "./crypto/chacha20",           version = "1.1.2-Alpha1" }
+entlib-native-key-establishment =   { path = "./crypto/key-establishment",  version = "1.1.2-Alpha1" }
+entlib-native-tls =                 { path = "./crypto/tls",                version = "1.1.2-Alpha1" }
