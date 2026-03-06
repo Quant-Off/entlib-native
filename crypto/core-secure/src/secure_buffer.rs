@@ -1,5 +1,6 @@
 use core::ptr::write_volatile;
 use core::sync::atomic::{Ordering, compiler_fence};
+use std::fmt::{Debug, Formatter};
 
 /// 메모리 소거를 보장하는 보안 버퍼 구조체입니다.
 ///
