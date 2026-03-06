@@ -6,3 +6,5 @@ authors.workspace = true
 license.workspace = true
 
 [dependencies]
+entlib-native-core-secure.workspace = true
+entlib-native-sha2.workspace = true

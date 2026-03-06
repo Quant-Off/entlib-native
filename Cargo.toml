@@ -29,3 +29,4 @@ entlib-native-key-establishment =   { path = "./crypto/key-establishment",  vers
 entlib-native-digital-signature =   { path = "./crypto/digital-signature",  version = "1.1.2-Alpha1" }
 entlib-native-tls =                 { path = "./crypto/tls",                version = "1.1.2-Alpha1" }
 entlib-native-hkdf =                { path = "./crypto/hkdf",               version = "1.1.2-Alpha1" }
+entlib-native-hex =                 { path = "./crypto/hex",                version = "1.1.2-Alpha1" }
