@@ -11,7 +11,7 @@ mod tests {
         ($type:ty, $update:expr, $expected:expr) => {{
             let mut hasher = <$type>::new();
             hasher.update($update);
-            assert_eq!(hasher.finalize(), $expected);
+            assert_eq!(hasher.finalize().unwrap().as_slice(), $expected);
         }};
     }
 
@@ -58,7 +58,10 @@ mod tests {
         let mut hasher_single = SHA3_224::new();
         hasher_single.update(b"abc");
         let digest_single = hasher_single.finalize();
-        assert_eq!(digest_chunked, digest_single);
+        assert_eq!(
+            digest_chunked.unwrap().as_slice(),
+            digest_single.unwrap().as_slice()
+        );
 
         // SHA3-256
         let mut hasher_chunked = SHA3_256::new();
@@ -70,7 +73,10 @@ mod tests {
         let mut hasher_single = SHA3_256::new();
         hasher_single.update(b"abc");
         let digest_single = hasher_single.finalize();
-        assert_eq!(digest_chunked, digest_single);
+        assert_eq!(
+            digest_chunked.unwrap().as_slice(),
+            digest_single.unwrap().as_slice()
+        );
 
         // SHA3-384
         let mut hasher_chunked = SHA3_384::new();
@@ -82,7 +88,10 @@ mod tests {
         let mut hasher_single = SHA3_384::new();
         hasher_single.update(b"abc");
         let digest_single = hasher_single.finalize();
-        assert_eq!(digest_chunked, digest_single);
+        assert_eq!(
+            digest_chunked.unwrap().as_slice(),
+            digest_single.unwrap().as_slice()
+        );
 
         // SHA3-512
         let mut hasher_chunked = SHA3_512::new();
@@ -94,6 +103,9 @@ mod tests {
         let mut hasher_single = SHA3_512::new();
         hasher_single.update(b"abc");
         let digest_single = hasher_single.finalize();
-        assert_eq!(digest_chunked, digest_single);
+        assert_eq!(
+            digest_chunked.unwrap().as_slice(),
+            digest_single.unwrap().as_slice()
+        );
     }
 }

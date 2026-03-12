@@ -9,12 +9,13 @@ license.workspace = true
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
+entlib-native-secure-buffer.workspace = true
+entlib-native-newer-constant-time.workspace = true
 
 [dev-dependencies]
-criterion = { version = "0.8.2", features = ["html_reports"] }
-entlib-native-core-secure.workspace = true
-entlib-native-rng.workspace = true
+#criterion = { version = "0.8.2", features = ["html_reports"] }
+#entlib-native-rng.workspace = true
 
-[[bench]]
-name = "sha2_bench"
-harness = false
+#[[bench]]
+#name = "sha2_bench"
+#harness = false

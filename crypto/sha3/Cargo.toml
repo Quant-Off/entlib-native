@@ -9,9 +9,11 @@ license.workspace = true
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
+entlib-native-newer-constant-time.workspace = true
+entlib-native-secure-buffer.workspace = true
 
 [dev-dependencies]
-criterion = { version = "0.8.2", features = ["html_reports"] }
+#criterion = { version = "0.8.2", features = ["html_reports"] }
 entlib-native-core-secure.workspace = true
 entlib-native-rng.workspace = true
 
@@ -35,6 +37,6 @@ entlib-native-rng.workspace = true
 #name = "kcmvp_sha3_byte"
 #path = "test-vectors/bin/kcmvp_sha3_byte.rs"
 
-[[bench]]
-name = "sha3_bench"
-harness = false
+#[[bench]]
+#name = "sha3_bench"
+#harness = false

@@ -8,7 +8,10 @@ mod tests {
         ($type:ty, $update:expr, $output_len:expr, $expected:expr) => {{
             let mut hasher = <$type>::new();
             hasher.update($update);
-            assert_eq!(hasher.finalize($output_len), $expected);
+            assert_eq!(
+                hasher.finalize($output_len).unwrap().as_mut_slice(),
+                $expected
+            );
         }};
     }
 
@@ -36,7 +39,10 @@ mod tests {
         let mut hasher_single = SHAKE128::new();
         hasher_single.update(b"abc");
         let digest_single = hasher_single.finalize(32);
-        assert_eq!(digest_chunked, digest_single);
+        assert_eq!(
+            digest_chunked.unwrap().as_slice(),
+            digest_single.unwrap().as_slice()
+        );
 
         // SHAKE256
         let mut hasher_chunked = SHAKE256::new();
@@ -48,7 +54,10 @@ mod tests {
         let mut hasher_single = SHAKE256::new();
         hasher_single.update(b"abc");
         let digest_single = hasher_single.finalize(64);
-        assert_eq!(digest_chunked, digest_single);
+        assert_eq!(
+            digest_chunked.unwrap().as_slice(),
+            digest_single.unwrap().as_slice()
+        );
     }
 
     #[test]
@@ -62,7 +71,10 @@ mod tests {
         let mut hasher_long = SHAKE128::new();
         hasher_long.update(b"test");
         let long = hasher_long.finalize(32);
-        assert_eq!(&long[..16], &short[..]);
+        assert_eq!(
+            &long.unwrap().as_slice()[..16],
+            &short.unwrap().as_slice()[..]
+        );
 
         // SHAKE256
         let mut hasher_short = SHAKE256::new();
@@ -72,6 +84,9 @@ mod tests {
         let mut hasher_long = SHAKE256::new();
         hasher_long.update(b"test");
         let long = hasher_long.finalize(64);
-        assert_eq!(&long[..32], &short[..]);
+        assert_eq!(
+            &long.unwrap().as_slice()[..32],
+            &short.unwrap().as_slice()[..]
+        );
     }
 }
