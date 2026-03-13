@@ -2,7 +2,7 @@
 
 mod hmac;
 
-pub use hmac::{MacResult, HMACSHA224, HMACSHA256, HMACSHA384, HMACSHA512};
+pub use hmac::{HMACSHA224, HMACSHA256, HMACSHA384, HMACSHA512, MacResult};
 
 /// HMAC 연산 중 발생할 수 있는 보안 오류
 #[derive(Debug)]

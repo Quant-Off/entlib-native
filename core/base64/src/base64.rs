@@ -1,4 +1,4 @@
-use entlib_native_newer_constant_time::traits::{
+use entlib_native_constant_time::traits::{
     ConstantTimeEq, ConstantTimeIsNegative, ConstantTimeSelect,
 };
 
@@ -13,7 +13,7 @@ use entlib_native_newer_constant_time::traits::{
 /// - `ct_select`: CPU 분기 없는 조건부 값 선택
 #[inline(always)]
 pub fn ct_bin_to_b64_u8(c: u8) -> u8 {
-    use entlib_native_newer_constant_time::choice::Choice;
+    use entlib_native_constant_time::choice::Choice;
 
     // c < 26 이면 대문자 영역 (MSB 기반 언더플로우 감지)
     let mask_upper: Choice = c.wrapping_sub(26).ct_is_negative();
@@ -57,7 +57,7 @@ pub fn ct_bin_to_b64_u8(c: u8) -> u8 {
 /// - 모든 경로에서 동일한 수의 연산을 수행하여 타이밍 공격을 방어합니다.
 #[inline(always)]
 pub fn ct_b64_to_bin_u8(b: u8) -> u8 {
-    use entlib_native_newer_constant_time::choice::Choice;
+    use entlib_native_constant_time::choice::Choice;
 
     // 각 문자 범위에 대한 상수-시간 마스크 생성
     // 범위 [lo, hi): !b.wrapping_sub(lo).ct_is_negative() & b.wrapping_sub(hi).ct_is_negative()

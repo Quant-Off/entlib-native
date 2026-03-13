@@ -1,8 +1,8 @@
 mod kcmvp_cavp_test {
+    use entlib_native_sha3::api::{SHA3_224, SHA3_256, SHA3_384, SHA3_512};
     use std::fs::File;
     use std::io::{BufRead, BufReader, BufWriter, Write};
     use std::path::Path;
-    use entlib_native_sha3::api::{SHA3_224, SHA3_256, SHA3_384, SHA3_512};
 
     /// 외부 입력에 대한 엄격한 16진수 디코딩 (Zero-Trust 검증)
     fn decode_hex(hex_str: &str) -> Result<Vec<u8>, &'static str> {
@@ -81,7 +81,8 @@ mod kcmvp_cavp_test {
         variant: Sha3Variant,
     ) -> Result<(), &'static str> {
         let req_file = File::open(Path::new(req_path)).map_err(|_| "Failed to open .req file")?;
-        let rsp_file = File::create(Path::new(rsp_path)).map_err(|_| "Failed to create .rsp file")?;
+        let rsp_file =
+            File::create(Path::new(rsp_path)).map_err(|_| "Failed to create .rsp file")?;
 
         let reader = BufReader::new(req_file);
         let mut writer = BufWriter::new(rsp_file);
@@ -132,7 +133,8 @@ mod kcmvp_cavp_test {
         variant: Sha3Variant,
     ) -> Result<(), &'static str> {
         let req_file = File::open(Path::new(req_path)).map_err(|_| "Failed to open .req file")?;
-        let rsp_file = File::create(Path::new(rsp_path)).map_err(|_| "Failed to create .rsp file")?;
+        let rsp_file =
+            File::create(Path::new(rsp_path)).map_err(|_| "Failed to create .rsp file")?;
 
         let reader = BufReader::new(req_file);
         let mut writer = BufWriter::new(rsp_file);
@@ -186,7 +188,8 @@ mod kcmvp_cavp_test {
                     // 1,000회 완료 후의 최신 MD를 다음 루프의 Seed로 설정
                     current_seed = md_history[n_blocks - 1].clone();
 
-                    writeln!(writer, "MD = {}", encode_hex(&current_seed)).map_err(|_| "IO Write Error")?;
+                    writeln!(writer, "MD = {}", encode_hex(&current_seed))
+                        .map_err(|_| "IO Write Error")?;
                     writeln!(writer).map_err(|_| "IO Write Error")?;
                 }
             } else if trimmed.starts_with('#') || trimmed.is_empty() || trimmed.starts_with('[') {
@@ -205,7 +208,7 @@ mod kcmvp_cavp_test {
     fn cavp_sha3_test() {
         let dir = match std::env::var("KCMVP_CAVP_DIR") {
             Ok(val) => val,
-            Err(_) => panic!("env")
+            Err(_) => panic!("env"),
         };
 
         // SHA3-224
@@ -220,10 +223,19 @@ mod kcmvp_cavp_test {
         //     Sha3Variant::Sha3_224
         // ).unwrap();
         process_mct(
-            format!("{}/entanglementlib__CAVP_1_20260307173059/SHA3-224_(Byte)_MCT.req", dir).as_str(),
-            format!("{}/entanglementlib__CAVP_1_20260307173059/SHA3-224_(Byte)_MCT.rsp", dir).as_str(),
-            Sha3Variant::Sha3_224
-        ).unwrap();
+            format!(
+                "{}/entanglementlib__CAVP_1_20260307173059/SHA3-224_(Byte)_MCT.req",
+                dir
+            )
+            .as_str(),
+            format!(
+                "{}/entanglementlib__CAVP_1_20260307173059/SHA3-224_(Byte)_MCT.rsp",
+                dir
+            )
+            .as_str(),
+            Sha3Variant::Sha3_224,
+        )
+        .unwrap();
 
         // SHA3-256
         // process_smt_lmt(
@@ -237,10 +249,19 @@ mod kcmvp_cavp_test {
         //     Sha3Variant::Sha3_256
         // ).unwrap();
         process_mct(
-            format!("{}/entanglementlib__CAVP_1_20260307173059/SHA3-256_(Byte)_MCT.req", dir).as_str(),
-            format!("{}/entanglementlib__CAVP_1_20260307173059/SHA3-256_(Byte)_MCT.rsp", dir).as_str(),
-            Sha3Variant::Sha3_256
-        ).unwrap();
+            format!(
+                "{}/entanglementlib__CAVP_1_20260307173059/SHA3-256_(Byte)_MCT.req",
+                dir
+            )
+            .as_str(),
+            format!(
+                "{}/entanglementlib__CAVP_1_20260307173059/SHA3-256_(Byte)_MCT.rsp",
+                dir
+            )
+            .as_str(),
+            Sha3Variant::Sha3_256,
+        )
+        .unwrap();
 
         // SHA3-384
         // process_smt_lmt(
@@ -254,10 +275,19 @@ mod kcmvp_cavp_test {
         //     Sha3Variant::Sha3_384
         // ).unwrap();
         process_mct(
-            format!("{}/entanglementlib__CAVP_1_20260307173059/SHA3-384_(Byte)_MCT.req", dir).as_str(),
-            format!("{}/entanglementlib__CAVP_1_20260307173059/SHA3-384_(Byte)_MCT.rsp", dir).as_str(),
-            Sha3Variant::Sha3_384
-        ).unwrap();
+            format!(
+                "{}/entanglementlib__CAVP_1_20260307173059/SHA3-384_(Byte)_MCT.req",
+                dir
+            )
+            .as_str(),
+            format!(
+                "{}/entanglementlib__CAVP_1_20260307173059/SHA3-384_(Byte)_MCT.rsp",
+                dir
+            )
+            .as_str(),
+            Sha3Variant::Sha3_384,
+        )
+        .unwrap();
 
         // SHA3-512
         // process_smt_lmt(
@@ -271,9 +301,18 @@ mod kcmvp_cavp_test {
         //     Sha3Variant::Sha3_512
         // ).unwrap();
         process_mct(
-            format!("{}/entanglementlib__CAVP_1_20260307173059/SHA3-512_(Byte)_MCT.req", dir).as_str(),
-            format!("{}/entanglementlib__CAVP_1_20260307173059/SHA3-512_(Byte)_MCT.rsp", dir).as_str(),
-            Sha3Variant::Sha3_512
-        ).unwrap();
+            format!(
+                "{}/entanglementlib__CAVP_1_20260307173059/SHA3-512_(Byte)_MCT.req",
+                dir
+            )
+            .as_str(),
+            format!(
+                "{}/entanglementlib__CAVP_1_20260307173059/SHA3-512_(Byte)_MCT.rsp",
+                dir
+            )
+            .as_str(),
+            Sha3Variant::Sha3_512,
+        )
+        .unwrap();
     }
 }

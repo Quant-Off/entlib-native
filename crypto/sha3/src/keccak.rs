@@ -1,7 +1,7 @@
 use crate::KeccakState;
 use core::ptr::write_volatile;
 use core::sync::atomic::{Ordering, compiler_fence};
-use entlib_native_newer_constant_time::traits::{ConstantTimeEq, ConstantTimeSelect};
+use entlib_native_constant_time::traits::{ConstantTimeEq, ConstantTimeSelect};
 use entlib_native_secure_buffer::SecureBuffer;
 
 const KECCAK_ROUND_CONSTANTS: [u64; 24] = [

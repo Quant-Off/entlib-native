@@ -1,5 +1,5 @@
 use crate::HmacError;
-use entlib_native_newer_constant_time::traits::ConstantTimeEq;
+use entlib_native_constant_time::traits::ConstantTimeEq;
 use entlib_native_sha2::api::{SHA224, SHA256, SHA384, SHA512};
 
 const IPAD: u8 = 0x36;

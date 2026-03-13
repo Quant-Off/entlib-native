@@ -104,12 +104,20 @@ mod kcmvp_cavp_test {
 
         let dir = match std::env::var("KCMVP_CAVP_DIR") {
             Ok(val) => val,
-            Err(_) => panic!("env")
+            Err(_) => panic!("env"),
         };
 
         process_cavp_file(
-            format!("{}/entanglementlib__CAVP_2_20260312205017/HMAC_SHA-224_KAT.req", dir).as_str(),
-            format!("{}/entanglementlib__CAVP_2_20260312205017/HMAC_SHA-224_KAT.rsp", dir).as_str(),
+            format!(
+                "{}/entanglementlib__CAVP_2_20260312205017/HMAC_SHA-224_KAT.req",
+                dir
+            )
+            .as_str(),
+            format!(
+                "{}/entanglementlib__CAVP_2_20260312205017/HMAC_SHA-224_KAT.rsp",
+                dir
+            )
+            .as_str(),
             |key, msg| {
                 // 초기화 시 보안 정책(112bit 미만 차단 등)에 의해 에러가 발생할 수 있음
                 let mut hmac = HMACSHA224::new(key).map_err(|_| "HmacInitError")?;
@@ -122,8 +130,16 @@ mod kcmvp_cavp_test {
         );
 
         process_cavp_file(
-            format!("{}/entanglementlib__CAVP_2_20260312205017/HMAC_SHA-256_KAT.req", dir).as_str(),
-            format!("{}/entanglementlib__CAVP_2_20260312205017/HMAC_SHA-256_KAT.rsp", dir).as_str(),
+            format!(
+                "{}/entanglementlib__CAVP_2_20260312205017/HMAC_SHA-256_KAT.req",
+                dir
+            )
+            .as_str(),
+            format!(
+                "{}/entanglementlib__CAVP_2_20260312205017/HMAC_SHA-256_KAT.rsp",
+                dir
+            )
+            .as_str(),
             |key, msg| {
                 // 초기화 시 보안 정책(112bit 미만 차단 등)에 의해 에러가 발생할 수 있음
                 let mut hmac = HMACSHA256::new(key).map_err(|_| "HmacInitError")?;
@@ -136,8 +152,16 @@ mod kcmvp_cavp_test {
         );
 
         process_cavp_file(
-            format!("{}/entanglementlib__CAVP_2_20260312205017/HMAC_SHA-384_KAT.req", dir).as_str(),
-            format!("{}/entanglementlib__CAVP_2_20260312205017/HMAC_SHA-384_KAT.rsp", dir).as_str(),
+            format!(
+                "{}/entanglementlib__CAVP_2_20260312205017/HMAC_SHA-384_KAT.req",
+                dir
+            )
+            .as_str(),
+            format!(
+                "{}/entanglementlib__CAVP_2_20260312205017/HMAC_SHA-384_KAT.rsp",
+                dir
+            )
+            .as_str(),
             |key, msg| {
                 // 초기화 시 보안 정책(112bit 미만 차단 등)에 의해 에러가 발생할 수 있음
                 let mut hmac = HMACSHA384::new(key).map_err(|_| "HmacInitError")?;
@@ -150,8 +174,16 @@ mod kcmvp_cavp_test {
         );
 
         process_cavp_file(
-            format!("{}/entanglementlib__CAVP_2_20260312205017/HMAC_SHA-512_KAT.req", dir).as_str(),
-            format!("{}/entanglementlib__CAVP_2_20260312205017/HMAC_SHA-512_KAT.rsp", dir).as_str(),
+            format!(
+                "{}/entanglementlib__CAVP_2_20260312205017/HMAC_SHA-512_KAT.req",
+                dir
+            )
+            .as_str(),
+            format!(
+                "{}/entanglementlib__CAVP_2_20260312205017/HMAC_SHA-512_KAT.rsp",
+                dir
+            )
+            .as_str(),
             |key, msg| {
                 // 초기화 시 보안 정책(112bit 미만 차단 등)에 의해 에러가 발생할 수 있음
                 let mut hmac = HMACSHA512::new(key).map_err(|_| "HmacInitError")?;

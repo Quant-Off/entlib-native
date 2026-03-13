@@ -8,7 +8,7 @@
 
 ```bash
 # 빌드
-$ cargo +nightly build --release -p entlib-native-newer-constant-time --bench dudect_audit
+$ cargo +nightly build --release -p entlib-native-constant-time --bench dudect_audit
 
 # 실행
 $ ./target/release/deps/dudect_audit-...

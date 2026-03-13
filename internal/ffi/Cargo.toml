@@ -20,24 +20,9 @@ strip = true
 panic = "abort"
 
 [dependencies]
-tokio.workspace = true
 entlib-native-result.workspace = true
 entlib-native-base64.workspace = true
-entlib-native-newer-constant-time.workspace = true
 entlib-native-secure-buffer.workspace = true
 entlib-native-hex.workspace = true
-entlib-native-rng.workspace = true
 entlib-native-sha2.workspace = true
 entlib-native-sha3.workspace = true
-entlib-native-chacha20.workspace = true
-
-[dev-dependencies]
-#criterion = { version = "0.8.2", features = ["html_reports"] }
-#
-#[[bench]]
-#name = "ffi_base64_bench"
-#harness = false
-#
-#[[bench]]
-#name = "ffi_wipe_bench"
-#harness = false

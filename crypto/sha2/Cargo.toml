@@ -10,7 +10,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 entlib-native-secure-buffer.workspace = true
-entlib-native-newer-constant-time.workspace = true
+entlib-native-constant-time.workspace = true
 
 [dev-dependencies]
 #criterion = { version = "0.8.2", features = ["html_reports"] }

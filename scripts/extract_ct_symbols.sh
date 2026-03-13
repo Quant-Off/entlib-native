@@ -4,7 +4,7 @@
 set -euo pipefail
 
 TARGET_ARCH=$1
-CRATE_NAME="entlib_native_newer_constant_time"
+CRATE_NAME="entlib_native_constant_time"
 
 echo "[INFO] $TARGET_ARCH 아키텍처 바이너리 심볼 추출 시작"
 

@@ -7,16 +7,16 @@
 //! 다음과 같이 빌드 후 바이너리를 실행하여 벤치마킹 할 수 있습니다.
 //! ```bash
 //! # 빌드
-//! $ cargo +nightly build --release -p entlib-native-newer-constant-time --bench dudect_audit
+//! $ cargo +nightly build --release -p entlib-native-constant-time --bench dudect_audit
 //!
 //! # 실행
 //! $ ./target/release/deps/dudect_audit-...
 //! ```
 
-use dudect_bencher::{ctbench_main, BenchRng, Class, CtRunner};
 use dudect_bencher::rand::Rng;
-use entlib_native_newer_constant_time::traits::{ConstantTimeEq, ConstantTimeSelect};
-use entlib_native_newer_constant_time::choice::Choice;
+use dudect_bencher::{BenchRng, Class, CtRunner, ctbench_main};
+use entlib_native_constant_time::choice::Choice;
+use entlib_native_constant_time::traits::{ConstantTimeEq, ConstantTimeSelect};
 
 /// [ConstantTimeEq::ct_eq] 검증
 /// 두 값이 완벽히 동일한 경우([Class::Right])와 서로 다른 경우([Class::Left])의
@@ -42,9 +42,8 @@ fn bench_ct_eq(runner: &mut CtRunner, rng: &mut BenchRng) {
     for (class, (a, b)) in classes.into_iter().zip(inputs.into_iter()) {
         runner.run_one(class, || {
             // black_box를 통해 컴파일러 DCE 최적화 억제
-            let _ = core::hint::black_box(
-                core::hint::black_box(a).ct_eq(core::hint::black_box(&b))
-            );
+            let _ =
+                core::hint::black_box(core::hint::black_box(a).ct_eq(core::hint::black_box(&b)));
         });
     }
 }
@@ -65,7 +64,7 @@ fn bench_ct_select(runner: &mut CtRunner, rng: &mut BenchRng) {
             *class = Class::Right; // True 분기
         } else {
             *input = (a, b, 0x00);
-            *class = Class::Left;  // False 분기
+            *class = Class::Left; // False 분기
         }
     }
 

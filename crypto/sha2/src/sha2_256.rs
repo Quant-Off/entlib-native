@@ -1,7 +1,7 @@
 use crate::Sha256State;
 use core::ptr::write_volatile;
 use core::sync::atomic::{Ordering, compiler_fence};
-use entlib_native_newer_constant_time::traits::{ConstantTimeEq, ConstantTimeSelect};
+use entlib_native_constant_time::traits::{ConstantTimeEq, ConstantTimeSelect};
 use entlib_native_secure_buffer::SecureBuffer;
 
 const SHA_256_K: [u32; 64] = [

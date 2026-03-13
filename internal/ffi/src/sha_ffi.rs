@@ -1,5 +1,5 @@
 use crate::FFIStandard;
-use entlib_native_newer_constant_time::traits::{ConstantTimeEq, ConstantTimeSelect};
+use entlib_native_constant_time::traits::{ConstantTimeEq, ConstantTimeSelect};
 use entlib_native_result::EntLibResult;
 use entlib_native_sha2::api::*;
 use entlib_native_sha3::api::*;

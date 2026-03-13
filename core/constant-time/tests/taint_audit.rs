@@ -1,9 +1,9 @@
 #![cfg(test)]
 #![cfg(target_os = "linux")]
 
+use entlib_native_constant_time::choice::Choice;
+use entlib_native_constant_time::traits::{ConstantTimeEq, ConstantTimeSelect};
 use valgrind_request::running_on_valgrind;
-use entlib_native_newer_constant_time::traits::{ConstantTimeEq, ConstantTimeSelect};
-use entlib_native_newer_constant_time::choice::Choice;
 
 /// [보안 통제] Memcheck Client Request 연동 (ctgrind 기법)
 /// Rust 생태계에서 누락된 Memcheck 매크로를 FFI를 통해 강제 바인딩합니다.
@@ -18,20 +18,14 @@ extern "C" {
 /// 비밀 데이터를 오염(Taint) 처리합니다.
 unsafe fn taint_memory<T>(data: &T) {
     if running_on_valgrind() > 0 {
-        VALGRIND_MAKE_MEM_UNDEFINED(
-            data as *const T as *const u8,
-            core::mem::size_of::<T>(),
-        );
+        VALGRIND_MAKE_MEM_UNDEFINED(data as *const T as *const u8, core::mem::size_of::<T>());
     }
 }
 
 /// 비밀 데이터의 오염(Taint) 상태를 해제합니다.
 unsafe fn untaint_memory<T>(data: &T) {
     if running_on_valgrind() > 0 {
-        VALGRIND_MAKE_MEM_DEFINED(
-            data as *const T as *const u8,
-            core::mem::size_of::<T>(),
-        );
+        VALGRIND_MAKE_MEM_DEFINED(data as *const T as *const u8, core::mem::size_of::<T>());
     }
 }
 

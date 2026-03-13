@@ -1,9 +1,12 @@
 [package]
-name = "entlib-native-rng"
+name = "entlib-native-secure-buffer"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
 
+[features]
+std = []
+
 [dependencies]
-entlib-native-secure-buffer.workspace = true
+entlib-native-result.workspace = true

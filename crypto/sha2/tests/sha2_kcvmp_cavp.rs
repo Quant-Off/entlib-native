@@ -2,8 +2,8 @@ mod kcmvp_cavp_test {
     use std::fs::File;
     use std::io::{BufRead, BufReader, BufWriter, Write};
 
-    use entlib_native_sha2::api::{SHA224, SHA256, SHA384, SHA512};
     use entlib_native_secure_buffer::SecureBuffer;
+    use entlib_native_sha2::api::{SHA224, SHA256, SHA384, SHA512};
 
     pub trait CavpHash {
         fn new() -> Self;

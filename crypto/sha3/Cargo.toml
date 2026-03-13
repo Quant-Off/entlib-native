@@ -9,7 +9,7 @@ license.workspace = true
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-entlib-native-newer-constant-time.workspace = true
+entlib-native-constant-time.workspace = true
 entlib-native-secure-buffer.workspace = true
 
 [dev-dependencies]

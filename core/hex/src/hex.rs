@@ -1,5 +1,5 @@
-use entlib_native_newer_constant_time::choice::Choice;
-use entlib_native_newer_constant_time::traits::{
+use entlib_native_constant_time::choice::Choice;
+use entlib_native_constant_time::traits::{
     ConstantTimeEq, ConstantTimeIsNegative, ConstantTimeSelect,
 };
 

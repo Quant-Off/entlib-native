@@ -3,7 +3,7 @@ members = ["internal/*", "crypto/*", "core/*"]
 resolver = "2"
 
 [workspace.package]
-version = "1.1.2-Alpha1"
+version = "1.1.2-Alpha2"
 edition = "2024"
 authors = ["Q. T. Felix <qtfelix@qu4nt.space>"]
 license = "MIT LICENSE"
@@ -12,25 +12,22 @@ license = "MIT LICENSE"
 strip = true
 
 [workspace.dependencies]
-### INTERNAL CORE DEPENDENCIES ###
-entlib-native-ffi =             { path = "./internal/ffi",            version = "1.1.2-Alpha1" }
-entlib-native-quantum-util =    { path = "./internal/quantum-util",   version = "1.1.2-Alpha1" }
-### EXTERNAL DEPENDENCIES ###
-tokio = { version = "1",           features = ["rt", "process"] } # Q. T. Felix TODO: 제거
+### INTERNAL DEPENDENCIES ###
+entlib-native-ffi =          { path = "internal/ffi",          version = "1.1.2-Alpha2" }
+entlib-native-quantum-util = { path = "internal/quantum-util", version = "1.1.2-Alpha2" }
+### CORE DEPENDENCIES ###
+entlib-native-hex =           { path = "core/hex",           version = "1.1.2-Alpha2" }
+entlib-native-result =        { path = "core/result",        version = "1.1.2-Alpha2" }
+entlib-native-base64 =        { path = "core/base64",        version = "1.1.2-Alpha2" }
+entlib-native-secure-buffer = { path = "core/secure-buffer", version = "1.1.2-Alpha2" }
+entlib-native-constant-time = { path = "core/constant-time", version = "1.1.2-Alpha2" }
 ### INTERNAL CRYPTO DEPENDENCIES ###
-entlib-native-hmac = {path="crypto/hmac",version = "1.1.2-Alpha1"}
-entlib-native-result =              { path = "core/result",             version = "1.1.2-Alpha1" }
-entlib-native-base64 =              { path = "core/base64",             version = "1.1.2-Alpha1" }
-entlib-native-sha2 =                { path = "crypto/sha2",               version = "1.1.2-Alpha1" }
-entlib-native-sha3 =                { path = "crypto/sha3",               version = "1.1.2-Alpha1" }
-entlib-native-constant-time =       { path = "./crypto/constant-time",      version = "1.1.2-Alpha1" }
-entlib-native-core-secure =         { path = "./crypto/core-secure",        version = "1.1.2-Alpha1" }
-entlib-native-rng =                 { path = "./crypto/rng",                version = "1.1.2-Alpha1" }
-entlib-native-chacha20 =            { path = "./crypto/chacha20",           version = "1.1.2-Alpha1" }
-entlib-native-key-establishment =   { path = "./crypto/key-establishment",  version = "1.1.2-Alpha1" }
-entlib-native-digital-signature =   { path = "./crypto/digital-signature",  version = "1.1.2-Alpha1" }
-entlib-native-tls =                 { path = "./crypto/tls",                version = "1.1.2-Alpha1" }
-entlib-native-hkdf =                { path = "./crypto/hkdf",               version = "1.1.2-Alpha1" }
-entlib-native-hex =                 { path = "core/hex",                    version = "1.1.2-Alpha1" }
-entlib-native-secure-buffer =       { path = "./core/secure-buffer",        version = "1.1.2-Alpha1" }
-entlib-native-newer-constant-time = { path = "./core/constant-time",        version = "1.1.2-Alpha1" }
+entlib-native-rng =               { path = "crypto/rng",               version = "1.1.2-Alpha2" }
+entlib-native-tls =               { path = "crypto/tls",               version = "1.1.2-Alpha2" }
+entlib-native-hkdf =              { path = "crypto/hkdf",              version = "1.1.2-Alpha2" }
+entlib-native-hmac =              { path = "crypto/hmac",              version = "1.1.2-Alpha2" }
+entlib-native-sha2 =              { path = "crypto/sha2",              version = "1.1.2-Alpha2" }
+entlib-native-sha3 =              { path = "crypto/sha3",              version = "1.1.2-Alpha2" }
+entlib-native-chacha20 =          { path = "crypto/chacha20",          version = "1.1.2-Alpha2" }
+entlib-native-key-establishment = { path = "crypto/key-establishment", version = "1.1.2-Alpha2" }
+entlib-native-digital-signature = { path = "crypto/digital-signature", version = "1.1.2-Alpha2" }

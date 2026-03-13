@@ -1,5 +1,5 @@
 [package]
-name = "entlib-native-newer-constant-time"
+name = "entlib-native-constant-time"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
