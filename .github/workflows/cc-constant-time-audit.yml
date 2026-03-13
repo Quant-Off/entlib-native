@@ -99,4 +99,4 @@ jobs:
         # 비밀 데이터를 의도적으로 초기화되지 않은 값으로 매핑한 테스트 실행
         run: |
           echo "[검증] Valgrind Memcheck 기반 분기 오염 역추적"
-          cargo valgrind test --test taint_audit -- --nocapture
+          cargo valgrind test --test taint_audit --features valgrind_audit -- --nocapture

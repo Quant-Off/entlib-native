@@ -1,5 +1,6 @@
 #![cfg(test)]
 #![cfg(target_os = "linux")]
+#![cfg(feature = "valgrind_audit")]
 
 use entlib_native_constant_time::choice::Choice;
 use entlib_native_constant_time::traits::{ConstantTimeEq, ConstantTimeSelect};
