@@ -1,7 +1,5 @@
-use crate::TYPE_ID;
 use crate::memory::SecureMemoryBlock;
 use crate::zeroize::{SecureZeroize, Zeroizer};
-use entlib_native_result::EntLibResult;
 
 /// 군사급 보안 요구사항을 충족하는 고수준 보안 버퍼입니다.
 ///
