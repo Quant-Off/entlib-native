@@ -1,0 +1,102 @@
+name: CC Constant-Time Hybrid Audit
+
+on:
+  push:
+    branches: [ "master", "release/*" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  # 정적 어셈블리 검증
+  static-asm-audit:
+    name: Level 1 - Static ASM Analysis
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        target:
+          - x86_64-unknown-linux-gnu
+          - aarch64-unknown-linux-gnu
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v3
+
+      - name: Install Rust Toolchain
+        uses: dtolnay/rust-toolchain@1.93.1
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install cargo-show-asm
+        run: cargo install cargo-show-asm
+
+      - name: Inspect and Verify Assembly Output
+        shell: bash
+        run: |
+          echo "[entlib-native asm ct audit] 대상 아키텍처: ${{ matrix.target }}"
+          
+          # 아키텍처별 금지된 명령어 패턴 정의
+          if [[ "${{ matrix.target }}" == *"x86_64"* ]]; then
+            FORBIDDEN_REGEX="\b(je|jne|jg|jge|jl|jle|ja|jae|jb|jbe|cmov[a-z]*)\b"
+          elif [[ "${{ matrix.target }}" == *"aarch64"* ]]; then
+            FORBIDDEN_REGEX="\b(b\.[a-z]{2}|cbz|cbnz|tbz|tbnz)\b"
+          else
+            echo "지원하지 않는 아키텍처입니다!"
+            exit 1
+          fi
+
+          # 1. 추출 스크립트 실행
+          chmod +x extract_ct_symbols.sh
+          ./extract_ct_symbols.sh ${{ matrix.target }}
+          
+          # 2. JSON 파싱을 통해 bash 배열로 복원
+          mapfile -t DYNAMIC_TARGETS < <(jq -r '.[]' target_functions.json)
+
+          # 3. 추출된 모든 단형화(Monomorphized) 함수에 대해 전수 검증 수행
+          for FUNC in "${DYNAMIC_TARGETS[@]}"; do
+            echo "-> $FUNC 검증 중..."
+          
+            # 따옴표("$FUNC")로 감싸서 제네릭 기호(<>) 파싱 오류를 방지해야 함
+            cargo asm --target ${{ matrix.target }} --release "$FUNC" > asm_output.txt
+          
+            if grep -q -E "$FORBIDDEN_REGEX" asm_output.txt; then
+              echo "[CRITICAL] $FUNC 에서 타이밍 공격을 유발할 수 있는 조건부 분기 명령어가 탐지되었습니다!"
+              grep -E "$FORBIDDEN_REGEX" asm_output.txt
+              exit 1
+            fi
+          done
+          echo "[SUCCESS] 추출된 ${#DYNAMIC_TARGETS[@]}개 함수의 어셈블리 무결성 전수 확인 완료"
+
+  # 동적 통계적 타이밍 분석 (DudeCT)
+  dynamic-timing-audit:
+    name: Level 2 - Dynamic Timing Analysis (DudeCT)
+    needs: static-asm-audit
+    runs-on: [self-hosted, bare-metal]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@nightly # dudect-bencher는 nightly 권장
+      - name: Enforce CPU Frequency Scaling Policy (Linux)
+        run:
+          sudo cpupower frequency-set --governor performance || true
+      - name: Run DudeCT Statistical Analysis
+        run: |
+          echo "[검증] DudeCT 기반 런타임 통계 분석 시작"
+          cargo bench --bench dudect_audit
+
+  # 바이너리 메모리 오염 추적 (Taint Analysis)
+  taint-tracking-audit:
+    name: Level 3 - Taint Flow Tracking (Valgrind)
+    needs: static-asm-audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@1.93.1
+      - name: Install System Dependencies for C-FFI and Valgrind
+        run: |
+          sudo apt-get update && sudo apt-get install -y build-essential valgrind libc6-dbg
+          cargo install cargo-valgrind
+      - name: Run Memcheck with Uninitialized Value Tracking
+        # 비밀 데이터를 의도적으로 초기화되지 않은 값으로 매핑한 테스트 실행
+        run: |
+          echo "[검증] Valgrind Memcheck 기반 분기 오염 역추적"
+          cargo valgrind test --test taint_audit -- --nocapture
