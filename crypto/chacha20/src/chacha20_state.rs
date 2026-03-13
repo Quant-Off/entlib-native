@@ -110,7 +110,7 @@ impl Drop for ChaCha20State {
 }
 
 /// ChaCha20 알고리즘을 사용하여 데이터를 암호화 또는 복호화합니다.
-/// 연산 결과는 자바(java) 힙의 생명주기와 분리된 `SecureBuffer`로 반환됩니다.
+/// 연산 결과는 자바(java) heap의 생명주기와 분리된 `SecureBuffer`로 반환됩니다.
 pub fn process_chacha20(
     key: &[u8; 32],
     nonce: &[u8; 12],

@@ -202,7 +202,7 @@ impl Drop for Poly1305State {
 }
 
 /// Poly1305 MAC을 생성합니다.
-/// 연산 결과는 Java 힙의 생명주기와 분리된 `SecureBuffer`로 반환됩니다.
+/// 연산 결과는 Java heap의 생명주기와 분리된 `SecureBuffer`로 반환됩니다.
 pub fn generate_poly1305(key: &[u8; 32], data: &[u8]) -> SecureBuffer {
     let mut state = Poly1305State::new(key);
     let mut chunks = data.chunks_exact(16);
