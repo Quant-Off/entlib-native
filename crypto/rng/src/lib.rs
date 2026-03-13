@@ -1,2 +1,2 @@
-pub mod base_rng;
-pub mod mixed;
+mod base_rng;
+mod mixed;

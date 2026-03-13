@@ -26,3 +26,4 @@ entlib-native-secure-buffer.workspace = true
 entlib-native-hex.workspace = true
 entlib-native-sha2.workspace = true
 entlib-native-sha3.workspace = true
+entlib-native-constant-time.workspace = true

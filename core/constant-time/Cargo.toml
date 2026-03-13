@@ -16,7 +16,6 @@ rand = "0.10.0"
 cc = "1.0.106"
 
 [features]
-default = []
 # Level 3 Valgrind 메모리 오염 추적 전용 플래그
 valgrind_audit = []
 

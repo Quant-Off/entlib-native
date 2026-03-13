@@ -6,4 +6,3 @@ authors.workspace = true
 license.workspace = true
 
 [dependencies]
-entlib-native-secure-buffer.workspace = true
