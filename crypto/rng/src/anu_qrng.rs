@@ -8,7 +8,7 @@
 //! Q. T. Felix
 
 use crate::base_rng::RngError;
-use entlib_native_core_secure::secure_buffer::SecureBuffer;
+use entlib_native_secure_buffer::SecureBuffer;
 use std::process::Stdio;
 use std::str;
 use std::vec::Vec;
@@ -60,8 +60,9 @@ impl AnuQrngClient {
         let response_str = str::from_utf8(&output.stdout).map_err(|_| RngError::ParseError)?;
 
         let bytes = Self::parse_json_data(response_str)?;
+        let buffer = SecureBuffer::new_owned(bytes.len()).expect("SecureBuffer allocate failed");
 
-        Ok(SecureBuffer { inner: bytes })
+        Ok(buffer)
     }
 
     /// 공백 및 포맷 변경에 강건하게 대응하는 개선된 슬라이싱 파서

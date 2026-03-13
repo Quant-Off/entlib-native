@@ -12,7 +12,7 @@
 use core::arch::asm;
 use core::ptr::{copy_nonoverlapping, write_unaligned, write_volatile};
 use core::sync::atomic::compiler_fence;
-use entlib_native_core_secure::secure_buffer::SecureBuffer;
+use entlib_native_secure_buffer::SecureBuffer;
 use std::sync::atomic::Ordering;
 use std::vec::Vec;
 
@@ -38,10 +38,10 @@ pub enum RngError {
 /// 하드웨어 명령어를 통해 추출된 엔트로피를 직접 할당하며,
 /// 지원되지 않는 아키텍처의 경우 컴파일 타임 에러를 발생시킵니다.
 pub fn generate_hardware_random_bytes(len: usize) -> Result<SecureBuffer, RngError> {
-    let mut buffer: Vec<u8> = Vec::with_capacity(len);
+    let mut buffer = SecureBuffer::new_owned(len).expect("SecureBuffer allocate failed");
 
     unsafe {
-        let ptr: *mut _ = buffer.as_mut_ptr();
+        let ptr = buffer.as_mut_slice();
         let mut offset = 0;
 
         // 8바이트(u64) 단위로 난수를 채움
@@ -104,7 +104,7 @@ fn get_hw_random_u64() -> Result<u64, RngError> {
 /// 기존에 할당된 보안 버퍼(`secure_buffer`)에 하드웨어 진난수를 안전하게 주입합니다.
 ///
 /// ffi 계층을 통해 자바(java) 측에서 전달된 메모리 세그먼트(memory segment)를
-/// 재사용할 때 발생할 수 있는 힙 메모리 파편화를 방지하며, 난수 생성 중
+/// 재사용할 때 발생할 수 있는 heap 메모리 파편화를 방지하며, 난수 생성 중
 /// 스택에 복사된 임시 레지스터 값들을 함수 종료 전 강제로 소거(zeroize)합니다.
 pub fn next_generate(buffer: &mut SecureBuffer) -> Result<(), RngError> {
     let len = buffer.inner.len();
