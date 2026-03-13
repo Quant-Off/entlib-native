@@ -46,8 +46,8 @@ jobs:
           fi
 
           # 1. 추출 스크립트 실행
-          chmod +x extract_ct_symbols.sh
-          ./extract_ct_symbols.sh ${{ matrix.target }}
+          chmod +x scripts/extract_ct_symbols.sh
+          scripts/extract_ct_symbols.sh ${{ matrix.target }}
           
           # 2. JSON 파싱을 통해 bash 배열로 복원
           mapfile -t DYNAMIC_TARGETS < <(jq -r '.[]' target_functions.json)
