@@ -56,8 +56,8 @@ jobs:
           for FUNC in "${DYNAMIC_TARGETS[@]}"; do
             echo "-> $FUNC 검증 중..."
           
-            # 따옴표("$FUNC")로 감싸서 제네릭 기호(<>) 파싱 오류를 방지해야 함
-            cargo asm --target ${{ matrix.target }} --release "$FUNC" > asm_output.txt
+            # Workspace 환경 커버
+            cargo asm -p entlib-native-constant-time --target ${{ matrix.target }} --release "$FUNC" > asm_output.txt
           
             if grep -q -E "$FORBIDDEN_REGEX" asm_output.txt; then
               echo "[CRITICAL] $FUNC 에서 타이밍 공격을 유발할 수 있는 조건부 분기 명령어가 탐지되었습니다!"
