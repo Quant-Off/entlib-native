@@ -1,0 +1,24 @@
+[package]
+name = "entlib-native-newer-constant-time"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+
+[dev-dependencies]
+dudect-bencher = "0.6.0"
+valgrind_request = "1.1.0"
+rand = "0.10.0"
+
+[build-dependencies]
+cc = "1.0.106"
+
+[[bench]]
+name = "dudect_audit"
+harness = false
+
+[[test]]
+name = "taint_audit"
+path = "tests/taint_audit.rs"

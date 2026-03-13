@@ -17,17 +17,25 @@ use core::ops::{BitAnd, BitOr, BitXor, Not};
 pub struct Choice(u8);
 
 impl Choice {
-    /// 크레이트 내부의 상수-시간 연산 구현체에서만 호출할 수 있는 마스크 생성자입니다.
+    /// 비밀 데이터의 상태 마스크를 상수-시간으로 안전하게 정규화합니다.
     ///
-    /// # Safety
-    /// = 호출자는 `mask`가 반드시 `0x00` 또는 `0xFF`임을 보장해야 합니다.
+    /// # Security Note
+    /// 어떠한 바이트(u8) 입력이 들어오더라도 수학적 비트 연산을 통해
+    /// 0x00(False) 또는 0xFF(True)로 강제 변환합니다.
     #[inline(always)]
-    pub(crate) fn from_mask_unchecked(mask: u8) -> Self {
-        debug_assert!(
-            mask == 0x00 || mask == 0xFF,
-            "치명: Choice 마스크는 반드시 0x00 또는 0xFF여야 합니다!"
-        );
-        Choice(mask)
+    pub(crate) fn from_mask_normalized(mask: u8) -> Self {
+        // 값의 존재 유무(Non-Zero) 탐지
+        // mask가 0이면 msb_set은 0x00, 0이 아니면 2의 보수 성질에 의해 msb_set의 MSB는 무조건 1이 됨
+        let msb_set = mask | mask.wrapping_neg();
+
+        // 최상위 비트(MSB)를 추출하여 0 또는 1의 상태로 매핑
+        let is_nonzero = msb_set >> 7;
+
+        // 2의 보수를 취해 최종 마스크 생성 (0x00 또는 0xFF)
+        // is_nonzero가 0이면 0x00, 1이면 0xFF를 반환 (단일 NEG 명령어로 컴파일)
+        let secure_mask = is_nonzero.wrapping_neg();
+
+        Choice(secure_mask)
     }
 
     /// 내부 값을 반환합니다. 컴파일러 최적화를 방지하기 위해 `black_box`를 사용합니다.
