@@ -14,8 +14,6 @@ entlib-native-secure-buffer.workspace = true
 
 [dev-dependencies]
 #criterion = { version = "0.8.2", features = ["html_reports"] }
-entlib-native-core-secure.workspace = true
-entlib-native-rng.workspace = true
 
 #[[bin]]
 #name = "cavp_sha3_bit"
