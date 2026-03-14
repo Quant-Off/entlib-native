@@ -11,7 +11,7 @@ mod tests {
         ($type:ty, $update:expr, $expected:expr) => {{
             let mut hasher = <$type>::new();
             hasher.update($update);
-            assert_eq!(hasher.finalize(), $expected);
+            assert_eq!(hasher.finalize().unwrap().as_slice(), $expected);
         }};
     }
 
@@ -36,23 +36,23 @@ mod tests {
         hasher_chunked.update(b"a");
         hasher_chunked.update(b"b");
         hasher_chunked.update(b"c");
-        let digest_chunked = hasher_chunked.finalize();
+        let digest_chunked = hasher_chunked.finalize().unwrap();
 
         let mut hasher_single = SHA384::new();
         hasher_single.update(b"abc");
-        let digest_single = hasher_single.finalize();
-        assert_eq!(digest_chunked, digest_single);
+        let digest_single = hasher_single.finalize().unwrap();
+        assert_eq!(digest_chunked.as_slice(), digest_single.as_slice());
 
-        // sha256
+        // sha512
         let mut hasher_chunked = SHA512::new();
         hasher_chunked.update(b"a");
         hasher_chunked.update(b"b");
         hasher_chunked.update(b"c");
-        let digest_chunked = hasher_chunked.finalize();
+        let digest_chunked = hasher_chunked.finalize().unwrap();
 
         let mut hasher_single = SHA512::new();
         hasher_single.update(b"abc");
-        let digest_single = hasher_single.finalize();
-        assert_eq!(digest_chunked, digest_single);
+        let digest_single = hasher_single.finalize().unwrap();
+        assert_eq!(digest_chunked.as_slice(), digest_single.as_slice());
     }
 }

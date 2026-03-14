@@ -3,12 +3,13 @@ mod keccak;
 
 use core::ptr::write_volatile;
 use core::sync::atomic::{Ordering, compiler_fence};
+use entlib_native_secure_buffer::SecureBuffer;
 
 /// Keccak 스펀지 함수의 내부 상태 구조체(internal state structure)
 pub(crate) struct KeccakState {
     pub(crate) state: [u64; 25],
     pub(crate) rate_bytes: usize,
-    pub(crate) buffer: [u8; 200],
+    pub(crate) buffer: SecureBuffer, // 200
     pub(crate) buffer_len: usize,
     pub(crate) domain: u8,
 }
@@ -19,11 +20,6 @@ impl Drop for KeccakState {
         for i in 0..25 {
             unsafe {
                 write_volatile(&mut self.state[i], 0);
-            }
-        }
-        for i in 0..200 {
-            unsafe {
-                write_volatile(&mut self.buffer[i], 0);
             }
         }
         unsafe {

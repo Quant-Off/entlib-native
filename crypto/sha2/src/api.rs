@@ -1,4 +1,5 @@
 use crate::{Sha256State, Sha512State};
+use entlib_native_secure_buffer::SecureBuffer;
 
 //
 // SHA224 - start
@@ -16,7 +17,7 @@ impl SHA224 {
     }
 
     // 해시 연산 완료 및 다이제스트 반환
-    pub fn finalize(self) -> Vec<u8> {
+    pub fn finalize(self) -> Result<SecureBuffer, &'static str> {
         self.0.finalize()
     }
 }
@@ -46,7 +47,7 @@ impl SHA256 {
     }
 
     // 해시 연산 완료 및 다이제스트 반환
-    pub fn finalize(self) -> Vec<u8> {
+    pub fn finalize(self) -> Result<SecureBuffer, &'static str> {
         self.0.finalize()
     }
 }
@@ -76,7 +77,7 @@ impl SHA384 {
     }
 
     // 해시 연산 완료 및 다이제스트 반환
-    pub fn finalize(self) -> Vec<u8> {
+    pub fn finalize(self) -> Result<SecureBuffer, &'static str> {
         self.0.finalize()
     }
 }
@@ -106,7 +107,7 @@ impl SHA512 {
     }
 
     // 해시 연산 완료 및 다이제스트 반환
-    pub fn finalize(self) -> Vec<u8> {
+    pub fn finalize(self) -> Result<SecureBuffer, &'static str> {
         self.0.finalize()
     }
 }

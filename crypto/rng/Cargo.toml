@@ -6,13 +6,3 @@ authors.workspace = true
 license.workspace = true
 
 [dependencies]
-entlib-native-core-secure.workspace = true
-tokio.workspace = true
-
-[dev-dependencies]
-criterion = { version = "0.8.2", features = ["html_reports"] }
-tokio = { workspace = true, features = ["macros"] }
-
-[[bench]]
-name = "anu_qrng_bench"
-harness = false

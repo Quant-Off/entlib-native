@@ -1,0 +1,112 @@
+name: CC Constant-Time Hybrid Audit
+
+on:
+  push:
+    branches: [ "master", "release/*" ]
+  pull_request:
+    branches: [ "master" ]
+
+# 실제 운영(Production) 및 폐쇄망(Air-Gapped) 환경 적용 시에는 외부 Github Actions Runner 대신
+# 내부망에 구축된 Self-hosted Runner와 사내 Harbar같은 레지스트리에 검증 도구(cargo-show-asm, valgrind)가
+# 사전 설치된 무결성 컨테이너 이미지를 `container:` 지시어를 통해 사용해야 합니다!!!
+
+jobs:
+  # 정적 어셈블리 검증
+  static-asm-audit:
+    name: Level 1 - Static ASM Analysis
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        target:
+          - x86_64-unknown-linux-gnu
+          - aarch64-unknown-linux-gnu
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v3
+
+      - name: Install Rust Toolchain
+        uses: dtolnay/rust-toolchain@1.93.1
+        with:
+          components: rust-src
+          targets: ${{ matrix.target }}
+
+      # 폐쇄망 적용 시 이 단계는 생략되고 사전 빌드된 컨테이너 내장 도구를 사용해야 함
+      - name: Install cargo-show-asm (Supply Chain Audit Required)
+        run: cargo install cargo-show-asm --locked
+
+      - name: Inspect and Verify Assembly Output
+        shell: bash
+        run: |
+          echo "[entlib-native asm ct audit] 대상 아키텍처: ${{ matrix.target }}"
+          
+          if [[ "${{ matrix.target }}" == *"x86_64"* ]]; then
+            FORBIDDEN_REGEX="\b(je|jne|jg|jge|jl|jle|ja|jae|jb|jbe)\b"
+          elif [[ "${{ matrix.target }}" == *"aarch64"* ]]; then
+            FORBIDDEN_REGEX="\b(b\.[a-z]{2}|cbz|cbnz|tbz|tbnz)\b"
+          else
+            echo "지원하지 않는 아키텍처입니다!"
+            exit 1
+          fi
+
+          # 1. 추출 스크립트 실행 (동적 audit_wrapper 생성 포함)
+          chmod +x scripts/extract_ct_symbols.sh
+          scripts/extract_ct_symbols.sh ${{ matrix.target }}
+          
+          # 2. JSON 파싱을 통해 bash 배열로 복원
+          mapfile -t DYNAMIC_TARGETS < <(jq -r '.[]' target_functions.json)
+
+          # 3. 추출된 동적 래퍼 심볼에 대해 전수 검증 수행
+          for FUNC in "${DYNAMIC_TARGETS[@]}"; do
+            echo "-> $FUNC 검증 중..."
+          
+            cargo asm -p entlib-native-constant-time --lib --features audit_mode --rust --target ${{ matrix.target }} --release "$FUNC" > asm_output.txt
+          
+            if grep -q -E "$FORBIDDEN_REGEX" asm_output.txt; then
+              echo "[CRITICAL] $FUNC 에서 타이밍 공격을 유발할 수 있는 조건부 분기 명령어가 탐지되었습니다!"
+              grep -E "$FORBIDDEN_REGEX" asm_output.txt
+              exit 1
+            fi
+          done
+          echo "[SUCCESS] 추출된 ${#DYNAMIC_TARGETS[@]}개 함수의 어셈블리 무결성 전수 확인 완료"
+
+  # 동적 통계적 타이밍 분석 (DudeCT)
+  dynamic-timing-audit:
+    name: Level 2 - Dynamic Timing Analysis (DudeCT)
+    needs: static-asm-audit
+    runs-on: [self-hosted, bare-metal]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install Rust Toolchain (Nightly)
+        uses: dtolnay/rust-toolchain@nightly
+      - name: Enforce CPU Frequency Scaling Policy (Linux)
+        run: sudo cpupower frequency-set --governor performance || true
+      - name: Run DudeCT Statistical Analysis
+        run: |
+          echo "[검증] DudeCT 기반 런타임 통계 분석 시작"
+          cargo +nightly bench --bench dudect_audit
+
+  # 바이너리 메모리 오염 추적 (Taint Analysis)
+  taint-tracking-audit:
+    name: Level 3 - Taint Flow Tracking (Valgrind)
+    needs: static-asm-audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v3
+      - name: Install Rust Toolchain (Nightly Only)
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rust-src
+      # 폐쇄망 적용 시 이 단계는 생략되고 사전 빌드된 컨테이너(valgrind 내장)를 사용해야 함
+      - name: Install System Dependencies for C-FFI and Valgrind
+        run: |
+          sudo apt-get update && sudo apt-get install -y build-essential valgrind libc6-dbg
+          cargo install cargo-valgrind --locked
+      # 여기까지
+
+      - name: Run Memcheck with Uninitialized Value Tracking
+        run: |
+          echo "[검증] Valgrind Memcheck 기반 분기 오염 역추적"
+          cargo +nightly valgrind test -p entlib-native-constant-time --test taint_audit --features valgrind_taint_audit -- --nocapture

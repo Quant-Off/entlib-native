@@ -1,6 +1,8 @@
 use crate::Sha256State;
 use core::ptr::write_volatile;
 use core::sync::atomic::{Ordering, compiler_fence};
+use entlib_native_constant_time::traits::{ConstantTimeEq, ConstantTimeSelect};
+use entlib_native_secure_buffer::SecureBuffer;
 
 const SHA_256_K: [u32; 64] = [
     0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
@@ -28,7 +30,7 @@ impl Sha256State {
         };
         Self {
             state,
-            buffer: [0; 64],
+            buffer: SecureBuffer::new_owned(64).expect("SecureBuffer allocate failed"),
             buffer_len: 0,
             total_len: 0,
             is_224,
@@ -113,9 +115,13 @@ impl Sha256State {
 
         while i < data.len() {
             let fill = 64 - self.buffer_len;
-            let chunk_len = core::cmp::min(data.len() - i, fill);
 
-            self.buffer[self.buffer_len..self.buffer_len + chunk_len]
+            let remain = data.len() - i;
+            let is_ge = remain.ct_is_ge(&fill);
+            let chunk_len = usize::ct_select(&fill, &remain, is_ge);
+
+            let buf_slice = self.buffer.as_mut_slice();
+            buf_slice[self.buffer_len..self.buffer_len + chunk_len]
                 .copy_from_slice(&data[i..i + chunk_len]);
 
             self.buffer_len += chunk_len;
@@ -123,47 +129,92 @@ impl Sha256State {
 
             if self.buffer_len == 64 {
                 let mut block = [0u8; 64];
-                block.copy_from_slice(&self.buffer);
+                block.copy_from_slice(buf_slice);
                 self.process_block(&block);
                 self.buffer_len = 0;
             }
         }
     }
 
-    pub(crate) fn finalize(mut self) -> Vec<u8> {
-        // 1비트 '1' 패딩 추가(append 1 bit)
-        self.buffer[self.buffer_len] = 0x80;
+    pub(crate) fn finalize(mut self) -> Result<SecureBuffer, &'static str> {
+        let len = self.buffer_len;
+        self.buffer.as_mut_slice()[len] = 0x80;
         self.buffer_len += 1;
 
-        // 길이가 56바이트를 초과하면 버퍼를 0으로 채우고 새로운 블록 처리
-        if self.buffer_len > 56 {
-            self.buffer[self.buffer_len..64].fill(0);
-            let mut block = [0u8; 64];
-            block.copy_from_slice(&self.buffer);
-            self.process_block(&block);
-            self.buffer_len = 0;
+        let needs_extra_block = self.buffer_len.ct_is_ge(&57usize);
+
+        let mut block1 = [0u8; 64];
+        let buf_slice = self.buffer.as_slice();
+        for i in 0..64 {
+            let is_pad = i.ct_is_ge(&self.buffer_len);
+            block1[i] = u8::ct_select(&0u8, &buf_slice[i], is_pad);
         }
 
-        // 남은 버퍼 공간을 0으로 채우기
-        self.buffer[self.buffer_len..56].fill(0);
+        let total_len_bytes = self.total_len.to_be_bytes();
 
-        // 최종 64비트 길이를 빅 엔디안 형식으로 추가(append length in big-endian)
-        self.buffer[56..64].copy_from_slice(&self.total_len.to_be_bytes());
+        // 추가 블럭이 필요 없는 경우(False), 첫 번째 블럭 마지막에 길이 삽임
+        for i in 56..64 {
+            let orig = block1[i];
+            let len_byte = total_len_bytes[i - 56];
+            // needs_extra_block이 True면 원래 값 0 유지, False면 len_byte 덮어쓰기
+            block1[i] = u8::ct_select(&orig, &len_byte, needs_extra_block);
+        }
+        self.process_block(&block1);
+        let state_after_block1 = self.state; // 첫 번째 블럭 처리 후 상태 저장
 
-        let mut block = [0u8; 64];
-        block.copy_from_slice(&self.buffer);
-        self.process_block(&block);
+        let mut block2 = [0u8; 64];
+        // 두 번째 블럭은 항상 마지막에 길이를 포함하도록 구성 (추가 블럭 필요 시 유효함)
+        block2[56..64].copy_from_slice(&total_len_bytes);
+        self.process_block(&block2);
 
-        let mut digest = Vec::with_capacity(32);
-        for &s in &self.state {
-            digest.extend_from_slice(&s.to_be_bytes());
+        // 최종 상태 상수-시간 결정
+        for (i, &saved) in state_after_block1.iter().enumerate() {
+            // needs_extra_block이 True면 두 블럭을 모두 거친 self.state 적용
+            // 그렇지 않으면 첫 번째 블럭만 거침 state_after_block1 로 롤백
+            self.state[i] = u32::ct_select(&self.state[i], &saved, needs_extra_block);
         }
 
-        if self.is_224 {
-            digest.truncate(28);
+        // 스택에 할당된 임시 데이터 소거
+        for b in &mut block1 {
+            unsafe {
+                write_volatile(b, 0);
+            }
+        }
+        for b in &mut block2 {
+            unsafe {
+                write_volatile(b, 0);
+            }
+        }
+        compiler_fence(Ordering::SeqCst);
+
+        // 다이제스트 생성을 위한 SecureBuffer 할당
+        let digest_size = if self.is_224 { 28 } else { 32 };
+        // 실패 시 &'static str 에러를 반환(?)하여 안전하게 에러 핸들링
+        let mut digest_buf = SecureBuffer::new_owned(digest_size)?;
+
+        // 가변 슬라이스를 통해 상태(state) 배열의 값을 다이제스트 버퍼로 전송
+        let digest_slice = digest_buf.as_mut_slice();
+        for (i, &s) in self.state.iter().enumerate() {
+            let start = i * 4;
+            // SHA-224 절단 시점을 넘어선 데이터는 복사하지 않음
+            // 알고리즘 모드 선택은 공개 정보라서 분기 허용
+            if start >= digest_size {
+                break;
+            }
+
+            let bytes = s.to_be_bytes();
+
+            let max_end = start + 4;
+            let is_end_ge = max_end.ct_is_ge(&digest_size);
+            let end = usize::ct_select(&digest_size, &max_end, is_end_ge);
+            let copy_len = end - start;
+
+            digest_slice[start..end].copy_from_slice(&bytes[..copy_len]);
         }
 
-        // self가 범위를 벗어나면서 Drop 트레이트에 의해 내부 상태가 자동 소거됨
-        digest
+        // 함수 종료 시 `mut self`가 범위를 벗어나 다음 수행
+        // 1. self.buffer (SecureBuffer)의 Drop 발동 -> 소거 및 OS 메모리 잠금 해제
+        // 2. self.state 등 내부 데이터 파기
+        Ok(digest_buf)
     }
 }
