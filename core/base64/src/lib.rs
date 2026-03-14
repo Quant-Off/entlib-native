@@ -109,7 +109,7 @@ pub fn encode(input: &SecureBuffer) -> Result<SecureBuffer, &'static str> {
 pub fn decode(input: &SecureBuffer) -> Result<SecureBuffer, &'static str> {
     let input = input.as_slice();
 
-    if input.len() % 4 != 0 {
+    if !input.len().is_multiple_of(4) {
         return Err("invalid base64: length must be a multiple of 4");
     }
     if input.is_empty() {
