@@ -12,7 +12,7 @@ echo "[INFO] $TARGET_ARCH 아키텍처 바이너리 심볼 추출 시작"
 # 라이브러리 내의 모든 심볼 목록 추출
 # stderr 노이즈를 제거하여 순수 심볼 목록만 ALL_SYMBOLS에 담음
 # cargo asm 자체가 실패할 경우 명시적인 에러 메시지 던짐
-ALL_SYMBOLS=$(cargo asm -p "$PACKAGE_NAME" --target "$TARGET_ARCH" --release --lib 2>&1 || true)
+ALL_SYMBOLS=$(cargo asm -p "$PACKAGE_NAME" --features audit_mode --target "$TARGET_ARCH" --release --lib 2>&1 || true)
 if [ -z "$ALL_SYMBOLS" ]; then
     echo "[CRITICAL] cargo asm 실행에 실패하여 심볼을 추출할 수 없습니다!"
     exit 1
