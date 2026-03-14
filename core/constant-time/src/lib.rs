@@ -2,6 +2,8 @@
 
 pub mod choice;
 pub mod traits;
+
+#[cfg(feature = "audit_mode")]
 mod wrapper;
 
 use choice::Choice;
