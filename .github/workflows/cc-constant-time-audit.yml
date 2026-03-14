@@ -25,6 +25,7 @@ jobs:
       - name: Install Rust Toolchain
         uses: dtolnay/rust-toolchain@1.93.1
         with:
+          components: rust-src # 이 중요한건 빠지면 안돼요 ㅋㅋ
           targets: ${{ matrix.target }}
 
       - name: Install cargo-show-asm

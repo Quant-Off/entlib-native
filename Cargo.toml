@@ -12,10 +12,10 @@ license = "MIT LICENSE"
 #strip = true
 # 패닉 발생 시 스택 풀기를 비활성화하여 메모리 상태가
 # 외부에 노출되거나 조작될 가능성을 차단할 필요 있음
-panic = "abort"
-lto = true
-codegen-units = 1
-strip = true
+#panic = "abort"
+#lto = true
+#codegen-units = 1
+#strip = true
 
 [profile.dev]
 panic = "abort"
