@@ -85,7 +85,7 @@ macro_rules! impl_ffi_hash_bits_func {
         pub unsafe extern "C" fn $fn_name(
             input: *const FFIStandard,
             output: *mut FFIStandard,
-            last_byte: u8,
+            last_byte: u8, // Q. T. Felix TODO: https://github.com/Quant-Off/entlib-native/pull/9#issuecomment-4059961999
             valid_bits: usize,
         ) -> EntLibResult {
             // 포인터 유효성 검증
