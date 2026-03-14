@@ -2,6 +2,7 @@
 
 pub mod choice;
 pub mod traits;
+mod wrapper;
 
 use choice::Choice;
 use traits::{

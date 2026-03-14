@@ -51,6 +51,7 @@ pub(crate) fn encode_hex_core_ct(input: &[u8], output: &mut [u8]) {
 /// (디코딩된 값, 유효성 여부를 나타내는 Choice) 튜플을 반환합니다.
 /// 문자가 유효하지 않더라도 연산 시간은 동일하며, 반환되는 Choice는 거짓(0x00)이 됩니다.
 #[inline(always)]
+#[allow(non_snake_case)] // for a, A, f, F
 fn decode_nibble_ct(c: u8) -> (u8, Choice) {
     // 1. '0' ~ '9' (48 ~ 57) 판별
     // c < 48 이면 MSB가 1, 57 < c 이면 MSB가 1이 됨 (언더플로우 활용)
