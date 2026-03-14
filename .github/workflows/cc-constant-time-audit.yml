@@ -109,4 +109,4 @@ jobs:
       - name: Run Memcheck with Uninitialized Value Tracking
         run: |
           echo "[검증] Valgrind Memcheck 기반 분기 오염 역추적"
-          cargo +nightly valgrind test --test taint_audit --features valgrind_audit -- --nocapture
+          cargo +nightly valgrind test -p entlib-native-constant-time --test taint_audit --features valgrind_taint_audit -- --nocapture
