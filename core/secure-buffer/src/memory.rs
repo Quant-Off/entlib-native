@@ -87,10 +87,14 @@ impl SecureMemoryBlock {
     pub unsafe fn deallocate_unlocked(&self) {
         #[cfg(feature = "std")]
         // 메모리 잠금 해제 (페이지 아웃 허용)
-        os_lock::unlock_memory(self.ptr, self.capacity);
+        unsafe {
+            os_lock::unlock_memory(self.ptr, self.capacity);
+        }
 
         // 메모리 할당 해제
-        dealloc(self.ptr, self.layout);
+        unsafe {
+            dealloc(self.ptr, self.layout);
+        }
     }
 }
 

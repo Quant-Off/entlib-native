@@ -163,7 +163,7 @@ impl KeccakState {
 
         for i in 0..rate {
             // i < len
-            let is_i_less_len = i.ct_is_ge(&len).not();
+            let is_i_less_len = i.ct_is_ge(&len).choice_not();
             let is_i_eq_len = i.ct_eq(&len);
             let is_i_eq_len_plus_1 = i.ct_eq(&(len + 1));
 
@@ -214,8 +214,8 @@ impl KeccakState {
         self.process_buffer(&block2[..rate]);
 
         // needs_block2가 False면 두 번째 블럭의 연산 결과를 폐기하고 첫 번째 결과로 상수-시간 롤백
-        for i in 0..self.state.len() {
-            self.state[i] = u64::ct_select(&self.state[i], &state_after_block1[i], needs_block2);
+        for (i, &saved) in state_after_block1.iter().enumerate() {
+            self.state[i] = u64::ct_select(&self.state[i], &saved, needs_block2);
         }
 
         // 스택에 할당된 임시 패딩 데이터 완전 소거

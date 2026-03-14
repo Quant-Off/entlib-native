@@ -22,6 +22,13 @@ pub enum HKDFState {
 
 /// NIST SP 800-56Cr2를 준수하는 HKDF-SHA256 인스턴스
 pub struct HKDFSHA256;
+
+impl Default for HKDFSHA256 {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl HKDFSHA256 {
     /// 새로운 HKDF 인스턴스를 생성합니다.
     #[inline(always)]
@@ -74,7 +81,7 @@ impl HKDFSHA256 {
         let mut okm_offset = 0;
         let mut block_index: u8 = 1;
 
-        let n = (length + SHA256_HASH_LEN - 1) / SHA256_HASH_LEN;
+        let n = length.div_ceil(SHA256_HASH_LEN);
 
         for i in 0..n {
             let mut hmac = HMACSHA256::new(prk.as_slice()).unwrap();

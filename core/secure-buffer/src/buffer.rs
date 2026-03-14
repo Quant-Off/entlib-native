@@ -58,17 +58,17 @@ impl SecureBuffer {
     /// - 호출자는 `ptr`이 가리키는 메모리가 `len`만큼 유효함을 보장해야 합니다.
     pub unsafe fn from_raw_parts(ptr: *mut u8, len: usize) -> Result<Self, &'static str> {
         // 외부에서 주입된 메모리가 페이지 경계에 맞게 정렬되었는지 강제 검증 (Zero-Trust)
-        if (ptr as usize) % crate::memory::PAGE_SIZE != 0 {
+        if !(ptr as usize).is_multiple_of(crate::memory::PAGE_SIZE) {
             return Err("Security Violation: External memory pointer is not page-aligned.");
         }
-        if len % crate::memory::PAGE_SIZE != 0 {
+        if !len.is_multiple_of(crate::memory::PAGE_SIZE) {
             return Err(
                 "Security Violation: External memory length is not a multiple of PAGE_SIZE.",
             );
         }
 
         #[cfg(feature = "std")]
-        {
+        unsafe {
             // 외부 메모리라도 Rust 쪽에서 사용 중에는 스왑되지 않도록 잠금 시도
             if !crate::memory::os_lock::lock_memory(ptr, len) {
                 return Err("Failed to lock external memory segment.");

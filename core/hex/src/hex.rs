@@ -103,7 +103,7 @@ pub(crate) fn decode_hex_core_ct(input: &[u8], output: &mut [u8]) -> Choice {
     // 길이 검증: Hex 문자열은 항상 짝수 길이여야 합니다.
     // 길이는 비밀 데이터가 아니므로 일반 분기(if)를 사용해도 무방하지만,
     // 엄격한 상수-시간 제어를 위해 Choice를 생성합니다.
-    let is_even_len = (input.len() % 2 as usize).ct_eq(&0usize);
+    let is_even_len = (input.len() % 2_usize).ct_eq(&0usize);
 
     // from_mask_unchecked 대신 ct_eq를 사용하여 True(0xFF) Choice를 초기화합니다.
     let mut all_valid = 0u8.ct_eq(&0u8);

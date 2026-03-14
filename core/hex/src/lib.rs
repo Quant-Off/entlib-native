@@ -51,10 +51,7 @@ pub fn decode(input: &SecureBuffer) -> Result<SecureBuffer, &'static str> {
 
     // 2. 출력용 SecureBuffer 생성 (RO 패턴 적용)
     // new_owned를 통해 Rust 내부에서 페이지 정렬된 안전한 메모리를 새로 할당받고 OS 잠금을 수행합니다.
-    let mut output_buffer = match SecureBuffer::new_owned(required_len) {
-        Ok(buf) => buf,
-        Err(e) => return Err(e),
-    };
+    let mut output_buffer = SecureBuffer::new_owned(required_len)?;
 
     // 3. 상수-시간 디코딩 연산 수행
     // 입력에 유효하지 않은 문자가 포함되어 있어도 즉시 반환(Early Return)하지 않고 끝까지 연산합니다.

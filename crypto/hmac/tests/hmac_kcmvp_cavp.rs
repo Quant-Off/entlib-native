@@ -6,7 +6,7 @@ mod kcmvp_cavp_test {
 
     /// 헥스 문자열을 안전하게 바이트 벡터로 변환 (Zero-Trust 원칙 적용)
     fn decode_hex(s: &str) -> Result<Vec<u8>, &'static str> {
-        if s.len() % 2 != 0 {
+        if !s.len().is_multiple_of(2) {
             return Err("Invalid hex string length");
         }
         (0..s.len())
@@ -22,6 +22,7 @@ mod kcmvp_cavp_test {
 
     /// 단일 알고리즘에 대한 CAVP 테스트 벡터 처리기
     /// `compute_mac` 클로저를 통해 구체적인 HMAC 알고리즘을 주입받습니다.
+    #[allow(unused_assignments)]
     fn process_cavp_file<F>(req_path: &str, rsp_path: &str, mut compute_mac: F)
     where
         // 입력: key, msg / 출력: Result<전체 MAC 바이트, 에러>

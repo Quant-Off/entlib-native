@@ -164,17 +164,14 @@ impl Sha256State {
 
         let mut block2 = [0u8; 64];
         // 두 번째 블럭은 항상 마지막에 길이를 포함하도록 구성 (추가 블럭 필요 시 유효함)
-        for i in 56..64 {
-            block2[i] = total_len_bytes[i - 56];
-        }
+        block2[56..64].copy_from_slice(&total_len_bytes);
         self.process_block(&block2);
 
         // 최종 상태 상수-시간 결정
-        for i in 0..8 {
+        for (i, &saved) in state_after_block1.iter().enumerate() {
             // needs_extra_block이 True면 두 블럭을 모두 거친 self.state 적용
             // 그렇지 않으면 첫 번째 블럭만 거침 state_after_block1 로 롤백
-            self.state[i] =
-                u32::ct_select(&self.state[i], &state_after_block1[i], needs_extra_block);
+            self.state[i] = u32::ct_select(&self.state[i], &saved, needs_extra_block);
         }
 
         // 스택에 할당된 임시 데이터 소거
