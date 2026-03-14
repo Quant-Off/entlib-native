@@ -2,9 +2,9 @@ name: Constant-Time Assembly Verification
 
 on:
   push:
-    branches: [ "master", "fix/*", "feature/*" ]
+    branches: [ "master", "fix/*" ]
   pull_request:
-    branches: [ "master", "feature/*" ]
+    branches: [ "master" ]
 
 env:
   CARGO_TERM_COLOR: always
