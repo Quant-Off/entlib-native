@@ -104,8 +104,13 @@ fn audit_taint_flow_ct_select() {
     // Constant Folding 방지 및 Taint Tracking 강제를 위한 mut 및 black_box 적용
     let mut a: u32 = black_box(0x11111111);
     let mut b: u32 = black_box(0x22222222);
-    // 안전한 생성자 패턴 유지 및 런타임 평가 강제
-    let mut choice = black_box(Choice::from(black_box(1u8)));
+
+    // ConstantTimeEq로 Choice(0x00) 생성
+    // 0u8과 1u8은 다르므로 False(0x00) Choice가 반환
+    // ct_select에서 b를 선택하도록
+    let mut choice_seed_1 = black_box(0u8);
+    let mut choice_seed_2 = black_box(1u8);
+    let mut choice = black_box(choice_seed_1.ct_eq(&choice_seed_2));
 
     unsafe {
         taint_memory(&a);
@@ -113,6 +118,7 @@ fn audit_taint_flow_ct_select() {
         taint_memory(&choice);
     }
 
+    // choice가 False(0x00) -> b(0x22222222)가 선택되어야 함
     let selected = u32::ct_select(&a, &b, choice);
 
     unsafe {
@@ -123,6 +129,7 @@ fn audit_taint_flow_ct_select() {
 
         // LLVM 레지스터 캐싱 무효화 및 안전한 메모리 강제 로드
         let safe_selected = read_volatile(&selected);
+        // b의 값이 안전하게 반환되었나??
         assert_eq!(safe_selected, 0x22222222);
     }
 }
