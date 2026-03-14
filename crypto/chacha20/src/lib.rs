@@ -1,3 +1,1 @@
-fn main() {
-    todo!("IM NOOB")
-}
+#![no_std]

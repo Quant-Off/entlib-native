@@ -9,7 +9,7 @@ pub trait ConstantTimeEq {
     /// 기본적으로 ct_eq의 결과를 반전(NOT)시켜 제공합니다.
     #[inline(always)]
     fn ct_ne(&self, other: &Self) -> Choice {
-        self.ct_eq(other).not()
+        self.ct_eq(other).choice_not()
     }
 
     fn ct_is_ge(&self, other: &Self) -> Choice;

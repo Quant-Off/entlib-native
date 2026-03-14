@@ -73,8 +73,7 @@ unsafe extern "C" fn ffi_base64_encode(
         return EntLibResult::new(TYPE_ID_BASE64, -3);
     }
 
-    // ManuallyDrop<SecureBuffer>를 Deref하여 &SecureBuffer로 전달
-    match encode(&*in_buffer) {
+    match encode(&in_buffer) {
         Ok(encoded_buf) => {
             let encoded = encoded_buf.as_slice();
             // write_volatile로 컴파일러 최적화에 의한 소거 방지
@@ -140,8 +139,7 @@ unsafe extern "C" fn ffi_base64_decode(
         return EntLibResult::new(TYPE_ID_BASE64, -4);
     }
 
-    // ManuallyDrop<SecureBuffer>를 Deref하여 &SecureBuffer로 전달
-    match decode(&*in_buffer) {
+    match decode(&in_buffer) {
         Ok(decoded_buf) => {
             let decoded = decoded_buf.as_slice();
             let decoded_len = decoded.len();

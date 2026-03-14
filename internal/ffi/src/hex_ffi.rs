@@ -34,9 +34,8 @@ pub extern "C" fn entlib_ffi_hex_encode(
         return EntLibResult::new(TYPE_ID_HEX, -3);
     }
 
-    // ManuallyDrop<SecureBuffer>를 Deref하여 &SecureBuffer로 전달
-    match encode(&*input_buf) {
-        Ok(mut encoded_buf) => {
+    match encode(&input_buf) {
+        Ok(encoded_buf) => {
             let encoded = encoded_buf.as_slice();
 
             unsafe {
@@ -68,7 +67,7 @@ pub extern "C" fn ffi_hex_decode(
 
     // Hex 인코딩 데이터는 반드시 짝수 길이를 가짐
     // 길이는 비밀 데이터가 아님 -> 상수-시간 분기 필요 X
-    if input_buf.len() % 2 != 0 {
+    if !input_buf.len().is_multiple_of(2) {
         return EntLibResult::new(TYPE_ID_HEX, -5);
     }
 
@@ -79,8 +78,8 @@ pub extern "C" fn ffi_hex_decode(
         return EntLibResult::new(TYPE_ID_HEX, -3);
     }
 
-    match decode(&*input_buf) {
-        Ok(mut encoded_buf) => {
+    match decode(&input_buf) {
+        Ok(encoded_buf) => {
             let encoded = encoded_buf.as_slice();
 
             unsafe {

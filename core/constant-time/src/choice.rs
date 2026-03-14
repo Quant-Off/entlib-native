@@ -52,7 +52,7 @@ impl Choice {
     ///
     /// `!choice` 연산자와 동일한 동작을 수행합니다.
     #[inline(always)]
-    pub fn not(self) -> Self {
+    pub fn choice_not(self) -> Self {
         Choice(!self.0)
     }
 }

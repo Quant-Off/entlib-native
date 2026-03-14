@@ -46,6 +46,10 @@ impl FFIStandard {
 }
 
 /// Java-Owned End Process order
+///
+/// # Safety
+/// - `target`은 유효한 `FFIStandard` 포인터여야 합니다.
+/// - `target`이 가리키는 메모리는 Java FFM API에서 할당된 페이지-정렬 메모리여야 합니다.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn joep(target: *const FFIStandard) -> EntLibResult {
     if target.is_null() {

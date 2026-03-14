@@ -6,7 +6,7 @@ mod kcmvp_cavp_test {
 
     /// 외부 입력에 대한 엄격한 16진수 디코딩 (Zero-Trust 검증)
     fn decode_hex(hex_str: &str) -> Result<Vec<u8>, &'static str> {
-        if hex_str.len() % 2 != 0 {
+        if !hex_str.len().is_multiple_of(2) {
             return Err("Hex string length must be even");
         }
         (0..hex_str.len())
@@ -75,6 +75,7 @@ mod kcmvp_cavp_test {
     }
 
     /// SMT 및 LMT 테스트 벡터 파싱 및 검증 수행
+    #[allow(dead_code)]
     fn process_smt_lmt(
         req_path: &str,
         rsp_path: &str,

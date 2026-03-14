@@ -52,7 +52,7 @@ pub fn audit_verify_choice_from_mask_normalized(a: u8) -> Choice {
 #[unsafe(no_mangle)]
 #[inline(never)]
 pub fn audit_verify_choice_not(choice: Choice) -> Choice {
-    choice.not()
+    choice.choice_not()
 }
 
 #[unsafe(no_mangle)]

@@ -51,7 +51,7 @@ macro_rules! impl_ffi_hash_func {
                         // 상수-시간 FFI 패딩 복사
                         for i in 0..out_len {
                             // i < required_capacity 반별 (i >= required_capacity 의 NOT)
-                            let is_valid = i.ct_is_ge(&required_capacity).not();
+                            let is_valid = i.ct_is_ge(&required_capacity).choice_not();
 
                             // out-of-bounds 접근 방지를 위한 안전한 인덱스 선택
                             let safe_idx = usize::ct_select(&0, &i, is_valid);
@@ -123,7 +123,7 @@ macro_rules! impl_ffi_hash_bits_func {
                         // 상수-시간 FFI 패딩 복사
                         // 다이제스트 크기를 초과하는 버퍼 영역은 물리적으로 0x00 완전 소거
                         for i in 0..out_len {
-                            let is_valid = i.ct_is_ge(&required_capacity).not();
+                            let is_valid = i.ct_is_ge(&required_capacity).choice_not();
 
                             // Out-of-bounds 방지를 위해 인덱스를 상수-시간으로 0으로 폴백(Fallback)
                             let safe_idx = usize::ct_select(&0, &i, is_valid);

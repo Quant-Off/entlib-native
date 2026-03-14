@@ -71,10 +71,7 @@ mod tests {
         let mut hasher_long = SHAKE128::new();
         hasher_long.update(b"test");
         let long = hasher_long.finalize(32);
-        assert_eq!(
-            &long.unwrap().as_slice()[..16],
-            &short.unwrap().as_slice()[..]
-        );
+        assert_eq!(&long.unwrap().as_slice()[..16], short.unwrap().as_slice());
 
         // SHAKE256
         let mut hasher_short = SHAKE256::new();
@@ -84,9 +81,6 @@ mod tests {
         let mut hasher_long = SHAKE256::new();
         hasher_long.update(b"test");
         let long = hasher_long.finalize(64);
-        assert_eq!(
-            &long.unwrap().as_slice()[..32],
-            &short.unwrap().as_slice()[..]
-        );
+        assert_eq!(&long.unwrap().as_slice()[..32], short.unwrap().as_slice());
     }
 }

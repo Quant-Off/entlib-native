@@ -2,14 +2,14 @@
 #![cfg(target_os = "linux")]
 #![cfg(feature = "valgrind_taint_audit")]
 
+use core::arch::asm;
 use entlib_native_constant_time::choice::Choice;
 use entlib_native_constant_time::traits::{ConstantTimeEq, ConstantTimeSelect};
-use core::arch::asm;
 
 // 하이퍼 콜 상수
 // Memcheck Tool ID: 'M'(77) << 24 | 'C'(67) << 16 = 0x4d430000
 const VALGRIND_MAKE_MEM_UNDEFINED: usize = 0x4d43_0001;
-const VALGRIND_MAKE_MEM_DEFINED: usize   = 0x4d43_0002;
+const VALGRIND_MAKE_MEM_DEFINED: usize = 0x4d43_0002;
 const VALGRIND_RUNNING_ON_VALGRIND: usize = 0x1001;
 
 /// x86_64 아키텍처 전용 Valgrind 하이퍼콜 주입 (Zero-Dependency)
