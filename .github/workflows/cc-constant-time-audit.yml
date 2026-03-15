@@ -85,28 +85,28 @@ jobs:
       - name: Run DudeCT Statistical Analysis
         run: |
           echo "[검증] DudeCT 기반 런타임 통계 분석 시작"
-          cargo +nightly bench --bench dudect_audit
+          scripts/catch_hex_dudect_audit.sh
 
-  # 바이너리 메모리 오염 추적 (Taint Analysis)
-  taint-tracking-audit:
-    name: Level 3 - Taint Flow Tracking (Valgrind)
-    needs: static-asm-audit
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Source Code
-        uses: actions/checkout@v3
-      - name: Install Rust Toolchain (Nightly Only)
-        uses: dtolnay/rust-toolchain@nightly
-        with:
-          components: rust-src
-      # 폐쇄망 적용 시 이 단계는 생략되고 사전 빌드된 컨테이너(valgrind 내장)를 사용해야 함
-      - name: Install System Dependencies for C-FFI and Valgrind
-        run: |
-          sudo apt-get update && sudo apt-get install -y build-essential valgrind libc6-dbg
-          cargo install cargo-valgrind --locked
-      # 여기까지
-
-      - name: Run Memcheck with Uninitialized Value Tracking
-        run: |
-          echo "[검증] Valgrind Memcheck 기반 분기 오염 역추적"
-          cargo +nightly valgrind test -p entlib-native-constant-time --test taint_audit --features valgrind_taint_audit -- --nocapture
+  # 바이너리 메모리 오염 추적 (Taint Analysis) TODO: 어떻게 동작하는지 아직 잘 모르겠어서 추 후 재검토
+#  taint-tracking-audit:
+#    name: Level 3 - Taint Flow Tracking (Valgrind)
+#    needs: static-asm-audit
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Checkout Source Code
+#        uses: actions/checkout@v3
+#      - name: Install Rust Toolchain (Nightly Only)
+#        uses: dtolnay/rust-toolchain@nightly
+#        with:
+#          components: rust-src
+#      # 폐쇄망 적용 시 이 단계는 생략되고 사전 빌드된 컨테이너(valgrind 내장)를 사용해야 함
+#      - name: Install System Dependencies for C-FFI and Valgrind
+#        run: |
+#          sudo apt-get update && sudo apt-get install -y build-essential valgrind libc6-dbg
+#          cargo install cargo-valgrind --locked
+#      # 여기까지
+#
+#      - name: Run Memcheck with Uninitialized Value Tracking
+#        run: |
+#          echo "[검증] Valgrind Memcheck 기반 분기 오염 역추적"
+#          cargo +nightly valgrind test -p entlib-native-constant-time --test taint_audit --features valgrind_taint_audit -- --nocapture

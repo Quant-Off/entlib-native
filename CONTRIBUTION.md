@@ -1,5 +1,7 @@
 # 기여 및 라이선스
 
+> [English CONTRIBUTION](CONTRIBUTION_EN.md)
+
 _안녕하세요. 저희는 팀 퀀트(Quant)이며, 저는 Quant Theodore Felix라고 합니다._
 
 **이 프로젝트에 기여해주시는 모든 여러분에게 정말 감사드리며,** 몇 가지 사전 준비 사항을 알려드리고자 합니다. 우선, 이 프로젝트는 [`MIT LICENSE`](LICENSE)를 따릅니다.
@@ -58,6 +60,8 @@ _안녕하세요. 저희는 팀 퀀트(Quant)이며, 저는 Quant Theodore Felix
   - 많은 크레이트의 핵심 기능은 `Result` 열거형을 통해 `SecureBuffer` 구조체와 문자열 참조를 반환합니다. 이는 오류 전파에 부적절합니다.
 - 보안 버퍼 크레이트 `entlib-native-secure-buffer`
   - `zeroizer.rs` 내 no_std 폐쇄 환경을 위한 Fall-back 시, 해당 환경의 하드웨어(CPU) 특성에 따라 캐시 라인 플러시가 보장되지 않을 수 있다고 합니다. 이 부분에 대해 섬세한 평가검증이 필요합니다.
+- CI 워크플로
+  - CC 상수-시간 감사 워크플로의 Level 3(바이너리 메모리 오염 추적)은 Unix 환경에서 Valgrind를 사용하여 테스트를 수행합니다. 하지만 저는 아직 이 부분에 대해 큰 아이디어가 없어 임시 비활성화해둔 상태입니다. 이 부분에 대해 좋은 아이디어를 가지고 있다면 알려주세요.
 
 # 연락
 

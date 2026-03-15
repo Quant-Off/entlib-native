@@ -1,5 +1,7 @@
 # Contribution and License
 
+> [Korean CONTRIBUTION](CONTRIBUTION.md)
+
 _Hello. We are Team Quant, and I am Quant Theodore Felix._
 
 **We truly appreciate everyone who contributes to this project,** and we would like to inform you of a few prerequisites. First of all, this project follows the [`MIT LICENSE`](LICENSE).
@@ -58,6 +60,8 @@ For this project, contributions corresponding to the following items are our top
   - Core functions in many crates return a `SecureBuffer` struct and a string reference via the `Result` enum. This is inappropriate for error propagation.
 - Security Buffer Crate `entlib-native-secure-buffer`
   - During fall-back for `no_std` isolated environments in `zeroizer.rs`, it is said that cache line flushing may not be guaranteed depending on the hardware (CPU) characteristics of that environment. Delicate evaluation and verification are required for this part.
+- CI Workflow
+  - Level 3 (Binary Memory Corruption Tracking) of the CC Constant-Time Audit workflow performs tests using Valgrind in Unix environments. However, I do not have a significant idea for this part yet, so it is temporarily disabled. If you have any good ideas regarding this, please let us know.
 
 # Contact
 
