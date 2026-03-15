@@ -1,33 +1,58 @@
 use crate::HmacError;
 use entlib_native_constant_time::traits::ConstantTimeEq;
+use entlib_native_secure_buffer::SecureBuffer;
 use entlib_native_sha2::api::{SHA224, SHA256, SHA384, SHA512};
+use entlib_native_sha3::api::{SHA3_224, SHA3_256, SHA3_384, SHA3_512};
 
 const IPAD: u8 = 0x36;
 const OPAD: u8 = 0x5c;
 const SHA224_256_BLOCK_SIZE: usize = 64; // 512 bits
 const SHA384_512_BLOCK_SIZE: usize = 128; // 1024 bits
+// SHA3 HMAC 블록 크기 = rate (NIST FIPS 202 기준)
+const SHA3_224_BLOCK_SIZE: usize = 144; // rate = 1152 bits
+const SHA3_256_BLOCK_SIZE: usize = 136; // rate = 1088 bits
+const SHA3_384_BLOCK_SIZE: usize = 104; // rate = 832 bits
+const SHA3_512_BLOCK_SIZE: usize = 72; // rate = 576 bits
 const MIN_KEY_LEN: usize = 14; // 112 bits (NIST SP 800-107r1)
 
 /// 생성된 MAC을 담는 래퍼 구조체입니다.
-pub struct MacResult<const N: usize>(pub [u8; N]);
+///
+/// 내부 필드는 [`SecureBuffer`]로 관리되어, `Drop` 시점에 MAC 바이트가
+/// 자동으로 0으로 소거되고 OS 레벨 메모리 잠금(mlock)이 해제됩니다.
+pub struct MacResult(SecureBuffer);
 
-impl<const N: usize> PartialEq for MacResult<N> {
-    /// 부채널 공격(Timing Attack) 방지를 위해 검증된 constant-time 크레이트 활용
+impl MacResult {
+    /// MAC 바이트를 읽기 전용 슬라이스로 반환합니다.
+    #[inline(always)]
+    pub fn as_slice(&self) -> &[u8] {
+        self.0.as_slice()
+    }
+}
+
+impl PartialEq for MacResult {
+    /// 부채널 공격(Timing Attack) 방지를 위해 검증된 constant-time 크레이트 활용.
+    ///
+    /// MAC 길이(공개 정보)를 먼저 확인한 후 바이트를 상수-시간으로 비교합니다.
     #[inline(never)]
     fn eq(&self, other: &Self) -> bool {
-        let mut is_equal = 0xFFu8;
+        let a = self.0.as_slice();
+        let b = other.0.as_slice();
 
-        // 컴파일 타임에 길이 N이 결정되어 루프 언롤링 최적화에 유리
-        // 메모리 경계 체크 오버헤드가 발생하지 않음
-        for (a, b) in self.0.iter().zip(other.0.iter()) {
-            let choice = a.ct_eq(b);
-            is_equal &= choice.unwrap_u8();
+        // MAC 길이는 공개 정보이므로 일반 분기 허용
+        if a.len() != b.len() {
+            return false;
+        }
+
+        let mut is_equal = 0xFFu8;
+        for (x, y) in a.iter().zip(b.iter()) {
+            is_equal &= x.ct_eq(y).unwrap_u8();
         }
 
         is_equal == 0xFF
     }
 }
-impl<const N: usize> Eq for MacResult<N> {}
+
+impl Eq for MacResult {}
 
 macro_rules! impl_hmac_sha {
     (
@@ -44,7 +69,7 @@ macro_rules! impl_hmac_sha {
         }
 
         impl $struct_name {
-            /// HmacSha256 초기화 및 키 준비 함수입니다.
+            /// HMAC 초기화 및 키 준비 함수입니다.
             pub fn new(key: &[u8]) -> Result<Self, HmacError> {
                 // [Security Control] NIST SP 800-107r1 5.3절: 112비트 미만의 키 거부
                 if key.len() < MIN_KEY_LEN {
@@ -57,12 +82,10 @@ macro_rules! impl_hmac_sha {
                 if key.len() > $block_size {
                     let mut key_hasher = <$hasher_type>::new();
                     key_hasher.update(key);
-                    // Result<SecureBuffer, &'static str> 반환
                     let hashed_key = key_hasher
                         .finalize()
                         .map_err(HmacError::HashComputationError)?;
 
-                    // SecureBuffer의 명시적 인터페이스인 as_slice() 사용
                     let hash_slice = hashed_key.as_slice();
                     k_block[..hash_slice.len()].copy_from_slice(hash_slice);
                 } else {
@@ -99,7 +122,7 @@ macro_rules! impl_hmac_sha {
             }
 
             /// 최종 MAC 계산 및 반환 함수입니다.
-            pub fn finalize(mut self) -> Result<MacResult<$mac_size>, HmacError> {
+            pub fn finalize(mut self) -> Result<MacResult, HmacError> {
                 // Q. T. Felix NOTE: 왜 Option을 안 쓰냐 -> 분기생성 가능성 있음 -> 부채널 공격 위험해집니다.
                 //                   Drop 구현체의 부분 소유권 이동 금지 규칙을 우회하기 위해,
                 //                   분기 없는 core::mem::replace를 사용하여 내부 Hasher의 소유권을 획득
@@ -119,11 +142,14 @@ macro_rules! impl_hmac_sha {
                     .finalize()
                     .map_err(HmacError::HashComputationError)?;
 
-                let mut final_mac = [0u8; $mac_size];
-                final_mac.copy_from_slice(outer_hash.as_slice());
+                // SecureBuffer에 MAC을 복사하여 mlock + 자동 소거 보장
+                let mut mac_buf =
+                    SecureBuffer::new_owned($mac_size).map_err(HmacError::AllocationError)?;
+                mac_buf
+                    .as_mut_slice()
+                    .copy_from_slice(outer_hash.as_slice());
 
-                // i_key_pad, o_key_pad 완전 소거
-                Ok(MacResult(final_mac))
+                Ok(MacResult(mac_buf))
             }
         }
 
@@ -150,3 +176,8 @@ impl_hmac_sha!(HMACSHA224, SHA224, SHA224_256_BLOCK_SIZE, 28);
 impl_hmac_sha!(HMACSHA256, SHA256, SHA224_256_BLOCK_SIZE, 32);
 impl_hmac_sha!(HMACSHA384, SHA384, SHA384_512_BLOCK_SIZE, 48);
 impl_hmac_sha!(HMACSHA512, SHA512, SHA384_512_BLOCK_SIZE, 64);
+
+impl_hmac_sha!(HMACSHA3_224, SHA3_224, SHA3_224_BLOCK_SIZE, 28);
+impl_hmac_sha!(HMACSHA3_256, SHA3_256, SHA3_256_BLOCK_SIZE, 32);
+impl_hmac_sha!(HMACSHA3_384, SHA3_384, SHA3_384_BLOCK_SIZE, 48);
+impl_hmac_sha!(HMACSHA3_512, SHA3_512, SHA3_512_BLOCK_SIZE, 64);

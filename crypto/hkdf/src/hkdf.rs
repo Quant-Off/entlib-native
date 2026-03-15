@@ -55,7 +55,7 @@ impl HKDFSHA256 {
             SecureBuffer::new_owned(SHA256_HASH_LEN).map_err(|_| HKDFState::AllocationFailed)?;
 
         // 데이터 복사
-        prk_buffer.as_mut_slice()[..SHA256_HASH_LEN].copy_from_slice(&prk_mac.0);
+        prk_buffer.as_mut_slice()[..SHA256_HASH_LEN].copy_from_slice(prk_mac.as_slice());
 
         Ok(prk_buffer)
     }
@@ -93,7 +93,7 @@ impl HKDFSHA256 {
             hmac.update(&[block_index]);
 
             let mac = hmac.finalize().map_err(|_| HKDFState::HmacError)?;
-            t.copy_from_slice(&mac.0);
+            t.copy_from_slice(mac.as_slice());
 
             let copy_len = min(SHA256_HASH_LEN, length - okm_offset);
             okm[okm_offset..okm_offset + copy_len].copy_from_slice(&t[..copy_len]);

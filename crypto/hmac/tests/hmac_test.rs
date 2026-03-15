@@ -1,23 +1,29 @@
-use entlib_native_hmac::{HMACSHA256, HMACSHA512, HmacError, MacResult};
+use entlib_native_hmac::{HMACSHA256, HMACSHA512, HmacError};
 
 //
 // 헬퍼
 //
 
-fn hmac256(key: &[u8], chunks: &[&[u8]]) -> [u8; 32] {
+fn hmac256(key: &[u8], chunks: &[&[u8]]) -> Vec<u8> {
     let mut h = HMACSHA256::new(key).expect("HMACSHA256 초기화 실패");
     for c in chunks {
         h.update(c);
     }
-    h.finalize().expect("HMACSHA256 finalize 실패").0
+    h.finalize()
+        .expect("HMACSHA256 finalize 실패")
+        .as_slice()
+        .to_vec()
 }
 
-fn hmac512(key: &[u8], chunks: &[&[u8]]) -> [u8; 64] {
+fn hmac512(key: &[u8], chunks: &[&[u8]]) -> Vec<u8> {
     let mut h = HMACSHA512::new(key).expect("HMACSHA512 초기화 실패");
     for c in chunks {
         h.update(c);
     }
-    h.finalize().expect("HMACSHA512 finalize 실패").0
+    h.finalize()
+        .expect("HMACSHA512 finalize 실패")
+        .as_slice()
+        .to_vec()
 }
 
 //
@@ -337,22 +343,30 @@ fn sha512_mac_ct_ne_different() {
     assert!(m1 != m2);
 }
 
-/// 1바이트 비트플립 탐지 (SHA-256)
+/// 1바이트 비트플립 탐지 (SHA-256): 메시지 1비트 차이는 다른 MAC을 생성해야 함
 #[test]
 fn sha256_mac_single_bit_flip_detected() {
-    let real = HMACSHA256::new(&[0x0bu8; 20]).unwrap().finalize().unwrap();
-    let mut tampered = real.0;
-    tampered[31] ^= 0x01;
-    assert!(MacResult::<32>(real.0) != MacResult::<32>(tampered));
+    let key = [0x0bu8; 20];
+    let mut h1 = HMACSHA256::new(&key).unwrap();
+    h1.update(b"data\x00");
+    let m1 = h1.finalize().unwrap();
+    let mut h2 = HMACSHA256::new(&key).unwrap();
+    h2.update(b"data\x01");
+    let m2 = h2.finalize().unwrap();
+    assert!(m1 != m2);
 }
 
-/// 1바이트 비트플립 탐지 (SHA-512)
+/// 1바이트 비트플립 탐지 (SHA-512): 메시지 1비트 차이는 다른 MAC을 생성해야 함
 #[test]
 fn sha512_mac_single_bit_flip_detected() {
-    let real = HMACSHA512::new(&[0x0bu8; 20]).unwrap().finalize().unwrap();
-    let mut tampered = real.0;
-    tampered[63] ^= 0x01;
-    assert!(MacResult::<64>(real.0) != MacResult::<64>(tampered));
+    let key = [0x0bu8; 20];
+    let mut h1 = HMACSHA512::new(&key).unwrap();
+    h1.update(b"data\x00");
+    let m1 = h1.finalize().unwrap();
+    let mut h2 = HMACSHA512::new(&key).unwrap();
+    h2.update(b"data\x01");
+    let m2 = h2.finalize().unwrap();
+    assert!(m1 != m2);
 }
 
 //
