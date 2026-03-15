@@ -10,16 +10,14 @@ pub(crate) fn page_size() -> usize {
         static OS_PAGE_SIZE: OnceLock<usize> = OnceLock::new();
         *OS_PAGE_SIZE.get_or_init(|| {
             #[cfg(unix)]
-            unsafe {
                 // 커널 계층과 직접 통신하여 페이지 크기 획득
-                let size = unsafe { fetch_os_page_size() };
+                let size = fetch_os_page_size();
 
                 // 변조된 커널 응답 방어 (최소 4kb 및 2배수 확인)
                 if size < 4096 || !size.is_power_of_two() {
                     panic!("Security Violation: 안전하지 않거나 변조된 OS 페이지 크기가 감지되었습니다! ({})", size);
                 }
                 size
-            }
         })
     }
 
@@ -153,12 +151,12 @@ unsafe fn fetch_os_page_size() -> usize {
 }
 
 #[cfg(all(feature = "std", unix, not(target_os = "linux")))]
-unsafe fn fetch_os_page_size() -> usize {
+fn fetch_os_page_size() -> usize {
     unsafe extern "C" {
         fn get_pagesize() -> core::ffi::c_int;
     }
 
-    let size = get_pagesize();
+    let size = unsafe { get_pagesize() };
 
     // 비정상적인 OS 응답 방어
     if size <= 0 {
