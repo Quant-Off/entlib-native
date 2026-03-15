@@ -18,6 +18,7 @@
 #![allow(non_camel_case_types)]
 
 use crate::KeccakState;
+use entlib_native_secure_buffer::SecureBuffer;
 
 //
 // SHA3-224 - start
@@ -35,12 +36,16 @@ impl SHA3_224 {
     }
 
     // 해시 연산 완료 및 다이제스트 반환
-    pub fn finalize(self) -> Vec<u8> {
+    pub fn finalize(self) -> Result<SecureBuffer, &'static str> {
         self.0.finalize(28, None)
     }
 
     // last_bits: 0~7 사이의 값. 마지막 바이트의 유효 비트 개수
-    pub fn finalize_bits(self, last_byte: u8, valid_bits: usize) -> Vec<u8> {
+    pub fn finalize_bits(
+        self,
+        last_byte: u8,
+        valid_bits: usize,
+    ) -> Result<SecureBuffer, &'static str> {
         self.0.finalize(28, Some((last_byte, valid_bits)))
     }
 }
@@ -70,12 +75,16 @@ impl SHA3_256 {
     }
 
     // 해시 연산 완료 및 다이제스트 반환
-    pub fn finalize(self) -> Vec<u8> {
+    pub fn finalize(self) -> Result<SecureBuffer, &'static str> {
         self.0.finalize(32, None)
     }
 
     // last_bits: 0~7 사이의 값. 마지막 바이트의 유효 비트 개수
-    pub fn finalize_bits(self, last_byte: u8, valid_bits: usize) -> Vec<u8> {
+    pub fn finalize_bits(
+        self,
+        last_byte: u8,
+        valid_bits: usize,
+    ) -> Result<SecureBuffer, &'static str> {
         self.0.finalize(32, Some((last_byte, valid_bits)))
     }
 }
@@ -105,12 +114,16 @@ impl SHA3_384 {
     }
 
     // 해시 연산 완료 및 다이제스트 반환
-    pub fn finalize(self) -> Vec<u8> {
+    pub fn finalize(self) -> Result<SecureBuffer, &'static str> {
         self.0.finalize(48, None)
     }
 
     // last_bits: 0~7 사이의 값. 마지막 바이트의 유효 비트 개수
-    pub fn finalize_bits(self, last_byte: u8, valid_bits: usize) -> Vec<u8> {
+    pub fn finalize_bits(
+        self,
+        last_byte: u8,
+        valid_bits: usize,
+    ) -> Result<SecureBuffer, &'static str> {
         self.0.finalize(48, Some((last_byte, valid_bits)))
     }
 }
@@ -140,12 +153,16 @@ impl SHA3_512 {
     }
 
     // 해시 연산 완료 및 다이제스트 반환
-    pub fn finalize(self) -> Vec<u8> {
+    pub fn finalize(self) -> Result<SecureBuffer, &'static str> {
         self.0.finalize(64, None)
     }
 
     // last_bits: 0~7 사이의 값. 마지막 바이트의 유효 비트 개수
-    pub fn finalize_bits(self, last_byte: u8, valid_bits: usize) -> Vec<u8> {
+    pub fn finalize_bits(
+        self,
+        last_byte: u8,
+        valid_bits: usize,
+    ) -> Result<SecureBuffer, &'static str> {
         self.0.finalize(64, Some((last_byte, valid_bits)))
     }
 }
@@ -175,12 +192,17 @@ impl SHAKE128 {
     }
 
     // 바이트가 정확히 맞아떨어질 때 사용 (불완전 바이트 없음)
-    pub fn finalize(self, output_len: usize) -> Vec<u8> {
+    pub fn finalize(self, output_len: usize) -> Result<SecureBuffer, &'static str> {
         self.0.finalize(output_len, None)
     }
 
     // 불완전한 마지막 바이트(last_byte)와 그 유효 비트 수(valid_bits)를 함께 받음
-    pub fn finalize_bits(self, output_len: usize, last_byte: u8, valid_bits: usize) -> Vec<u8> {
+    pub fn finalize_bits(
+        self,
+        output_len: usize,
+        last_byte: u8,
+        valid_bits: usize,
+    ) -> Result<SecureBuffer, &'static str> {
         self.0.finalize(output_len, Some((last_byte, valid_bits)))
     }
 }
@@ -210,12 +232,17 @@ impl SHAKE256 {
     }
 
     // 바이트가 정확히 맞아떨어질 때 사용 (불완전 바이트 없음)
-    pub fn finalize(self, output_len: usize) -> Vec<u8> {
+    pub fn finalize(self, output_len: usize) -> Result<SecureBuffer, &'static str> {
         self.0.finalize(output_len, None)
     }
 
     // 불완전한 마지막 바이트(last_byte)와 그 유효 비트 수(valid_bits)를 함께 받음
-    pub fn finalize_bits(self, output_len: usize, last_byte: u8, valid_bits: usize) -> Vec<u8> {
+    pub fn finalize_bits(
+        self,
+        output_len: usize,
+        last_byte: u8,
+        valid_bits: usize,
+    ) -> Result<SecureBuffer, &'static str> {
         self.0.finalize(output_len, Some((last_byte, valid_bits)))
     }
 }

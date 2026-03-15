@@ -1,0 +1,15 @@
+[package]
+name = "entlib-native-hmac"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+entlib-native-secure-buffer.workspace = true
+entlib-native-constant-time.workspace = true
+entlib-native-sha2.workspace = true
+entlib-native-sha3.workspace = true
+
+[dev-dependencies]
+entlib-native-hex.workspace = true

@@ -1,0 +1,12 @@
+[package]
+name = "entlib-native-secure-buffer"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[features]
+std = []
+
+[dependencies]
+entlib-native-result.workspace = true

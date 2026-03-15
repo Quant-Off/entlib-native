@@ -8,34 +8,11 @@ license.workspace = true
 [lib]
 crate-type = ["cdylib", "lib"]
 
-# 패닉 발생 시 스택 풀기를 비활성화하여 메모리 상태가
-# 외부에 노출되거나 조작될 가능성을 차단할 필요 있음
-[profile.release]
-panic = "abort"
-lto = true
-codegen-units = 1
-strip = true
-
-[profile.dev]
-panic = "abort"
-
 [dependencies]
-tokio.workspace = true
+entlib-native-result.workspace = true
 entlib-native-base64.workspace = true
-entlib-native-constant-time.workspace = true
-entlib-native-core-secure.workspace = true
-entlib-native-rng.workspace = true
+entlib-native-secure-buffer.workspace = true
+entlib-native-hex.workspace = true
 entlib-native-sha2.workspace = true
 entlib-native-sha3.workspace = true
-entlib-native-chacha20.workspace = true
-
-[dev-dependencies]
-#criterion = { version = "0.8.2", features = ["html_reports"] }
-#
-#[[bench]]
-#name = "ffi_base64_bench"
-#harness = false
-#
-#[[bench]]
-#name = "ffi_wipe_bench"
-#harness = false
+entlib-native-constant-time.workspace = true

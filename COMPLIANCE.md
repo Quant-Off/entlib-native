@@ -12,23 +12,38 @@ NIST CAVP는 단일 알고리즘에 대한 검증 작업입니다. 실제 프로
 
 - [ ] SP 800-90A DRBG(Deterministic Random Bit Generators)
 
+> [KCMVP](https://seed.kisa.or.kr/kisa/kcmvp/EgovVerification.do) (KS X ISO/IEC 18031)
+
+- [ ] Security techniques - Hash-functions - Part 3: Dedicated hash-functions (2018)
+
 ## SHA2
 
-> [NIST CAVP - Secure Hashing](https://csrc.nist.gov/projects/cryptographic-algorithm-validation-program/secure-hashing) (ISO/IEC 10118-3)
+> [NIST CAVP - Secure Hashing](https://csrc.nist.gov/projects/cryptographic-algorithm-validation-program/secure-hashing)
 
 - [ ] FIPS 180-4 SHA Test Vectors for Hashing Bit/Byte-Oriented Messages
 
-> [KCMVP](https://seed.kisa.or.kr/kisa/kcmvp/EgovVerification.do) KS X ISO/IEC 10118-3:2001
+> [KCMVP](https://seed.kisa.or.kr/kisa/kcmvp/EgovVerification.do) (KS X ISO/IEC 10118-3:2001)
 
 - [ ] Security techniques - Hash-functions - Part 3: Dedicated hash-functions (2018)
 
 ## SHA3
 
-> [NIST CAVP - Secure Hashing](https://csrc.nist.gov/projects/cryptographic-algorithm-validation-program/secure-hashing) (ISO/IEC 10118-3)
+> [NIST CAVP - Secure Hashing](https://csrc.nist.gov/projects/cryptographic-algorithm-validation-program/secure-hashing)
 
 - [X] FIPS 202 SHA-3 Hash Function Test Vectors for Hashing Bit/Byte-Oriented Messages
 - [X] FIPS 202 SHA-3 XOF Test Vectors for Bit/Byte-Oriented Output
 
-> [KCMVP](https://seed.kisa.or.kr/kisa/kcmvp/EgovVerification.do) KS X ISO/IEC 10118-3:2001
+> [KCMVP](https://seed.kisa.or.kr/kisa/kcmvp/EgovVerification.do) (KS X ISO/IEC 10118-3:2001)
 
 - [X] Security techniques - Hash-functions - Part 3: Dedicated hash-functions (2018)
+
+## HKDF
+
+> [NIST CAVP - Key Derivation](https://csrc.nist.gov/projects/cryptographic-algorithm-validation-program/key-derivation) (SP 800-108)
+
+- [ ] KDF in Counter Mode Test Vectors
+- [ ] KDF in Feedback Mode Test Vectors where no counter is used
+- [ ] KDF in Feedback Mode Test Vectors where zero length IV is allowed
+- [ ] KDF in Feedback Mode Test Vectors where zero length IV is not allowed
+- [ ] KDF in Double-Pipeline Iteration Mode Test Vectors where no counter is used
+- [ ] KDF in Double-Pipeline Iteration Mode Test Vectors where counter is used

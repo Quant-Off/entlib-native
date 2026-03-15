@@ -1,0 +1,10 @@
+[package]
+name = "entlib-native-hex"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+entlib-native-secure-buffer.workspace = true
+entlib-native-constant-time.workspace = true

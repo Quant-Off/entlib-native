@@ -1,7 +1,8 @@
 use crate::KeccakState;
-use core::cmp::min;
 use core::ptr::write_volatile;
 use core::sync::atomic::{Ordering, compiler_fence};
+use entlib_native_constant_time::traits::{ConstantTimeEq, ConstantTimeSelect};
+use entlib_native_secure_buffer::SecureBuffer;
 
 const KECCAK_ROUND_CONSTANTS: [u64; 24] = [
     0x0000000000000001,
@@ -43,7 +44,7 @@ impl KeccakState {
         Self {
             state: [0; 25],
             rate_bytes: rate_bits / 8,
-            buffer: [0; 200],
+            buffer: SecureBuffer::new_owned(200).expect("SecureBuffer allocate failed"),
             buffer_len: 0,
             domain,
         }
@@ -95,9 +96,8 @@ impl KeccakState {
         compiler_fence(Ordering::SeqCst);
     }
 
-    /// rate 바이트만큼 채워진 버퍼를 상태에 흡수(absorb)하고 순열 적용
-    fn process_buffer(&mut self) {
-        for (i, chunk) in self.buffer[..self.rate_bytes].chunks(8).enumerate() {
+    fn process_buffer(&mut self, block: &[u8]) {
+        for (i, chunk) in block.chunks(8).enumerate() {
             let mut word_bytes = [0u8; 8];
             word_bytes.copy_from_slice(chunk);
             self.state[i] ^= u64::from_le_bytes(word_bytes);
@@ -109,14 +109,21 @@ impl KeccakState {
     pub(crate) fn update(&mut self, data: &[u8]) {
         let mut offset = 0;
         while offset < data.len() {
-            let take = min(self.rate_bytes - self.buffer_len, data.len() - offset);
-            self.buffer[self.buffer_len..self.buffer_len + take]
+            let fill = self.rate_bytes - self.buffer_len;
+            let remain = data.len() - offset;
+            let is_ge = remain.ct_is_ge(&fill);
+            let take = usize::ct_select(&fill, &remain, is_ge);
+
+            self.buffer.as_mut_slice()[self.buffer_len..self.buffer_len + take]
                 .copy_from_slice(&data[offset..offset + take]);
             self.buffer_len += take;
             offset += take;
 
             if self.buffer_len == self.rate_bytes {
-                self.process_buffer();
+                let mut temp_block = [0u8; 200]; // rete_bytes의 최대 크기 넉넉히 수용
+                temp_block[..self.rate_bytes]
+                    .copy_from_slice(&self.buffer.as_slice()[..self.rate_bytes]);
+                self.process_buffer(&temp_block[..self.rate_bytes]);
                 self.buffer_len = 0;
             }
         }
@@ -127,46 +134,104 @@ impl KeccakState {
     /// # Arguments
     /// - last_byte_bits 마지막 바이트의 유효 비트 수 (0~7). 0인 경우 8비트(전체)가 유효하거나 바이트 정렬됨을 의미
     fn pad(&mut self, last_byte_opt: Option<(u8, usize)>) {
-        let mut valid_bits = 0;
+        // Q. T. Felix NOTE: Option은 컴파일러 최적화에 따라 분기를 유발할 수 있음.
+        //                   나중에 (b: u8, bits: usize) 형태의 명시적 인자 전달 구조로 리팩토링.
+        let (b, bits) = last_byte_opt.unwrap_or((0, 0));
+        let valid_bits = bits;
 
-        if let Some((last_byte, bits)) = last_byte_opt {
-            valid_bits = bits;
-            let mask = (1u8 << valid_bits) - 1;
-            self.buffer[self.buffer_len] = last_byte & mask;
-        } else {
-            self.buffer[self.buffer_len] = 0;
-        }
+        // 상수-시간 마스크로 불필요한 비트 제거 (오버플로 방지)
+        let mask = ((1u16 << valid_bits).wrapping_sub(1)) as u8;
+        let last_byte_val = b & mask;
 
-        // 도메인 구분자와 패딩 시작 비트(1) 병합
         let padding = (self.domain as u16) << valid_bits;
-        self.buffer[self.buffer_len] |= (padding & 0xFF) as u8;
-        self.buffer_len += 1;
+        let p0 = (padding & 0xFF) as u8 | last_byte_val;
+        let p1 = (padding >> 8) as u8;
 
-        // 패딩이 바이트 경계를 넘어가는 경우 (오버플로)
-        if padding > 0xFF {
-            if self.buffer_len == self.rate_bytes {
-                self.process_buffer();
-                self.buffer_len = 0;
+        // padding > 0xFF (padding >= 0x0100)
+        let has_p1 = padding.ct_is_ge(&0x0100u16);
+
+        let rate = self.rate_bytes;
+        let len = self.buffer_len;
+
+        // Keccak 최대 rate_bytes 수용할 수 있는 고정 버퍼
+        let mut block1 = [0u8; 200];
+        let mut block2 = [0u8; 200];
+
+        // 상수-시간 블럭 1,2 ㄹ데이터 구성
+        let buf_slice = self.buffer.as_slice();
+        let p1_to_block2 = len.ct_eq(&(rate - 1)) & has_p1;
+
+        for i in 0..rate {
+            // i < len
+            let is_i_less_len = i.ct_is_ge(&len).choice_not();
+            let is_i_eq_len = i.ct_eq(&len);
+            let is_i_eq_len_plus_1 = i.ct_eq(&(len + 1));
+
+            // i < len 이면 원래 버퍼, 아니면 0
+            let mut byte = u8::ct_select(&buf_slice[i], &0, is_i_less_len);
+
+            // i == len 위치에 p0 덮어쓰기
+            byte = u8::ct_select(&p0, &byte, is_i_eq_len);
+
+            // i == len + 1 이고 has_p1이 True인 위치에 p1 덮어쓰기
+            let put_p1_here = is_i_eq_len_plus_1 & has_p1;
+            byte = u8::ct_select(&p1, &byte, put_p1_here);
+
+            block1[i] = byte;
+        }
+
+        // p1이 블럭 경계를 넘어간 경우 block2의 첫 번째 바이트에 저장
+        block2[0] = u8::ct_select(&p1, &0, p1_to_block2);
+
+        // 충동 및 추가 블럭 필요 여부 판별
+        let len_after_pad = len + 1 + usize::ct_select(&1, &0, has_p1);
+
+        // 패딩이 경계를 넘었는가?
+        let spills_to_block2 = len_after_pad.ct_is_ge(&(rate + 1));
+        // 블럭이 꽉 찼늗가?
+        let exactly_full = len_after_pad.ct_eq(&rate);
+
+        // 블럭이 가득 찼는데 마지막 바이트에 0x80 비트가 이미 존재하는지 상수-시간으로 검사 (keccak 10*1 충돌대응)
+        let collision_bit = (block1[rate - 1] & 0x80).ct_eq(&0x80);
+        let has_collision = exactly_full & collision_bit;
+
+        // 추가 블럭(block2) 연산 결과를 최종 state에 반영해야 하는지 여부
+        let needs_block2 = spills_to_block2 | has_collision;
+
+        // 최종 스펀지 패딩 비트 상수-시간 배치
+        // needs_block2가 True면 block2 끝에, 그렇지 않으면 block1 끝에 0x80 적용
+        block1[rate - 1] =
+            u8::ct_select(&block1[rate - 1], &(block1[rate - 1] | 0x80), needs_block2);
+        block2[rate - 1] =
+            u8::ct_select(&(block2[rate - 1] | 0x80), &block2[rate - 1], needs_block2);
+
+        // 상수-시간 압축 수행
+        // 첫 번째 블럭 처리 및 keccak 상태 백업
+        self.process_buffer(&block1[..rate]);
+        let state_after_block1 = self.state;
+
+        // 두 번째 블럭 일괄 처리
+        self.process_buffer(&block2[..rate]);
+
+        // needs_block2가 False면 두 번째 블럭의 연산 결과를 폐기하고 첫 번째 결과로 상수-시간 롤백
+        for (i, &saved) in state_after_block1.iter().enumerate() {
+            self.state[i] = u64::ct_select(&self.state[i], &saved, needs_block2);
+        }
+
+        // 스택에 할당된 임시 패딩 데이터 완전 소거
+        for b in &mut block1 {
+            unsafe {
+                write_volatile(b, 0);
             }
-            self.buffer[self.buffer_len] = (padding >> 8) as u8;
-            self.buffer_len += 1;
         }
-
-        // Q. T. Felix NOTE: Keccak 10*1 패딩 비트 충돌(Collision) 감지 추가
-        //                   블록이 정확히 가득 찼는데(rate_bytes) 방금 추가한 도메인/시작 패딩이
-        //                   블록의 마지막 비트(0x80)를 점유했다면 즉시 압축하고 새 블록을 생성해야 함
-        if self.buffer_len == self.rate_bytes && (self.buffer[self.rate_bytes - 1] & 0x80) != 0 {
-            self.process_buffer();
-            self.buffer_len = 0;
+        for b in &mut block2 {
+            unsafe {
+                write_volatile(b, 0);
+            }
         }
+        compiler_fence(Ordering::SeqCst);
 
-        // 남은 공간 0으로 채움
-        self.buffer[self.buffer_len..self.rate_bytes].fill(0);
-
-        // 스펀지 구조의 최종 종료 패딩 비트(0x80) 설정
-        self.buffer[self.rate_bytes - 1] |= 0x80;
-
-        self.process_buffer();
+        self.buffer_len = 0;
     }
 
     /// 해시 연산 종료 및 다이제스트(digest) 반환
@@ -177,23 +242,41 @@ impl KeccakState {
         mut self,
         output_len: usize,
         last_byte_opt: Option<(u8, usize)>,
-    ) -> Vec<u8> {
+    ) -> Result<SecureBuffer, &'static str> {
         self.pad(last_byte_opt);
 
-        let mut out = Vec::with_capacity(output_len);
-        while out.len() < output_len {
-            for i in 0..(self.rate_bytes / 8) {
-                if out.len() >= output_len {
+        let mut out_buf = SecureBuffer::new_owned(output_len)?;
+        if output_len == 0 {
+            return Ok(out_buf);
+        }
+
+        let out_slice = out_buf.as_mut_slice();
+        let mut out_idx = 0;
+        let rate_words = self.rate_bytes / 8;
+
+        while out_idx < output_len {
+            for i in 0..rate_words {
+                // 출력 길이(output_len)는 스펙에 따른 공개 정보이라
+                // 이를 기반으로 한 루프 탈출 분기문은 비밀 데이터의 타이밍을 누출하지 않음
+                if out_idx >= output_len {
                     break;
                 }
                 let word_bytes = self.state[i].to_le_bytes();
-                let take = core::cmp::min(8, output_len - out.len());
-                out.extend_from_slice(&word_bytes[..take]);
+
+                let remain = output_len - out_idx;
+                let is_ge = remain.ct_is_ge(&8usize);
+                let take = usize::ct_select(&8, &remain, is_ge);
+
+                // 계산될 길이만큼 버퍼에 복사
+                out_slice[out_idx..out_idx + take].copy_from_slice(&word_bytes[..take]);
+                out_idx += take;
             }
-            if out.len() < output_len {
+
+            // 추가 출력이 필요하면 keccak 상태 갱신
+            if out_idx < output_len {
                 Self::keccak_f1600(&mut self.state);
             }
         }
-        out
+        Ok(out_buf)
     }
 }
