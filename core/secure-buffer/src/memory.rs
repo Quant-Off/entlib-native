@@ -152,6 +152,22 @@ unsafe fn fetch_os_page_size() -> usize {
     extracted_page_size
 }
 
+#[cfg(all(feature = "std", unix, not(target_os = "linux")))]
+unsafe fn fetch_os_page_size() -> usize {
+    unsafe extern "C" {
+        fn get_pagesize() -> core::ffi::c_int;
+    }
+
+    let size = get_pagesize();
+
+    // 비정상적인 OS 응답 방어
+    if size <= 0 {
+        panic!("Critical Fault: OS가 페이지 크기 획득을 거부했거나 시스템 에러가 발생했습니다!");
+    }
+
+    size as usize
+}
+
 /// 요청된 크기를 시스템 페이지 크기의 배수로 올림 처리합니다.
 ///
 /// 메모리 할당 시 페이지 정렬(Page Alignment)을 보장하기 위해 사용됩니다.
