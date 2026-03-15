@@ -71,21 +71,21 @@ jobs:
           done
           echo "[SUCCESS] 추출된 ${#DYNAMIC_TARGETS[@]}개 함수의 어셈블리 무결성 전수 확인 완료"
 
-  # 동적 통계적 타이밍 분석 (DudeCT)
-  dynamic-timing-audit:
-    name: Level 2 - Dynamic Timing Analysis (DudeCT)
-    needs: static-asm-audit
-    runs-on: [self-hosted, bare-metal]
-    steps:
-      - uses: actions/checkout@v3
-      - name: Install Rust Toolchain (Nightly)
-        uses: dtolnay/rust-toolchain@nightly
-      - name: Enforce CPU Frequency Scaling Policy (Linux)
-        run: sudo cpupower frequency-set --governor performance || true
-      - name: Run DudeCT Statistical Analysis
-        run: |
-          echo "[검증] DudeCT 기반 런타임 통계 분석 시작"
-          scripts/catch_hex_dudect_audit.sh
+  # 동적 통계적 타이밍 분석 (DudeCT) TODO: 퀀트 컨테이너 안정화 후 가동 (필요 자료에 대한 폐쇄망 무결성 검증 중)
+#  dynamic-timing-audit:
+#    name: Level 2 - Dynamic Timing Analysis (DudeCT)
+#    needs: static-asm-audit
+#    runs-on: [self-hosted, bare-metal]
+#    steps:
+#      - uses: actions/checkout@v3
+#      - name: Install Rust Toolchain (Nightly)
+#        uses: dtolnay/rust-toolchain@nightly
+#      - name: Enforce CPU Frequency Scaling Policy (Linux)
+#        run: sudo cpupower frequency-set --governor performance || true
+#      - name: Run DudeCT Statistical Analysis
+#        run: |
+#          echo "[검증] DudeCT 기반 런타임 통계 분석 시작"
+#          scripts/catch_hex_dudect_audit.sh
 
   # 바이너리 메모리 오염 추적 (Taint Analysis) TODO: 어떻게 동작하는지 아직 잘 모르겠어서 추 후 재검토
 #  taint-tracking-audit:
