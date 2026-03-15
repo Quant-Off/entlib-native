@@ -8,7 +8,7 @@ pub(crate) fn page_size() -> usize {
     #[cfg(feature = "std")]
     {
         static OS_PAGE_SIZE: OnceLock<usize> = OnceLock::new();
-        *OS_PAGE_SIZE.get_or_init(|| {
+        *OS_PAGE_SIZE.get_or_init(|| unsafe {
             #[cfg(unix)]
                 // 커널 계층과 직접 통신하여 페이지 크기 획득
                 let size = fetch_os_page_size();
