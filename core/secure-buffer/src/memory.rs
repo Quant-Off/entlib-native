@@ -1,20 +1,167 @@
 use alloc::alloc::{Layout, alloc_zeroed, dealloc};
 
-/// 시스템의 기본 페이지 크기 (4KB)
-///
-/// 대부분의 현대 아키텍처(x86_64, ARM64 등)에서 페이지 크기는 4096 바이트입니다.
-/// 메모리 잠금(mlock) 등의 작업은 페이지 단위로 수행되므로, 할당 크기를 이 값의 배수로 맞추는 것이 유리합니다.
-pub(crate) const PAGE_SIZE: usize = 4096; // Q. T. Felix TODO: env
+#[cfg(feature = "std")]
+use std::sync::OnceLock;
+
+/// 시스템(런타임)의 실제 페이지 크기를 반환합니다.
+pub(crate) fn page_size() -> usize {
+    #[cfg(feature = "std")]
+    {
+        static OS_PAGE_SIZE: OnceLock<usize> = OnceLock::new();
+        *OS_PAGE_SIZE.get_or_init(|| {
+            #[cfg(unix)]
+            unsafe {
+                // 커널 계층과 직접 통신하여 페이지 크기 획득
+                let size = unsafe { fetch_os_page_size() };
+
+                // 변조된 커널 응답 방어 (최소 4kb 및 2배수 확인)
+                if size < 4096 || !size.is_power_of_two() {
+                    panic!("Security Violation: 안전하지 않거나 변조된 OS 페이지 크기가 감지되었습니다! ({})", size);
+                }
+                size
+            }
+        })
+    }
+
+    #[cfg(not(feature = "std"))]
+    {
+        // Q. T. Felix NOTE: no_std 환경에서는 빌드 타임 타겟 환경 변수 또는 하드웨어 레지스터 직접 조회 방식 적용이 필요합니다
+        //                   현재는 안전을 위해 최소 기준인 4096을 반환하되, 실제 환경에 맞춘 엄격한 포팅이 요구됩니다.
+        4096
+    }
+}
+
+#[cfg(all(feature = "std", target_os = "linux"))]
+unsafe fn fetch_os_page_size() -> usize {
+    let path = b"/proc/self/auxv\0";
+    let fd: isize;
+
+    // SYS_open (x86_64) / SYS_openat (aarch64)
+    #[cfg(target_arch = "x86_64")]
+    unsafe {
+        core::arch::asm!("syscall",
+        in("rax") 2, // SYS_open
+        in("rdi") path.as_ptr(),
+        in("rsi") 0, // O_RDONLY
+        lateout("rax") fd,
+        options(nostack, preserves_flags)
+        );
+    }
+
+    #[cfg(target_arch = "aarch64")]
+    unsafe {
+        core::arch::asm!("svc #0",
+        in("x8") 56, // SYS_openat
+        in("x0") -100isize, // AT_FDCWD
+        in("x1") path.as_ptr(),
+        in("x2") 0, // O_RDONLY
+        in("x3") 0, // Mode
+        lateout("x0") fd,
+        options(nostack, preserves_flags)
+        );
+    }
+
+    if fd < 0 {
+        panic!("Critical Fault: 커널이 auxv를 열기 위한 원시 시스템 호출을 거부했습니다!");
+    }
+
+    let mut buf = [0usize; 64];
+    let mut extracted_page_size = 0;
+    let mut bytes_read: isize;
+
+    // SYS_read 루프
+    loop {
+        #[cfg(target_arch = "x86_64")]
+        unsafe {
+            core::arch::asm!(
+            "syscall",
+            in("rax") 0, // SYS_read
+            in("rdi") fd,
+            in("rsi") buf.as_mut_ptr(),
+            in("rdx") buf.len() * core::mem::size_of::<usize>(),
+            lateout("rax") bytes_read,
+            options(nostack, preserves_flags)
+            );
+        }
+
+        #[cfg(target_arch = "aarch64")]
+        unsafe {
+            core::arch::asm!(
+            "svc #0",
+            in("x8") 63, // SYS_read
+            in("x0") fd,
+            in("x1") buf.as_mut_ptr(),
+            in("x2") buf.len() * core::mem::size_of::<usize>(),
+            lateout("x0") bytes_read,
+            options(nostack, preserves_flags)
+            );
+        }
+
+        if bytes_read <= 0 {
+            break;
+        }
+
+        let count = (bytes_read as usize) / core::mem::size_of::<usize>();
+        let mut i = 0;
+
+        while i < count {
+            if buf[i] == 6 {
+                // 상수 AT_PAGESZ = 6
+                extracted_page_size = buf[i + 1];
+                break;
+            }
+            if buf[i] == 0 {
+                // 상수 AT_NULL = 0 (auxv의 끝)
+                break;
+            }
+            i += 2;
+        }
+        if extracted_page_size != 0 {
+            break;
+        }
+    }
+
+    // SYS_close
+    #[cfg(target_arch = "x86_64")]
+    unsafe {
+        core::arch::asm!(
+        "syscall",
+        in("rax") 3, // SYS_close
+        in("rdi") fd,
+        lateout("rax") _,
+        options(nostack, preserves_flags)
+        );
+    }
+    #[cfg(target_arch = "aarch64")]
+    unsafe {
+        core::arch::asm!(
+        "svc #0",
+        in("x8") 57, // SYS_close
+        in("x0") fd,
+        lateout("x0") _,
+        options(nostack, preserves_flags)
+        );
+    }
+
+    if extracted_page_size == 0 {
+        panic!(
+            "Critical Fault: 프로세스 보조 벡터(auxiliary vector)에서 AT_PAGESZ를 찾을 수 없습니다!"
+        );
+    }
+
+    extracted_page_size
+}
 
 /// 요청된 크기를 시스템 페이지 크기의 배수로 올림 처리합니다.
 ///
 /// 메모리 할당 시 페이지 정렬(Page Alignment)을 보장하기 위해 사용됩니다.
-const fn align_to_page(size: usize) -> usize {
-    let remainder = size % PAGE_SIZE;
+fn align_to_page(size: usize) -> usize {
+    let ps = page_size();
+    let remainder = size % ps;
     if remainder == 0 {
         size
     } else {
-        size + (PAGE_SIZE - remainder)
+        size + (ps - remainder)
     }
 }
 
@@ -50,8 +197,9 @@ impl SecureMemoryBlock {
     /// 하지만 OS의 메모리 잠금 제한(RLIMIT_MEMLOCK 등)에 걸릴 경우 실패할 수 있습니다.
     pub fn allocate_locked(size: usize) -> Result<Self, &'static str> {
         let capacity = align_to_page(size);
+        let ps = page_size();
         // 페이지 크기로 정렬된 레이아웃 생성
-        let layout = Layout::from_size_align(capacity, PAGE_SIZE)
+        let layout = Layout::from_size_align(capacity, ps)
             .map_err(|_| "Invalid memory layout: Size or alignment error")?;
 
         // 할당 시 남는 패딩 영역의 기존 heap 찌꺼기 데이터를 0으로 덮어씀 (Zero-Initialization)
@@ -121,7 +269,48 @@ pub(crate) mod os_lock {
     /// 성공 시 `true`, 실패 시 `false`를 반환합니다.
     #[cfg(unix)]
     pub unsafe fn lock_memory(ptr: *mut u8, len: usize) -> bool {
-        unsafe { mlock(ptr as *const c_void, len) == 0 }
+        // 1차 잠금 시도
+        if unsafe { mlock(ptr as *const c_void, len) == 0 } {
+            return true;
+        }
+
+        // 1차 실패
+        // os 리소스 제한 동적 해제 시도
+        #[cfg(target_os = "linux")]
+        {
+            #[repr(C)]
+            struct Rlimit {
+                rlim_cur: u64,
+                rlim_max: u64,
+            }
+
+            unsafe extern "C" {
+                fn get_rlimit(resource: i32, rlim: *mut Rlimit) -> i32;
+                fn set_rlimit(resource: i32, rlim: *const Rlimit) -> i32;
+            }
+
+            const RLIMIT_MEMLOCK: i32 = 8;
+            const RLIM_INFINITY: u64 = u64::MAX;
+
+            let mut rlim = Rlimit {
+                rlim_cur: 0,
+                rlim_max: 0,
+            };
+
+            unsafe {
+                if get_rlimit(RLIMIT_MEMLOCK, &mut rlim) == 0 {
+                    rlim.rlim_cur = RLIM_INFINITY;
+                    rlim.rlim_max = RLIM_INFINITY;
+
+                    // 한도 상향 성공 시 2차 잠금 재시도
+                    if set_rlimit(RLIMIT_MEMLOCK, &rlim) == 0 {
+                        return mlock(ptr as *const c_void, len) == 0;
+                    }
+                }
+            }
+        }
+        // 권한 부 족같은 이유로 최종 실패
+        false
     }
 
     /// Unix 계열에서의 메모리 잠금 해제 구현

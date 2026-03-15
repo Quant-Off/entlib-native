@@ -50,6 +50,17 @@ The above rules might just be an eyesore. If you fall into one of the following 
   - Do you have opinions on data erasure, its method, or the currently implemented logic?
   - **Do you judge that the security of the overall security logic currently implemented is not rigorous?**
 
+# Key Contributions Based on Latest Release Updates
+
+For this project, contributions corresponding to the following items are our top priority for review (of course, security contributions are priority 0).
+
+- Common
+  - Core functions in many crates return a `SecureBuffer` struct and a string reference via the `Result` enum. This is inappropriate for error propagation.
+- Security Buffer Crate `entlib-native-secure-buffer`
+  - During fall-back for `no_std` isolated environments in `zeroizer.rs`, it is said that cache line flushing may not be guaranteed depending on the hardware (CPU) characteristics of that environment. Delicate evaluation and verification are required for this part.
+
+# Contact
+
 You can contact us in any way regarding the above content (with the exception of specific items).
 
 You can use email <qtfelix@qu4nt.space> or Discord `qtfelix`.
