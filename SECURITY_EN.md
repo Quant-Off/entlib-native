@@ -2,54 +2,59 @@
 
 > [Korean SECURITY](SECURITY.md)
 
-The native library of this EntanglementLib has "military-grade security" and "Anti-Data Remanence" as its core philosophies. We take your security vulnerability reports very seriously, and discovered issues are handled with the highest priority.
+`entlib-native` strictly adheres to the Zero-Trust principle.
+
+We take your security vulnerability reports very seriously, and any issues found will be treated as a top priority.
 
 ## Reporting a Vulnerability
 
-If you have discovered a security vulnerability, sensitive data remanence issue, or memory-related problem in this native library, **please DO NOT post it publicly on GitHub Issues!** Instead, please report it privately according to the procedure below.
+If you discover a complex security vulnerability, data residue issue, or memory-related problem, **NEVER post it publicly on GitHub Issues!** Instead, please report it privately by following the procedure below.
 
 ### How to Report
 
 1. Contact me directly via email at <qtfelix@qu4nt.space>.
-2. Please include `[SECURITY] entlib-native Vulnerability Report [GITHUB USERNAME]` in the email subject.
+2. Please include `[SECURITY] entlib-native Vulnerability Report [GITHUB USERNAME]` in the email subject line.
 3. If possible, please include the following information:
-    * Type of vulnerability (timing issue, key remanence in memory dump, FFI boundary check bypass, PQC algorithm implementation error, etc.)
-    * Reproduction method (PoC code or step-by-step description)
-    * Detailed information of the affected version and environment (OS, computer hardware information, Java version, etc.)
+   * The type of vulnerability (constant-time issue, timing issue, memory data residue, FFI boundary check bypass, cryptographic algorithm implementation error, etc.)
+   * How to reproduce it (PoC code or step-by-step description)
+   * Detailed information about the affected version and environment (OS, computer hardware information, Java, Rust version, etc.)
 
 > [!NOTE]
-> If a PGP key is required for secure communication, please check the `KEYS` file in the repository or request it.
+> If you need a PGP key for secure communication, please check the [KEYS](KEYS) file in the repository or request it.
 
-### Handling Procedure
+### Processing Procedure
 
-Reported vulnerabilities are handled according to the following procedure:
+Reported vulnerabilities are handled through the following procedure:
 
-1. **Receipt Confirmation:** A receipt confirmation email is sent to the reporter within 48 hours.
-2. **Analysis and Verification:** The Quant team internally analyzes the impact and reproducibility of the vulnerability in detail.
-3. **Patch Development:** If the issue is confirmed, a hotfix for `entlib-native` or `entanglementlib` is developed.
-4. **Disclosure and Deployment:** After the patch is completed and released, the vulnerability information is disclosed at an appropriate time in consultation with the reporter.
+1. **Receipt Confirmation:** We will send a confirmation email to the reporter within 48 hours.
+2. **Analysis and Verification:** The Quant team will analyze the impact and reproducibility of the vulnerability in detail.
+3. **Patch Development:** If the problem is confirmed, we will develop a hotfix for `entlib-native` or `entanglementlib`.
+4. **Disclosure and Distribution:** After the patch is completed and released, we will disclose the vulnerability information at an appropriate time in consultation with the reporter.
 
 ## Security Focus Areas
 
-This project particularly considers security in the following areas important:
+This project places particular importance on security in the following areas:
 
-* **Memory Erasure:** Whether sensitive data (keys, plaintexts, random seeds, etc.) are immediately and certainly erased from memory after use. Integrity of erasure logic through `Drop` trait and `write_volatile`.
-* **Constant-Time Operations:** Whether operations dependent on secret keys or data are performed in constant time regardless of input values. Resistance to Timing Attacks.
-* **Random Number Generation:** Correct use of hardware entropy (`rdseed`, `rdrand`, `rndr`) and safety of non-linear mixing logic of `MixedRng`.
-* **FFI Boundaries:** Problems such as memory corruption, null pointer dereference, and buffer overflow that may occur during data exchange between Java and Rust.
-* **Cryptographic Correctness:** Whether implemented algorithms (`SHA-2`, `SHA-3`, `Base64`, etc.) accurately comply with standard specifications (`NIST FIPS`, `SP`, etc.).
+* **Memory Erasure:** Whether sensitive data (keys, plaintext, seeds, etc.) is immediately and reliably erased from memory after use. The integrity of the erasure logic through the `Drop` trait and `write_volatile`.
+* **Constant-Time Operations:** Whether operations that depend on secret keys or data are performed in a constant time regardless of the input value. Resistance to timing attacks.
+* **Random Number Generation:** The correct use and safety of OS hardware entropy.
+* **FFI Boundaries:** Issues that can occur during data exchange between Java and Rust, such as memory corruption, `null` pointer dereferencing, buffer overflows, and lack of filtering.
+* **Cryptographic Correctness:** Whether the implemented cryptographic algorithms accurately comply with standard specifications (`NIST FIPS`, `SP`, etc.).
+* **Cryptographic Correctness (Cryptographic Module):** Whether the Entanglement Library (Java), `entlib-native` (Rust), individually or as a mixed cryptographic module, accurately complies with `FIPS 140-2/3`.
 
 ## Out of Scope
 
 The following items are generally excluded from security vulnerability reports, but may be reviewed in serious cases:
 
-* **Simple Performance Issues:** Simple performance degradation that does not affect security (except when it can lead to `DoS` attacks).
+* **Simple Performance Issues:** Simple performance degradation that does not affect security (except in cases that could lead to a `DoS` attack).
 * **Typos in Documentation:** Simple typos or grammatical errors that do not cause technical misunderstandings.
 * **Experimental Features:** Bugs in features explicitly marked as "Experimental".
 * **User Environment Issues:** Problems caused by defects in the user's OS or hardware itself.
 
-## Acknowledgements
+You can find more details in the [Contribution Document](CONTRIBUTION_EN.md).
 
-If the issue is confirmed as a vulnerability, we will publish a security advisory and include your contribution in the contributors list. If you wish, we can also list your name and contact information in the contributors list.
+## Acknowledgments
 
-We thank in advance all security researchers and developers who have contributed to enhancing the security of the Entanglement Library.
+If the issue is confirmed as a vulnerability, we will issue a security advisory and include your contribution in the list of contributors. If you wish, we can also include your name and contact information in the list of contributors.
+
+We would like to thank in advance all security researchers and developers who have contributed to strengthening the security of the Entanglement Library.

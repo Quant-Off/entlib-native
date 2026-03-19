@@ -1,68 +1,84 @@
-# EntanglementLib: Native Bridge
+# Entanglement Library Native
 
-> [English README](README_EN.md)
+[![Version](https://img.shields.io/badge/version-1.1.0%20Alpha-blue?style=for-the-badge)](https://github.com/Quant-Off/entlib-native)
+[![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)](LICENSE)
+[![Language](https://img.shields.io/badge/language-Java-orange?style=for-the-badge)](https://github.com/Quant-Off/entlib-native)
 
-> [What does this library do?](INTRODUCTION.md) Detailed technical explanations can be found in the [Quant Team Public Documentation](https://docs.qu4nt.space/docs/projects/entanglementlib/entlib-native).
+![lol](entanglementlib-logo.png)
 
-The core functionality of the [EntanglementLib](https://github.com/Quant-Off/entanglementlib/blob/master/README_EN.md) resides in the Rust-based native library. All security operations are performed entirely within this native component.
+A Rust-based native library responsible for all the security features of the [EntanglementLib](https://github.com/Quant-Off/entanglementlib).
 
-Rust is the most suitable native base language for perfectly executing EntanglementLib’s security features. Its greatest strength is guaranteeing memory safety without any performance penalty. In detail, the [Ownership concept](https://doc.rust-lang.org/book/ch04-01-what-is-ownership.html) makes resource management straightforward, and **data-race-free concurrency** strengthens security even in multi-threaded environments. It offers consistent module management aligned with Python or JPMS (Java Platform Module System), easy encapsulation, and other flexible language characteristics. The ability to connect seamlessly with Java via FFI (Foreign Function Interface) is particularly compelling.
+> [Korean README](README.md)
 
-All security operations of EntanglementLib are executed in this native layer. Specifically, it provides the following capabilities:
+Rust is the most suitable native base language for fully implementing the security features of EntanglementLib. The biggest advantage of this language is that it guarantees memory stability without performance degradation. In detail, the [Ownership concept](https://doc.rust-kr.org/ch04-00-understanding-ownership.html) facilitates resource management, and the **concurrency feature without data competition** enhances security even in a multi-threaded environment.
 
-- [X] Hardware true random, mixed random, and quantum random number (Quantum RNG) generation
-- [X] AEAD encryption (ChaCha20)
-- [X] Secure Buffer that guarantees memory erasure
-- [X] Constant-Time operations
-- [X] Hash functions (including SHA2, SHA3, SHAKE)
+It is flexible in itself, such as easy module management and encapsulation consistent with Python or JPMS (Java Platform Module System), and the easy connection with Java through FFI (Foreign Function Interface) is sufficiently attractive.
 
-Each feature is managed as a separate crate. The root uses a virtual manifest, making sub-crate management straightforward. In addition, a dedicated crate implements the FFI functions to fundamentally block incorrect calls when the native is used from the Java side. This crate serves to expose only the essential functions that the Java side should call.
+---
 
-This native library uses **no external dependencies (crates)** for the implementation of its core security features. In other words, it fundamentally does not trust any resources imported from outside. This development philosophy fully supports the **Zero Trust principle**, and the resulting single artifact (the EntanglementLib) operates smoothly even in closed environments. This perfectly aligns with the **Air-Gapped Ready** principle.
+**Currently**, this native library provides the following features(indicating that these items have been stabilized):
 
-Ultimately, this native is a precious resource cultivated in a strict environment and is actively and safely utilized throughout the EntanglementLib.
+- `core`
+    - Secure Buffer that guarantees memory erasure
+    - Constant-Time operation
+    - RNG(HashDRBG)
+    - Base65, Hex en/decoding
+- `crypto`
+    - HASH (including SHA-2, 3, SHAKE)
+    - HKDF (for all hash algorithms)
+    - HMAC (for all hash algorithms)
+
+Each feature is managed as a separate crate under a specific directory, and the root is configured as a virtual manifest, making it easy to manage the sub-crates. The `entlib-native-ffi` crate that implements FFI is used to deliver the main functions to be used on the Java side. These features (and miscellaneous items) are managed under the `internal` directory.
+
+## Security Level
+
+The Entanglement Library aims for Common Criteria (CC) Evaluation Assurance Level (EAL) 4. Currently, all implementations are based on the National Institute of Standards and Technology (NIST) Federal Information Processing Standards (FIPS) 140-3, and CAVP verification is conducted internally whenever an individual algorithm implementation is created or changed.
+
+Of course, this is not a formal verification, but only an internal evaluation. The test vectors provided to CAVP are simply a guide to 'this algorithm works normally'. For Cryptographic Module Validation Program (CMVP), all implemented cryptographic algorithms must operate normally and clearly follow the FIPS standard without any error.
+
+The final security goal of the Entanglement Library is to obtain a grade of CC EAL5+ or higher (EAL7). This requires difficult and complex preparations such as strict design at the hardware level and formal specifications, but it is planned to reach military-grade security in the future. I am in the process of designing the architecture for this.
 
 ## Future Plans
 
-This native still has a long way to go. We must implement a wide variety of classical encryption algorithm modules.
+We need to implement a variety of supported classic cryptographic algorithm modules.
 
-- [ ] AES (128, 192, 256)
-- [ ] ARIA (128, 192, 256)
-- [ ] RSA (2048, 4096, 8192)
-- [ ] ED25519, ED448 signatures
-- [ ] X25519, X448 key agreement
+- AEAD
+    - [ ] ChaCha20
+- BlockCipher
+    - [ ] AES(128, 192, 256)
+    - [ ] ARIA(128, 192, 256)
+- Digital Signature
+    - [ ] RSA(2048, 4096, 8192)
+    - [ ] ED25519, ED448 signature
+    - [ ] X25519, X448 key agreement
 
-In addition, essential cryptographic primitives such as HMAC and HKDF must be provided.
+In addition, cryptographic essential functions such as HMAC and HKDF must also be provided.
 
-The Post-Quantum Cryptography (PQC) algorithms have the following targets:
+The Post-Quantum Cryptography (PQC) algorithm has the following goals.
 
-- [ ] [FIPS 203 (Module Lattice-based Key Encapsulation Mechanism, ML-KEM)](https://csrc.nist.gov/pubs/fips/203/final)
-- [ ] [FIPS 204 (Module Lattice-based Digital Signature Algorithm, ML-DSA)](https://csrc.nist.gov/pubs/fips/204/final)
+- [ ] [FIPS 203 (Module Lattice-based Key Encapsulate Mechanism, ML-KEM)](https://csrc.nist.gov/pubs/fips/203/final)
+- [X] [FIPS 204(Module Lattice-based Digital Signature Algorithm, ML-DSA)](https://csrc.nist.gov/pubs/fips/204/final)
 - [ ] [FIPS 205 (Stateless Hash-based Digital Signature Algorithm, SLH-DSA)](https://csrc.nist.gov/pubs/fips/205/final)
 
-Once the above PQC algorithms are implemented, the following TLS features must also be provided:
+Once the above PQC algorithm is implemented, the following TLS features must also be provided.
 
 - [ ] TLS 1.3
 - [ ] X25519MLKEM768 according to [`draft-ietf-tls-ecdhe-mlkem`](https://datatracker.ietf.org/doc/draft-ietf-tls-ecdhe-mlkem/)
 
-PKIX, JWT and CWT, OTP, and many others — there is clearly still a long road ahead.
+I realize that there is still a long way to go, such as PKIX, JWT and CWT, and OTP.
 
-## Certification and Compliance Requirements
+## Certification and Compliance Required
 
-Implementation alone is not enough. Every feature implemented in this native must completely follow the security implementation (specification) requirements set by international certification authorities and must obtain formal certification. Until then, no algorithm is considered “safe.” Hidden variables can surface at any time.
+In order to fully comply with the aforementioned certification and compliance matters, the cryptographic algorithm is continuously verified, and the FIPS standard of the Entanglement Library itself is also checked. I will record the specific progress on CAVP in another document.
 
-Therefore, when using any functionality from this native, please treat it as an **experimental** feature or use it with that understanding.
+Therefore, if you use `entlib-naitve`, please provide or use it as an 'experimental' feature.
 
 > [!NOTE]
-> Features that have passed strict certification and regulatory review will be updated immediately. You can check the relevant information in [this document](COMPLIANCE_EN.md).
+> Features that have passed strict certification and regulatory review will be updated immediately. I will make sure that this information is available in [this document](COMPLIANCE_EN.md).
 
-# Inspiration and Contribution
+# Contribution
 
-Coincidentally, the respected security collective `Legion of the BouncyCastle Inc` has begun development of [`bc-rust`](https://github.com/bcgit/bc-rust/), providing a great deal of inspiration that is highly relevant to EntanglementLib’s bridging technology. They have been a constant source of strength for me from the very beginning of EntanglementLib development up to now. In any case, I will maintain this development pace and will continue to update this document in line with future releases. Ultimately, development will proceed steadily toward this goal.
+My favorite security group, `Legion of the BouncyCastle Inc`, has started developing [`bc-rust`](https://github.com/bcgit/bc-rust/), and I have gained a lot of useful technical inspiration from it, such as cryptographic algorithms and key management methods. They have always been my strength since I started developing the Entanglement Library. Anyway, I will maintain this development speed (10 hours a day, 7 days a week, but commits are slow), and I will continue to revise this document according to future updates. In the end, I plan to develop towards this goal.
 
 > [!TIP]
-> Your feedback is always an enormous help. If you would like to contribute to this project, please refer to [this guide](CONTRIBUTION_EN.md)!
-
-# Benchmarking
-
-Benchmarking of this native library is performed using the `criterion` crate. Detailed results for each benchmark can be found in the [benchmarks subdirectory](benchmarks).
+> Your feedback is always a great help. If you want to contribute to this project, please refer to the issues or the [contribution document](CONTRIBUTION_EN.md)!
