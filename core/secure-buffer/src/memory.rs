@@ -160,10 +160,10 @@ unsafe fn fetch_os_page_size() -> usize {
 #[cfg(all(feature = "std", unix, not(target_os = "linux")))]
 fn fetch_os_page_size() -> usize {
     unsafe extern "C" {
-        fn get_pagesize() -> core::ffi::c_int;
+        fn getpagesize() -> core::ffi::c_int;
     }
 
-    let size = unsafe { get_pagesize() };
+    let size = unsafe { getpagesize() };
 
     // 비정상적인 OS 응답 방어
     if size <= 0 {
