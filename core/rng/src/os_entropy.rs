@@ -42,6 +42,42 @@ pub fn extract_os_entropy(size: usize) -> Result<SecureBuffer, &'static str> {
     Ok(buffer)
 }
 
+#[cfg(all(target_os = "linux", target_arch = "aarch64"))]
+pub fn extract_os_entropy(size: usize) -> Result<SecureBuffer, &'static str> {
+    let mut buffer = SecureBuffer::new_owned(size)?;
+    let buf_slice = buffer.as_mut_slice();
+    let mut read_bytes = 0;
+
+    // SYS_getrandom = 278 (aarch64 Linux), flags = 0 (/dev/urandom 동작)
+    while read_bytes < size {
+        let ret: isize;
+        unsafe {
+            asm!(
+                "svc #0",
+                in("x8") 278usize,
+                in("x0") buf_slice[read_bytes..].as_mut_ptr(),
+                in("x1") size - read_bytes,
+                in("x2") 0usize,
+                lateout("x0") ret,
+                options(nostack),
+            );
+        }
+        if ret < 0 {
+            if -ret == 4 {
+                // EINTR
+                continue;
+            }
+            return Err("Entropy extraction failed due to OS kernel error.");
+        }
+        if ret == 0 {
+            return Err("OS entropy source returned EOF unexpectedly.");
+        }
+        read_bytes += ret as usize;
+    }
+
+    Ok(buffer)
+}
+
 #[cfg(target_os = "macos")]
 pub fn extract_os_entropy(size: usize) -> Result<SecureBuffer, &'static str> {
     // getentropy(2): macOS 10.12+, 최대 256 바이트, 단일 호출로 완전 채움
@@ -60,6 +96,7 @@ pub fn extract_os_entropy(size: usize) -> Result<SecureBuffer, &'static str> {
     Ok(buffer)
 }
 
+#[allow(dead_code)]
 #[cfg(target_arch = "x86_64")]
 pub fn extract_hardware_entropy(size: usize) -> Result<SecureBuffer, &'static str> {
     // 8비트 단위 할당
@@ -67,7 +104,7 @@ pub fn extract_hardware_entropy(size: usize) -> Result<SecureBuffer, &'static st
     let buf_slice = buffer.as_mut_slice();
 
     // RDSEED는 8비트 단위 추출 (8배수 검증)
-    if size % 8 != 0 {
+    if !size.is_multiple_of(8) {
         return Err("Hardware entropy size must be a multiple of 8 bytes.");
     }
 
@@ -111,7 +148,7 @@ pub fn extract_hardware_entropy_arm(size: usize) -> Result<SecureBuffer, &'stati
     let mut buffer = SecureBuffer::new_owned(size)?;
     let buf_slice = buffer.as_mut_slice();
 
-    if size % 8 != 0 {
+    if !size.is_multiple_of(8) {
         return Err("Hardware entropy size must be a multiple of 8 bytes.");
     }
 
