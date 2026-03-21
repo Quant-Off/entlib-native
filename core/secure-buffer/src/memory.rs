@@ -8,9 +8,15 @@ pub(crate) fn page_size() -> usize {
     #[cfg(feature = "std")]
     {
         static OS_PAGE_SIZE: OnceLock<usize> = OnceLock::new();
-        *OS_PAGE_SIZE.get_or_init(|| unsafe {
+        *OS_PAGE_SIZE.get_or_init(|| {
             #[cfg(unix)]
+            {
                 // 커널 계층과 직접 통신하여 페이지 크기 획득
+                // Linux: fetch_os_page_size()는 raw syscall을 사용하는 unsafe fn
+                // 그 외 Unix(macOS 등): POSIX getpagesize() 래퍼이므로 safe fn
+                #[cfg(target_os = "linux")]
+                let size = unsafe { fetch_os_page_size() };
+                #[cfg(not(target_os = "linux"))]
                 let size = fetch_os_page_size();
 
                 // 변조된 커널 응답 방어 (최소 4kb 및 2배수 확인)
@@ -18,7 +24,8 @@ pub(crate) fn page_size() -> usize {
                     panic!("Security Violation: 안전하지 않거나 변조된 OS 페이지 크기가 감지되었습니다! ({})", size);
                 }
                 size
-        })
+            }
+        }) // Q. T. Felix TODO: 베어메탈 환경 대응이 필요합니다.
     }
 
     #[cfg(not(feature = "std"))]
@@ -226,6 +233,7 @@ impl SecureMemoryBlock {
         #[cfg(feature = "std")]
         unsafe {
             // OS별 메모리 잠금 수행
+            // Q. T. Felix TODO: 베어메탈 std 환경에서 lock_memory는 사용할 수 없습니다.
             if !os_lock::lock_memory(ptr, capacity) {
                 // 잠금 실패 시, 할당했던 메모리를 즉시 해제하고 에러 반환
                 dealloc(ptr, layout);
@@ -250,6 +258,7 @@ impl SecureMemoryBlock {
         #[cfg(feature = "std")]
         // 메모리 잠금 해제 (페이지 아웃 허용)
         unsafe {
+            // Q. T. Felix TODO: 베어메탈 std 환경에서 unlock_memory는 사용할 수 없습니다.
             os_lock::unlock_memory(self.ptr, self.capacity);
         }
 
