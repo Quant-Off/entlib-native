@@ -381,7 +381,8 @@ pub fn poly_simple_bit_unpack_t1(v: &[u8]) -> Poly {
 //
 
 #[cfg(test)]
-mod tests { // todo: 이거 옮기든가 축약하든가 해야되는데
+mod tests {
+    // todo: 이거 옮기든가 축약하든가 해야되는데
     // 보기 안ㄴ좋음
     use super::*;
     use crate::poly::PolyVec;
