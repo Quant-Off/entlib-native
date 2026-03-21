@@ -43,29 +43,36 @@ The final security goal of the Entanglement Library is to obtain a grade of CC E
 We need to implement a variety of supported classic cryptographic algorithm modules.
 
 - AEAD
-    - [ ] ChaCha20
-- BlockCipher
-    - [ ] AES(128, 192, 256)
-    - [ ] ARIA(128, 192, 256)
+  - [ ] ChaCha20
+- Block Cipher
+  - [ ] AES (128, 192, 256)
+  - [ ] ARIA (128, 192, 256)
+- KDF (Key Derivation Function)
+  - [ ] PBKDF2
+  - [ ] Argon2id
 - Digital Signature
-    - [ ] RSA(2048, 4096, 8192)
-    - [ ] ED25519, ED448 signature
-    - [ ] X25519, X448 key agreement
+  - [ ] RSA (2048, 4096, 8192)
+  - [ ] ED25519, ED448 Signatures
+  - [ ] X25519, X448 Key Agreement
+- De/Serializer, En/Decoder
+  - [ ] ASN.1 Encoder/Decoder
+  - [ ] PEM/DER Serializer
+- PKC Standard Pipeline
+  - [ ] PKCS #8
+  - [ ] PKCS #11
+    - [ ] C-API FFI Mapping
+    - [ ] Dynamic Loader (System Call-based)
 
-In addition, cryptographic essential functions such as HMAC and HKDF must also be provided.
+Post-Quantum Cryptography (PQC) algorithms aim to achieve the following goals.
 
-The Post-Quantum Cryptography (PQC) algorithm has the following goals.
+- [ ] FIPS 203 (Module Lattice-based Key Encapsulation Mechanism, ML-KEM)
+- [x] FIPS 204 (Module Lattice-based Digital Signature Algorithm, ML-DSA)
+- [ ] FIPS 205 (Stateless Hash-based Digital Signature Algorithm, SLH-DSA)
 
-- [ ] [FIPS 203 (Module Lattice-based Key Encapsulate Mechanism, ML-KEM)](https://csrc.nist.gov/pubs/fips/203/final)
-- [X] [FIPS 204(Module Lattice-based Digital Signature Algorithm, ML-DSA)](https://csrc.nist.gov/pubs/fips/204/final)
-- [ ] [FIPS 205 (Stateless Hash-based Digital Signature Algorithm, SLH-DSA)](https://csrc.nist.gov/pubs/fips/205/final)
-
-Once the above PQC algorithm is implemented, the following TLS features must also be provided.
+Additionally, the following TLS features must be supported.
 
 - [ ] TLS 1.3
-- [ ] X25519MLKEM768 according to [`draft-ietf-tls-ecdhe-mlkem`](https://datatracker.ietf.org/doc/draft-ietf-tls-ecdhe-mlkem/)
-
-I realize that there is still a long way to go, such as PKIX, JWT and CWT, and OTP.
+- [ ] X25519MLKEM768 in accordance with `draft-ietf-tls-ecdhe-mlkem`
 
 ## Certification and Compliance Required
 
