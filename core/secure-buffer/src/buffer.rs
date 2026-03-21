@@ -70,6 +70,7 @@ impl SecureBuffer {
 
         #[cfg(feature = "std")]
         unsafe {
+            // Q. T. Felix TODO: 베어메탈 std 환경에서 lock_memory는 사용할 수 없습니다.
             // 외부 메모리라도 Rust 쪽에서 사용 중에는 스왑되지 않도록 잠금 시도
             if !crate::memory::os_lock::lock_memory(ptr, len) {
                 return Err("Failed to lock external memory segment.");
@@ -100,7 +101,7 @@ impl SecureBuffer {
     ///
     /// # Security Note
     /// 반환된 슬라이스는 `SecureBuffer`의 수명에 묶여 있습니다.
-    /// 슬라이스를 통해 얻은 데이터는 별도로 복사하지 말고 제자리에서 사용하십시오.
+    /// 슬라이스를 통해 얻은 데이터는 별도로 복사하지 말고 제자리에서 사용하세요.
     #[inline(always)]
     pub fn as_slice(&self) -> &[u8] {
         unsafe { core::slice::from_raw_parts(self.ptr, self.len) }
@@ -139,6 +140,7 @@ impl Drop for SecureBuffer {
             // 외부가 소유한 메모리: 잠금만 해제하고, 메모리 반환은 Java Arena 등에 위임
             #[cfg(feature = "std")]
             unsafe {
+                // Q. T. Felix TODO: 베어메탈 std 환경에서 unlock_memory는 사용할 수 없습니다.
                 crate::memory::os_lock::unlock_memory(self.ptr, self.capacity);
             }
         }
