@@ -2,7 +2,7 @@
 
 [![Version](https://img.shields.io/badge/version-2.0.0-blue?style=for-the-badge)](https://github.com/Quant-Off/entlib-native)
 [![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)](LICENSE)
-[![Language](https://img.shields.io/badge/language-Java-orange?style=for-the-badge)](https://github.com/Quant-Off/entlib-native)
+[![Language](https://img.shields.io/badge/language-Rust-000000?style=for-the-badge)](https://github.com/Quant-Off/entlib-native)
 
 ![lol](entanglementlib-logo.png)
 
@@ -47,12 +47,21 @@ Python이나 JPMS(Java Platform Module System)와 일관된 모듈 관리, 캡�
 - BlockCipher
   - [ ] AES(128, 192, 256)
   - [ ] ARIA(128, 192, 256)
+- KDF
+  - [ ] PBKDF2
+  - [ ] Argon2id
 - Digital Signature
   - [ ] RSA(2048, 4096, 8192)
   - [ ] ED25519, ED448 서명
   - [ ] X25519, X448 키 합의
-
-이 뿐만 아니라 HMAC, HKDF 등의 암호학적 필수 기능도 제공되어야 합니다.
+- De/Serializer, En/Decoder
+  - [ ] ASN.1 인/디코더
+  - [ ] PEM/DER 직렬화기
+- PKC Standard Pipeline
+  - [ ] PKCS #8
+  - [PKCS #11](https://docs.oasis-open.org/pkcs11/pkcs11-base/v2.40/os/pkcs11-base-v2.40-os.html)
+    - [ ] C-API FFI 매핑
+    - [ ] Dyn Loader (시스템 콜 방식)
 
 양자-내성 암호화(Post-Quantum Cryptography, PQC) 알고리즘은 다음의 목표를 가집니다.
 
@@ -60,12 +69,11 @@ Python이나 JPMS(Java Platform Module System)와 일관된 모듈 관리, 캡�
 - [X] [FIPS 204(Module Lattice-based Digital Signature Algorithm, ML-DSA)](https://csrc.nist.gov/pubs/fips/204/final)
 - [ ] [FIPS 205(Stateless Hash-based Digital Signature Algorithm, SLH-DSA)](https://csrc.nist.gov/pubs/fips/205/final)
 
-위 PQC 알고리즘이 구현되면 다음의 TLS 기능도 제공되어야 합니다.
+그리고 다음의 TLS 기능도 제공되어야 합니다.
 
 - [ ] TLS 1.3
 - [ ] [`draft-ietf-tls-ecdhe-mlkem`](https://datatracker.ietf.org/doc/draft-ietf-tls-ecdhe-mlkem/)에 따른 X25519MLKEM768
-
-PKIX나 JWT 및 CWT, OTP 등, 아직 갈 길이 멀다는 것이 실감됩니다.
+- [ ] X9.146 QTLS 확장 표준
 
 ## 인증 및 규정 준수 필요
 

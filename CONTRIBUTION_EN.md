@@ -64,9 +64,11 @@ Contributions corresponding to the following items for this project are classifi
 - Common
   - **Correct error propagation method**: The core function of many crates returns a `SecureBuffer` struct and a string reference through a `Result` enum. This is inappropriate for error propagation.
   - **Compliance issues**: If you find any parts that do not comply with international certifications and regulations in the implementation of the cryptographic module, please contact us immediately.
+  - **Error messages**: Error messages should be ambiguous by default, but they must be truthful enough to be subtly recognizable. What do you think of the current error messages?
 - Secure buffer crate `entlib-native-secure-buffer`
   - **Bare-metal cache flush issue**: When falling back for a no_std closed environment in `zeroizer.rs`, it is said that cache line flushing may not be guaranteed depending on the hardware (CPU) characteristics of the environment. Delicate evaluation and verification are needed for this part.
   - **Double lock**: When interacting through the JO (Java-Owned) pattern, the memory is locked and then transmitted. The `SecureMemoryBlock` struct on the Rust side performs another lock on this data. What do you think about this operation?
+  - **Bare-metal support**: Most modern IoT, HSM, and automotive systems run on ARM-based bare-metal or RTOS environments. Currently, the secure buffer uses system calls like `mlock` to lock memory, but such responses are impossible in bare-metal environments. We need ideas for "possible responses" at the software level.
 - CI workflow
   - **Strict constant-time check**: Do you think the currently implemented constant-time operation is insufficient, or what do you think should be done for strict verification?
   - **How to track memory corruption**: Level 3 (binary memory corruption tracking) of the CC constant-time audit workflow uses Valgrind to perform tests in a Unix environment. However, I have temporarily disabled it because I don't have a big idea about this part yet. Please let me know if you have a good idea about this.
