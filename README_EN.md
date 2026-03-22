@@ -54,9 +54,9 @@ We need to implement a variety of supported classic cryptographic algorithm modu
   - [ ] RSA (2048, 4096, 8192)
   - [ ] ED25519, ED448 Signatures
   - [ ] X25519, X448 Key Agreement
-- De/Serializer, En/Decoder
-  - [ ] ASN.1 Encoder/Decoder
-  - [ ] PEM/DER Serializer
+- Serializer / Encode Pipeline
+  - [X] DER
+  - [ ] PEM
 - PKC Standard Pipeline
   - [ ] PKCS #8
   - [PKCS #11](https://docs.oasis-open.org/pkcs11/pkcs11-base/v2.40/os/pkcs11-base-v2.40-os.html)
