@@ -308,8 +308,8 @@ pub(crate) mod os_lock {
             }
 
             unsafe extern "C" {
-                fn get_rlimit(resource: i32, rlim: *mut Rlimit) -> i32;
-                fn set_rlimit(resource: i32, rlim: *const Rlimit) -> i32;
+                fn getrlimit(resource: i32, rlim: *mut Rlimit) -> i32;
+                fn setrlimit(resource: i32, rlim: *const Rlimit) -> i32;
             }
 
             const RLIMIT_MEMLOCK: i32 = 8;
@@ -321,12 +321,12 @@ pub(crate) mod os_lock {
             };
 
             unsafe {
-                if get_rlimit(RLIMIT_MEMLOCK, &mut rlim) == 0 {
+                if getrlimit(RLIMIT_MEMLOCK, &mut rlim) == 0 {
                     rlim.rlim_cur = RLIM_INFINITY;
                     rlim.rlim_max = RLIM_INFINITY;
 
                     // 한도 상향 성공 시 2차 잠금 재시도
-                    if set_rlimit(RLIMIT_MEMLOCK, &rlim) == 0 {
+                    if setrlimit(RLIMIT_MEMLOCK, &rlim) == 0 {
                         return mlock(ptr as *const c_void, len) == 0;
                     }
                 }
