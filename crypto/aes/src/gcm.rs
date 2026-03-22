@@ -1,3 +1,6 @@
+//! AES-256-GCM AEAD 모듈입니다.
+//! NIST SP 800-38D 준거. 96비트 nonce, 128비트 인증 태그를 지원합니다.
+
 use core::ptr::write_volatile;
 use entlib_native_constant_time::traits::ConstantTimeEq;
 use entlib_native_secure_buffer::SecureBuffer;
@@ -60,13 +63,12 @@ fn ct_eq_16(a: &[u8; 16], b: &[u8; 16]) -> bool {
     r == 0xFF
 }
 
-/// AES-256-GCM (AEAD)
-///
-/// NIST SP 800-38D 준거. 96비트 nonce만 지원.
+/// AES-256-GCM AEAD 암호화 구조체입니다.
+/// NIST SP 800-38D 준거이며 96비트 nonce만 지원합니다.
 pub struct AES256GCM;
 
 impl AES256GCM {
-    /// GCM 암호화
+    /// AES-256-GCM 암호화 함수입니다.
     ///
     /// # Arguments
     /// - `key` — 256비트(32 bytes) AES 키
@@ -135,7 +137,7 @@ impl AES256GCM {
         Ok(())
     }
 
-    /// GCM 복호화 및 태그 검증
+    /// AES-256-GCM 복호화 및 태그 검증 함수입니다.
     ///
     /// # Security Note
     /// 태그 검증에 실패하면 평문을 출력하지 않습니다. 상수-시간 비교를 사용합니다.

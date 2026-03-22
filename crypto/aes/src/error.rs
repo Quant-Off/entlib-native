@@ -1,4 +1,6 @@
-/// AES-256 연산 중 발생할 수 있는 오류
+//! AES-256 오류 타입 모듈입니다.
+
+/// AES-256 연산 중 발생할 수 있는 오류 열거형입니다.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AESError {
     /// 키 길이가 256비트(32 bytes)가 아님

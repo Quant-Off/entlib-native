@@ -1,3 +1,6 @@
+//! GHASH 인증 함수 모듈입니다.
+//! NIST SP 800-38D 준거 GF(2^128) 상수-시간 연산으로 GCM 인증 태그를 계산합니다.
+
 use core::ptr::write_volatile;
 
 // GCM GF(2^128) 곱셈: 환원 다항식 x^128 + x^7 + x^2 + x + 1
@@ -30,12 +33,18 @@ fn gf128_mul(x: &mut [u64; 2], h: &[u64; 2]) {
     *x = z;
 }
 
+/// GCM 인증 태그 계산을 위한 GHASH 상태 구조체입니다.
+/// `Drop` 시 내부 H 값과 누산 상태를 소거합니다.
 pub struct GHashState {
     h: [u64; 2],
     state: [u64; 2],
 }
 
 impl GHashState {
+    /// GHASH 상태를 초기화하는 함수입니다.
+    ///
+    /// # Arguments
+    /// `h_block` — H = AES_K(0^128) 블록
     pub fn new(h_block: &[u8; 16]) -> Self {
         let h = [
             u64::from_be_bytes([
@@ -64,6 +73,7 @@ impl GHashState {
         gf128_mul(&mut self.state, &self.h);
     }
 
+    /// 데이터를 GHASH 상태에 누적하는 함수입니다. 16바이트 단위로 처리하며 나머지는 0 패딩합니다.
     pub fn update(&mut self, data: &[u8]) {
         let mut i = 0;
         while i + 16 <= data.len() {
@@ -87,7 +97,12 @@ impl GHashState {
         }
     }
 
-    // 인증 태그 계산: 길이 블록 처리 후 최종 GHASH 값 반환
+    /// GHASH 최종값을 반환하는 함수입니다.
+    /// AAD/암호문 길이 블록을 처리한 뒤 16바이트 GHASH 출력을 반환합니다.
+    ///
+    /// # Arguments
+    /// - `aad_len` — AAD 바이트 수
+    /// - `ct_len` — 암호문 바이트 수
     pub fn finalize(mut self, aad_len: u64, ct_len: u64) -> [u8; 16] {
         let aad_bits = aad_len * 8;
         let ct_bits = ct_len * 8;

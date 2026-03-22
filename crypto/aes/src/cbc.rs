@@ -1,3 +1,6 @@
+//! AES-256-CBC-HMAC-SHA256 모듈입니다.
+//! PKCS7 패딩, Encrypt-then-MAC 방식으로 기밀성과 무결성을 동시에 제공합니다.
+
 use core::ptr::write_volatile;
 use entlib_native_constant_time::traits::ConstantTimeEq;
 use entlib_native_hmac::HMACSHA256;
@@ -9,13 +12,15 @@ use crate::error::AESError;
 pub const CBC_IV_LEN: usize = 16;
 pub const CBC_HMAC_LEN: usize = 32;
 
-/// CBC 암호화 출력 크기: IV(16) || 패딩된 암호문 || HMAC-SHA256(32)
+/// CBC 암호화 출력 크기를 반환하는 함수입니다.
+/// 출력 형식: `IV(16) || PKCS7-패딩된 암호문 || HMAC-SHA256(32)`
 pub fn cbc_output_len(plaintext_len: usize) -> usize {
     let padded = (plaintext_len / 16 + 1) * 16;
     CBC_IV_LEN + padded + CBC_HMAC_LEN
 }
 
-/// CBC 복호화 최대 평문 크기 (입력에서 IV·HMAC 제거, PKCS7 최소 1바이트)
+/// CBC 복호화 후 최대 평문 크기를 반환하는 함수입니다.
+/// 입력에서 IV(16), HMAC(32), PKCS7 최소 패딩(1)을 제외한 크기를 반환합니다.
 pub fn cbc_plaintext_max_len(input_len: usize) -> Option<usize> {
     input_len.checked_sub(CBC_IV_LEN + CBC_HMAC_LEN + 1)
 }
@@ -60,14 +65,12 @@ fn pkcs7_unpad_len(data: &[u8]) -> Result<usize, AESError> {
 // fxxk@@@ ^^7 일단 커밋 하고 pr로 수정
 //
 
-/// AES-256-CBC + PKCS7 + Encrypt-then-MAC(HMAC-SHA256)
-///
-/// CBC 모드는 단독으로 사용할 수 없습니다. 암호문 전체(IV 포함)에
-/// 대해 HMAC-SHA256 무결성 태그를 붙여야 합니다.
+/// AES-256-CBC-HMAC-SHA256 AEAD 구조체입니다.
+/// CBC 모드는 단독으로 사용할 수 없으며, 반드시 Encrypt-then-MAC 방식으로 무결성 태그를 붙여야 합니다.
 pub struct AES256CBCHmac;
 
 impl AES256CBCHmac {
-    /// CBC-HMAC 암호화
+    /// AES-256-CBC-HMAC-SHA256 암호화 함수입니다.
     ///
     /// # Arguments
     /// - `enc_key` — 256비트(32 bytes) AES 암호화 키
@@ -160,7 +163,7 @@ impl AES256CBCHmac {
         Ok(ct_end + 32)
     }
 
-    /// CBC-HMAC 복호화
+    /// AES-256-CBC-HMAC-SHA256 복호화 함수입니다.
     ///
     /// # Arguments
     /// - `enc_key` — 256비트(32 bytes) AES 복호화 키

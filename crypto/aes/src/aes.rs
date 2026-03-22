@@ -1,3 +1,20 @@
+//! AES-256 블록 암호 코어 모듈입니다.
+//! 룩업 테이블 없이 GF(2^8) 산술 연산만으로 구현하여 캐시-타이밍 부채널 공격을 차단합니다.
+//!
+//! # Examples
+//! ```rust
+//! use entlib_native_aes::{AES256GCM, GCM_NONCE_LEN, GCM_TAG_LEN};
+//! use entlib_native_secure_buffer::SecureBuffer;
+//!
+//! let mut key = SecureBuffer::new_owned(32).unwrap();
+//! key.as_mut_slice().copy_from_slice(&[0u8; 32]);
+//! let nonce = [0u8; GCM_NONCE_LEN];
+//! let plaintext = b"hello world";
+//! let mut ct = vec![0u8; plaintext.len()];
+//! let mut tag = [0u8; GCM_TAG_LEN];
+//! AES256GCM::encrypt(&key, &nonce, &[], plaintext, &mut ct, &mut tag).unwrap();
+//! ```
+
 use core::ptr::write_volatile;
 
 pub type Block = [u8; 16];
@@ -36,7 +53,8 @@ fn gf_inv(a: u8) -> u8 {
     gmul(gmul(gmul(gmul(gmul(gmul(a128, a64), a32), a16), a8), a4), a2)
 }
 
-// SubBytes 아핀 변환: b = a ^ rot(a,1) ^ rot(a,2) ^ rot(a,3) ^ rot(a,4) ^ 0x63
+/// AES SubBytes 바이트 치환 함수입니다.
+/// GF(2^8) 역원(a^254) 계산 후 아핀 변환을 적용하여 S-Box 출력을 반환합니다.
 #[inline(always)]
 pub fn sub_byte(a: u8) -> u8 {
     let inv = gf_inv(a);
@@ -158,12 +176,17 @@ const RCON: [u32; 7] = [
     0x10000000, 0x20000000, 0x40000000,
 ];
 
-// 확장 키: 15개의 라운드 키 (AES-256)
+/// AES-256 키 스케줄 구조체입니다.
+/// 256비트 키로부터 15개의 라운드 키를 파생하며, `Drop` 시 모든 라운드 키를 소거합니다.
 pub struct KeySchedule {
     pub round_keys: [Block; 15],
 }
 
 impl KeySchedule {
+    /// AES-256 키 스케줄을 생성하는 함수입니다.
+    ///
+    /// # Arguments
+    /// `key` — 256비트(32 bytes) AES 키
     pub fn new(key: &[u8; 32]) -> Self {
         let mut w = [0u32; 60];
 
@@ -216,6 +239,12 @@ impl Drop for KeySchedule {
     }
 }
 
+/// AES-256 블록 암호화 함수입니다.
+/// 14라운드 순방향 암호(SubBytes → ShiftRows → MixColumns → AddRoundKey)를 수행합니다.
+///
+/// # Arguments
+/// - `state` — 입출력 16바이트 블록 (in-place)
+/// - `ks` — 사전 생성된 키 스케줄
 pub fn aes256_encrypt_block(state: &mut Block, ks: &KeySchedule) {
     add_round_key(state, &ks.round_keys[0]);
     for round in 1..14 {
@@ -229,7 +258,10 @@ pub fn aes256_encrypt_block(state: &mut Block, ks: &KeySchedule) {
     add_round_key(state, &ks.round_keys[14]);
 }
 
-/// 단일 블록 ECB 암호화 — KAT(Known Answer Test) 전용
+/// 단일 블록 ECB 암호화 함수입니다. KAT(Known Answer Test) 전용입니다.
+///
+/// # Security Note
+/// ECB 모드는 패턴을 보존하므로 실제 암호화에 사용할 수 없습니다.
 #[cfg_attr(not(test), allow(dead_code))]
 pub fn aes256_encrypt_ecb(key: &[u8; 32], plaintext: &[u8; 16]) -> Block {
     let ks = KeySchedule::new(key);
@@ -238,6 +270,12 @@ pub fn aes256_encrypt_ecb(key: &[u8; 32], plaintext: &[u8; 16]) -> Block {
     state
 }
 
+/// AES-256 블록 복호화 함수입니다.
+/// 14라운드 역방향 암호(InvShiftRows → InvSubBytes → AddRoundKey → InvMixColumns)를 수행합니다.
+///
+/// # Arguments
+/// - `state` — 입출력 16바이트 블록 (in-place)
+/// - `ks` — 사전 생성된 키 스케줄
 pub fn aes256_decrypt_block(state: &mut Block, ks: &KeySchedule) {
     add_round_key(state, &ks.round_keys[14]);
     for round in (1..14).rev() {
