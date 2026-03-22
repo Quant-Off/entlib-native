@@ -73,6 +73,7 @@ Python이나 JPMS(Java Platform Module System)와 일관된 모듈 관리, 캡�
 
 - [ ] TLS 1.3
 - [ ] [`draft-ietf-tls-ecdhe-mlkem`](https://datatracker.ietf.org/doc/draft-ietf-tls-ecdhe-mlkem/)에 따른 X25519MLKEM768
+- [ ] X9.146 QTLS 확장 표준
 
 ## 인증 및 규정 준수 필요
 
