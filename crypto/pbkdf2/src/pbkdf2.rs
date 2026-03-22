@@ -105,8 +105,8 @@ macro_rules! impl_pbkdf2 {
 
                     // U_j = PRF(Password, U_{j-1}) for j = 2..=c
                     for _ in 1..iterations {
-                        let mut hmac =
-                            <$hmac_type>::new(password.as_slice()).map_err(|_| Pbkdf2Error::HmacError)?;
+                        let mut hmac = <$hmac_type>::new(password.as_slice())
+                            .map_err(|_| Pbkdf2Error::HmacError)?;
                         hmac.update(&u);
                         let mac = hmac.finalize().map_err(|_| Pbkdf2Error::HmacError)?;
                         u.copy_from_slice(mac.as_slice());
