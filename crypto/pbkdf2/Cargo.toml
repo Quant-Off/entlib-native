@@ -1,0 +1,13 @@
+[package]
+name = "entlib-native-pbkdf2"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+entlib-native-secure-buffer.workspace = true
+entlib-native-hmac.workspace = true
+
+[dev-dependencies]
+entlib-native-hex.workspace = true
