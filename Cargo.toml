@@ -33,6 +33,7 @@ entlib-native-secure-buffer = { path = "core/secure-buffer", version = "2.0.0" }
 entlib-native-constant-time = { path = "core/constant-time", version = "2.0.0" }
 ### INTERNAL CRYPTO DEPENDENCIES ###
 entlib-native-tls =               { path = "crypto/tls",               version = "2.0.0" }
+entlib-native-aes =               { path = "crypto/aes",               version = "2.0.0" }
 entlib-native-hkdf =              { path = "crypto/hkdf",              version = "2.0.0" }
 entlib-native-hmac =              { path = "crypto/hmac",              version = "2.0.0" }
 entlib-native-sha2 =              { path = "crypto/sha2",              version = "2.0.0" }
