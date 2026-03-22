@@ -54,9 +54,9 @@ Python이나 JPMS(Java Platform Module System)와 일관된 모듈 관리, 캡�
   - [ ] RSA(2048, 4096, 8192)
   - [ ] ED25519, ED448 서명
   - [ ] X25519, X448 키 합의
-- Serializer / Encode Pipeline
-  - [X] DER
-  - [ ] PEM
+- De/Serializer, En/Decoder
+  - [ ] ASN.1 인/디코더
+  - [ ] PEM/DER 직렬화기
 - PKC Standard Pipeline
   - [ ] PKCS #8
   - [PKCS #11](https://docs.oasis-open.org/pkcs11/pkcs11-base/v2.40/os/pkcs11-base-v2.40-os.html)

@@ -38,7 +38,6 @@ entlib-native-hkdf =              { path = "crypto/hkdf",              version =
 entlib-native-hmac =              { path = "crypto/hmac",              version = "2.0.0" }
 entlib-native-sha2 =              { path = "crypto/sha2",              version = "2.0.0" }
 entlib-native-sha3 =              { path = "crypto/sha3",              version = "2.0.0" }
-entlib-native-armor =             { path = "crypto/armor",             version = "2.0.0" }
 entlib-native-mldsa =             { path = "crypto/mldsa",             version = "2.0.0" }
 entlib-native-pbkdf2 =            { path = "crypto/pbkdf2",            version = "2.0.0" }
 entlib-native-chacha20 =          { path = "crypto/chacha20",          version = "2.0.0" }
