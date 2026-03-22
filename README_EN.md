@@ -59,7 +59,7 @@ We need to implement a variety of supported classic cryptographic algorithm modu
   - [ ] PEM/DER Serializer
 - PKC Standard Pipeline
   - [ ] PKCS #8
-  - [ ] PKCS #11
+  - [PKCS #11](https://docs.oasis-open.org/pkcs11/pkcs11-base/v2.40/os/pkcs11-base-v2.40-os.html)
     - [ ] C-API FFI Mapping
     - [ ] Dynamic Loader (System Call-based)
 
@@ -73,6 +73,7 @@ Additionally, the following TLS features must be supported.
 
 - [ ] TLS 1.3
 - [ ] X25519MLKEM768 in accordance with `draft-ietf-tls-ecdhe-mlkem`
+- [ ] X9.146 QTLS Extension Standard
 
 ## Certification and Compliance Required
 
