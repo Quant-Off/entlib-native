@@ -5,7 +5,7 @@ use core::ptr::write_volatile;
 use entlib_native_constant_time::traits::ConstantTimeEq;
 use entlib_native_secure_buffer::SecureBuffer;
 
-use crate::aes::{aes256_encrypt_block, KeySchedule};
+use crate::aes::{KeySchedule, aes256_encrypt_block};
 use crate::error::AESError;
 use crate::ghash::GHashState;
 
@@ -98,10 +98,9 @@ impl AES256GCM {
         let key_arr: [u8; 32] = {
             let s = key.as_slice();
             [
-                s[0],  s[1],  s[2],  s[3],  s[4],  s[5],  s[6],  s[7],
-                s[8],  s[9],  s[10], s[11], s[12], s[13], s[14], s[15],
-                s[16], s[17], s[18], s[19], s[20], s[21], s[22], s[23],
-                s[24], s[25], s[26], s[27], s[28], s[29], s[30], s[31],
+                s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10], s[11], s[12],
+                s[13], s[14], s[15], s[16], s[17], s[18], s[19], s[20], s[21], s[22], s[23], s[24],
+                s[25], s[26], s[27], s[28], s[29], s[30], s[31],
             ]
         };
         let ks = KeySchedule::new(&key_arr);
@@ -159,10 +158,9 @@ impl AES256GCM {
         let key_arr: [u8; 32] = {
             let s = key.as_slice();
             [
-                s[0],  s[1],  s[2],  s[3],  s[4],  s[5],  s[6],  s[7],
-                s[8],  s[9],  s[10], s[11], s[12], s[13], s[14], s[15],
-                s[16], s[17], s[18], s[19], s[20], s[21], s[22], s[23],
-                s[24], s[25], s[26], s[27], s[28], s[29], s[30], s[31],
+                s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10], s[11], s[12],
+                s[13], s[14], s[15], s[16], s[17], s[18], s[19], s[20], s[21], s[22], s[23], s[24],
+                s[25], s[26], s[27], s[28], s[29], s[30], s[31],
             ]
         };
         let ks = KeySchedule::new(&key_arr);
@@ -187,16 +185,24 @@ impl AES256GCM {
 
         // 상수-시간 태그 검증 — 검증 통과 전에 평문 출력 금지
         if !ct_eq_16(&expected_tag, tag) {
-            for b in &mut ej0 { unsafe { write_volatile(b, 0) }; }
-            for b in &mut h_block { unsafe { write_volatile(b, 0) }; }
+            for b in &mut ej0 {
+                unsafe { write_volatile(b, 0) };
+            }
+            for b in &mut h_block {
+                unsafe { write_volatile(b, 0) };
+            }
             return Err(AESError::AuthenticationFailed);
         }
 
         // 태그 검증 통과 후에만 복호화
         gctr(&ks, &j0, ciphertext, plaintext_out);
 
-        for b in &mut ej0 { unsafe { write_volatile(b, 0) }; }
-        for b in &mut h_block { unsafe { write_volatile(b, 0) }; }
+        for b in &mut ej0 {
+            unsafe { write_volatile(b, 0) };
+        }
+        for b in &mut h_block {
+            unsafe { write_volatile(b, 0) };
+        }
         Ok(())
     }
 }

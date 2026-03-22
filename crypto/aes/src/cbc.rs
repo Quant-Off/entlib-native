@@ -6,7 +6,7 @@ use entlib_native_constant_time::traits::ConstantTimeEq;
 use entlib_native_hmac::HMACSHA256;
 use entlib_native_secure_buffer::SecureBuffer;
 
-use crate::aes::{aes256_decrypt_block, aes256_encrypt_block, KeySchedule};
+use crate::aes::{KeySchedule, aes256_decrypt_block, aes256_encrypt_block};
 use crate::error::AESError;
 
 pub const CBC_IV_LEN: usize = 16;
@@ -39,7 +39,7 @@ fn ct_eq_32(a: &[u8], b: &[u8]) -> bool {
 
 // PKCS7 패딩 검증 (복호화 후) — HMAC 검증 통과 후에만 호출
 fn pkcs7_unpad_len(data: &[u8]) -> Result<usize, AESError> {
-    if data.is_empty() || data.len() % 16 != 0 {
+    if data.is_empty() || !data.len().is_multiple_of(16) {
         return Err(AESError::InternalError);
     }
     let pad_byte = data[data.len() - 1];
@@ -49,8 +49,8 @@ fn pkcs7_unpad_len(data: &[u8]) -> Result<usize, AESError> {
     }
     // 패딩 바이트 상수-시간 검증
     let mut valid = 0xFFu8;
-    for i in (data.len() - pad_len)..data.len() {
-        let diff = data[i] ^ pad_byte;
+    for &b in data.iter().skip(data.len() - pad_len) {
+        let diff = b ^ pad_byte;
         let not_zero = (diff | diff.wrapping_neg()) >> 7;
         valid &= (not_zero ^ 1).wrapping_neg();
     }
@@ -103,10 +103,9 @@ impl AES256CBCHmac {
         let enc_key_arr: [u8; 32] = {
             let s = enc_key.as_slice();
             [
-                s[0],  s[1],  s[2],  s[3],  s[4],  s[5],  s[6],  s[7],
-                s[8],  s[9],  s[10], s[11], s[12], s[13], s[14], s[15],
-                s[16], s[17], s[18], s[19], s[20], s[21], s[22], s[23],
-                s[24], s[25], s[26], s[27], s[28], s[29], s[30], s[31],
+                s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10], s[11], s[12],
+                s[13], s[14], s[15], s[16], s[17], s[18], s[19], s[20], s[21], s[22], s[23], s[24],
+                s[25], s[26], s[27], s[28], s[29], s[30], s[31],
             ]
         };
         let ks = KeySchedule::new(&enc_key_arr);
@@ -154,8 +153,7 @@ impl AES256CBCHmac {
         }
 
         // Encrypt-then-MAC: HMAC-SHA256(IV || 암호문)
-        let mut hmac = HMACSHA256::new(mac_key.as_slice())
-            .map_err(|_| AESError::InternalError)?;
+        let mut hmac = HMACSHA256::new(mac_key.as_slice()).map_err(|_| AESError::InternalError)?;
         hmac.update(&output[..ct_end]);
         let mac = hmac.finalize().map_err(|_| AESError::InternalError)?;
         output[ct_end..ct_end + 32].copy_from_slice(mac.as_slice());
@@ -186,7 +184,7 @@ impl AES256CBCHmac {
             return Err(AESError::InvalidKeyLength);
         }
         // 최소 크기: IV(16) + 블록 1개(16) + HMAC(32) = 64
-        if input.len() < 64 || (input.len() - 48) % 16 != 0 {
+        if input.len() < 64 || !(input.len() - 48).is_multiple_of(16) {
             return Err(AESError::InvalidInputLength);
         }
 
@@ -195,8 +193,7 @@ impl AES256CBCHmac {
         let authenticated = &input[..mac_start];
 
         // MAC 검증 (먼저, Encrypt-then-MAC)
-        let mut hmac = HMACSHA256::new(mac_key.as_slice())
-            .map_err(|_| AESError::InternalError)?;
+        let mut hmac = HMACSHA256::new(mac_key.as_slice()).map_err(|_| AESError::InternalError)?;
         hmac.update(authenticated);
         let expected_mac = hmac.finalize().map_err(|_| AESError::InternalError)?;
 
@@ -207,10 +204,8 @@ impl AES256CBCHmac {
 
         // MAC 검증 통과 후 복호화
         let iv: [u8; 16] = [
-            input[0],  input[1],  input[2],  input[3],
-            input[4],  input[5],  input[6],  input[7],
-            input[8],  input[9],  input[10], input[11],
-            input[12], input[13], input[14], input[15],
+            input[0], input[1], input[2], input[3], input[4], input[5], input[6], input[7],
+            input[8], input[9], input[10], input[11], input[12], input[13], input[14], input[15],
         ];
         let ciphertext = authenticated;
         let ct_blocks = &ciphertext[16..]; // IV 제외한 암호문 부분
@@ -222,10 +217,9 @@ impl AES256CBCHmac {
         let enc_key_arr: [u8; 32] = {
             let s = enc_key.as_slice();
             [
-                s[0],  s[1],  s[2],  s[3],  s[4],  s[5],  s[6],  s[7],
-                s[8],  s[9],  s[10], s[11], s[12], s[13], s[14], s[15],
-                s[16], s[17], s[18], s[19], s[20], s[21], s[22], s[23],
-                s[24], s[25], s[26], s[27], s[28], s[29], s[30], s[31],
+                s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10], s[11], s[12],
+                s[13], s[14], s[15], s[16], s[17], s[18], s[19], s[20], s[21], s[22], s[23], s[24],
+                s[25], s[26], s[27], s[28], s[29], s[30], s[31],
             ]
         };
         let ks = KeySchedule::new(&enc_key_arr);

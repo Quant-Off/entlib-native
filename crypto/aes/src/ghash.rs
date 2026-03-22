@@ -48,25 +48,32 @@ impl GHashState {
     pub fn new(h_block: &[u8; 16]) -> Self {
         let h = [
             u64::from_be_bytes([
-                h_block[0], h_block[1], h_block[2], h_block[3],
-                h_block[4], h_block[5], h_block[6], h_block[7],
+                h_block[0], h_block[1], h_block[2], h_block[3], h_block[4], h_block[5], h_block[6],
+                h_block[7],
             ]),
             u64::from_be_bytes([
-                h_block[8],  h_block[9],  h_block[10], h_block[11],
-                h_block[12], h_block[13], h_block[14], h_block[15],
+                h_block[8],
+                h_block[9],
+                h_block[10],
+                h_block[11],
+                h_block[12],
+                h_block[13],
+                h_block[14],
+                h_block[15],
             ]),
         ];
-        Self { h, state: [0u64; 2] }
+        Self {
+            h,
+            state: [0u64; 2],
+        }
     }
 
     fn update_block(&mut self, block: &[u8; 16]) {
         let b0 = u64::from_be_bytes([
-            block[0], block[1], block[2], block[3],
-            block[4], block[5], block[6], block[7],
+            block[0], block[1], block[2], block[3], block[4], block[5], block[6], block[7],
         ]);
         let b1 = u64::from_be_bytes([
-            block[8],  block[9],  block[10], block[11],
-            block[12], block[13], block[14], block[15],
+            block[8], block[9], block[10], block[11], block[12], block[13], block[14], block[15],
         ]);
         self.state[0] ^= b0;
         self.state[1] ^= b1;
@@ -78,10 +85,22 @@ impl GHashState {
         let mut i = 0;
         while i + 16 <= data.len() {
             let block: [u8; 16] = [
-                data[i],     data[i+1],  data[i+2],  data[i+3],
-                data[i+4],   data[i+5],  data[i+6],  data[i+7],
-                data[i+8],   data[i+9],  data[i+10], data[i+11],
-                data[i+12],  data[i+13], data[i+14], data[i+15],
+                data[i],
+                data[i + 1],
+                data[i + 2],
+                data[i + 3],
+                data[i + 4],
+                data[i + 5],
+                data[i + 6],
+                data[i + 7],
+                data[i + 8],
+                data[i + 9],
+                data[i + 10],
+                data[i + 11],
+                data[i + 12],
+                data[i + 13],
+                data[i + 14],
+                data[i + 15],
             ];
             self.update_block(&block);
             i += 16;
@@ -113,16 +132,16 @@ impl GHashState {
         len_block[3] = (aad_bits >> 32) as u8;
         len_block[4] = (aad_bits >> 24) as u8;
         len_block[5] = (aad_bits >> 16) as u8;
-        len_block[6] = (aad_bits >> 8)  as u8;
-        len_block[7] =  aad_bits         as u8;
-        len_block[8]  = (ct_bits >> 56) as u8;
-        len_block[9]  = (ct_bits >> 48) as u8;
+        len_block[6] = (aad_bits >> 8) as u8;
+        len_block[7] = aad_bits as u8;
+        len_block[8] = (ct_bits >> 56) as u8;
+        len_block[9] = (ct_bits >> 48) as u8;
         len_block[10] = (ct_bits >> 40) as u8;
         len_block[11] = (ct_bits >> 32) as u8;
         len_block[12] = (ct_bits >> 24) as u8;
         len_block[13] = (ct_bits >> 16) as u8;
-        len_block[14] = (ct_bits >> 8)  as u8;
-        len_block[15] =  ct_bits         as u8;
+        len_block[14] = (ct_bits >> 8) as u8;
+        len_block[15] = ct_bits as u8;
         self.update_block(&len_block);
 
         let s = self.state;

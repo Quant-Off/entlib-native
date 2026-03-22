@@ -50,7 +50,10 @@ fn gf_inv(a: u8) -> u8 {
     let a32 = gmul(a16, a16);
     let a64 = gmul(a32, a32);
     let a128 = gmul(a64, a64);
-    gmul(gmul(gmul(gmul(gmul(gmul(a128, a64), a32), a16), a8), a4), a2)
+    gmul(
+        gmul(gmul(gmul(gmul(gmul(a128, a64), a32), a16), a8), a4),
+        a2,
+    )
 }
 
 /// AES SubBytes 바이트 치환 함수입니다.
@@ -71,7 +74,12 @@ fn inv_sub_byte(a: u8) -> u8 {
 #[inline(always)]
 fn sub_word(w: u32) -> u32 {
     let b = w.to_be_bytes();
-    u32::from_be_bytes([sub_byte(b[0]), sub_byte(b[1]), sub_byte(b[2]), sub_byte(b[3])])
+    u32::from_be_bytes([
+        sub_byte(b[0]),
+        sub_byte(b[1]),
+        sub_byte(b[2]),
+        sub_byte(b[3]),
+    ])
 }
 
 fn sub_bytes(state: &mut Block) {
@@ -172,8 +180,7 @@ fn add_round_key(state: &mut Block, rk: &Block) {
 
 // AES-256 Rcon: i/8 = 1..7 → index 0..6
 const RCON: [u32; 7] = [
-    0x01000000, 0x02000000, 0x04000000, 0x08000000,
-    0x10000000, 0x20000000, 0x40000000,
+    0x01000000, 0x02000000, 0x04000000, 0x08000000, 0x10000000, 0x20000000, 0x40000000,
 ];
 
 /// AES-256 키 스케줄 구조체입니다.
@@ -191,12 +198,7 @@ impl KeySchedule {
         let mut w = [0u32; 60];
 
         for i in 0..8 {
-            w[i] = u32::from_be_bytes([
-                key[i * 4],
-                key[i * 4 + 1],
-                key[i * 4 + 2],
-                key[i * 4 + 3],
-            ]);
+            w[i] = u32::from_be_bytes([key[i * 4], key[i * 4 + 1], key[i * 4 + 2], key[i * 4 + 3]]);
         }
 
         for i in 8..60 {
