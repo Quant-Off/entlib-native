@@ -47,30 +47,52 @@ pub(crate) enum Ops {
 macro_rules! run_hash {
     ($hasher:expr, $in_file:expr, $out_file:expr, $raw:expr) => {{
         let interactive = $in_file.is_none();
-        let buf = match $in_file.as_deref().map(input::read_file).unwrap_or_else(input::read_stdin) {
+        let buf = match $in_file
+            .as_deref()
+            .map(input::read_file)
+            .unwrap_or_else(input::read_stdin)
+        {
             Ok(b) => b,
-            Err(e) => { eprintln!("오류: {e}"); std::process::exit(1); }
+            Err(e) => {
+                eprintln!("오류: {e}");
+                std::process::exit(1);
+            }
         };
         let mut hasher = $hasher;
         hasher.update(buf.as_slice());
         let digest = match hasher.finalize() {
             Ok(d) => d,
-            Err(e) => { eprintln!("해시 오류: {e}"); std::process::exit(1); }
+            Err(e) => {
+                eprintln!("해시 오류: {e}");
+                std::process::exit(1);
+            }
         };
-        let result = if $raw {
-            digest
-        } else {
-            hex_encode(digest)
-        };
+        let result = if $raw { digest } else { hex_encode(digest) };
         input::write_output(result, $out_file.as_deref(), interactive);
     }};
 }
 
 pub(crate) fn run(op: Ops) {
     match op {
-        Ops::Sha224 { in_file, out_file, raw } => run_hash!(SHA224::new(), in_file, out_file, raw),
-        Ops::Sha256 { in_file, out_file, raw } => run_hash!(SHA256::new(), in_file, out_file, raw),
-        Ops::Sha384 { in_file, out_file, raw } => run_hash!(SHA384::new(), in_file, out_file, raw),
-        Ops::Sha512 { in_file, out_file, raw } => run_hash!(SHA512::new(), in_file, out_file, raw),
+        Ops::Sha224 {
+            in_file,
+            out_file,
+            raw,
+        } => run_hash!(SHA224::new(), in_file, out_file, raw),
+        Ops::Sha256 {
+            in_file,
+            out_file,
+            raw,
+        } => run_hash!(SHA256::new(), in_file, out_file, raw),
+        Ops::Sha384 {
+            in_file,
+            out_file,
+            raw,
+        } => run_hash!(SHA384::new(), in_file, out_file, raw),
+        Ops::Sha512 {
+            in_file,
+            out_file,
+            raw,
+        } => run_hash!(SHA512::new(), in_file, out_file, raw),
     }
 }

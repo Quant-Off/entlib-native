@@ -71,15 +71,25 @@ pub(crate) enum Ops {
 macro_rules! run_hash {
     ($hasher:expr, $in_file:expr, $out_file:expr, $raw:expr) => {{
         let interactive = $in_file.is_none();
-        let buf = match $in_file.as_deref().map(input::read_file).unwrap_or_else(input::read_stdin) {
+        let buf = match $in_file
+            .as_deref()
+            .map(input::read_file)
+            .unwrap_or_else(input::read_stdin)
+        {
             Ok(b) => b,
-            Err(e) => { eprintln!("오류: {e}"); std::process::exit(1); }
+            Err(e) => {
+                eprintln!("오류: {e}");
+                std::process::exit(1);
+            }
         };
         let mut hasher = $hasher;
         hasher.update(buf.as_slice());
         let digest = match hasher.finalize() {
             Ok(d) => d,
-            Err(e) => { eprintln!("해시 오류: {e}"); std::process::exit(1); }
+            Err(e) => {
+                eprintln!("해시 오류: {e}");
+                std::process::exit(1);
+            }
         };
         let result = if $raw { digest } else { hex_encode(digest) };
         input::write_output(result, $out_file.as_deref(), interactive);
@@ -89,15 +99,25 @@ macro_rules! run_hash {
 macro_rules! run_xof {
     ($hasher:expr, $output_len:expr, $in_file:expr, $out_file:expr, $raw:expr) => {{
         let interactive = $in_file.is_none();
-        let buf = match $in_file.as_deref().map(input::read_file).unwrap_or_else(input::read_stdin) {
+        let buf = match $in_file
+            .as_deref()
+            .map(input::read_file)
+            .unwrap_or_else(input::read_stdin)
+        {
             Ok(b) => b,
-            Err(e) => { eprintln!("오류: {e}"); std::process::exit(1); }
+            Err(e) => {
+                eprintln!("오류: {e}");
+                std::process::exit(1);
+            }
         };
         let mut hasher = $hasher;
         hasher.update(buf.as_slice());
         let digest = match hasher.finalize($output_len) {
             Ok(d) => d,
-            Err(e) => { eprintln!("해시 오류: {e}"); std::process::exit(1); }
+            Err(e) => {
+                eprintln!("해시 오류: {e}");
+                std::process::exit(1);
+            }
         };
         let result = if $raw { digest } else { hex_encode(digest) };
         input::write_output(result, $out_file.as_deref(), interactive);
@@ -106,11 +126,37 @@ macro_rules! run_xof {
 
 pub(crate) fn run(op: Ops) {
     match op {
-        Ops::Sha3_224 { in_file, out_file, raw } => run_hash!(SHA3_224::new(), in_file, out_file, raw),
-        Ops::Sha3_256 { in_file, out_file, raw } => run_hash!(SHA3_256::new(), in_file, out_file, raw),
-        Ops::Sha3_384 { in_file, out_file, raw } => run_hash!(SHA3_384::new(), in_file, out_file, raw),
-        Ops::Sha3_512 { in_file, out_file, raw } => run_hash!(SHA3_512::new(), in_file, out_file, raw),
-        Ops::Shake128 { output_len, in_file, out_file, raw } => run_xof!(SHAKE128::new(), output_len, in_file, out_file, raw),
-        Ops::Shake256 { output_len, in_file, out_file, raw } => run_xof!(SHAKE256::new(), output_len, in_file, out_file, raw),
+        Ops::Sha3_224 {
+            in_file,
+            out_file,
+            raw,
+        } => run_hash!(SHA3_224::new(), in_file, out_file, raw),
+        Ops::Sha3_256 {
+            in_file,
+            out_file,
+            raw,
+        } => run_hash!(SHA3_256::new(), in_file, out_file, raw),
+        Ops::Sha3_384 {
+            in_file,
+            out_file,
+            raw,
+        } => run_hash!(SHA3_384::new(), in_file, out_file, raw),
+        Ops::Sha3_512 {
+            in_file,
+            out_file,
+            raw,
+        } => run_hash!(SHA3_512::new(), in_file, out_file, raw),
+        Ops::Shake128 {
+            output_len,
+            in_file,
+            out_file,
+            raw,
+        } => run_xof!(SHAKE128::new(), output_len, in_file, out_file, raw),
+        Ops::Shake256 {
+            output_len,
+            in_file,
+            out_file,
+            raw,
+        } => run_xof!(SHAKE256::new(), output_len, in_file, out_file, raw),
     }
 }

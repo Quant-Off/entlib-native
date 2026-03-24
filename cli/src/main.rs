@@ -32,6 +32,16 @@ enum Commands {
         #[command(subcommand)]
         op: cmd::sha3::Ops,
     },
+    /// PKCS#8 EncryptedPrivateKeyInfo 암호화/복호화
+    Pkcs8 {
+        #[command(subcommand)]
+        op: cmd::pkcs8::Ops,
+    },
+    /// ML-DSA 전자 서명 (키 생성 / 서명 / 검증)
+    MlDsa {
+        #[command(subcommand)]
+        op: cmd::mldsa::Ops,
+    },
 }
 
 fn main() {
@@ -41,5 +51,7 @@ fn main() {
         Commands::Hex { op } => cmd::hex::run(op),
         Commands::Sha2 { op } => cmd::sha2::run(op),
         Commands::Sha3 { op } => cmd::sha3::run(op),
+        Commands::Pkcs8 { op } => cmd::pkcs8::run(op),
+        Commands::MlDsa { op } => cmd::mldsa::run(op),
     }
 }

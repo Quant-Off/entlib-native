@@ -15,6 +15,9 @@ entlib-native-base64.workspace = true
 entlib-native-hex.workspace = true
 entlib-native-sha2.workspace = true
 entlib-native-sha3.workspace = true
+entlib-native-mldsa.workspace = true
+entlib-native-pkcs8.workspace = true
+entlib-native-rng.workspace = true
 entlib-native-secure-buffer.workspace = true
 
 [target.'cfg(unix)'.dependencies]

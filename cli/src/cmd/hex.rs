@@ -24,24 +24,44 @@ pub(crate) fn run(op: Ops) {
     match op {
         Ops::Encode { in_file, out_file } => {
             let interactive = in_file.is_none();
-            let buf = match in_file.as_deref().map(input::read_file).unwrap_or_else(input::read_stdin) {
+            let buf = match in_file
+                .as_deref()
+                .map(input::read_file)
+                .unwrap_or_else(input::read_stdin)
+            {
                 Ok(b) => b,
-                Err(e) => { eprintln!("오류: {e}"); std::process::exit(1); }
+                Err(e) => {
+                    eprintln!("오류: {e}");
+                    std::process::exit(1);
+                }
             };
             match encode(&buf) {
                 Ok(result) => input::write_output(result, out_file.as_deref(), interactive),
-                Err(e) => { eprintln!("인코딩 오류: {e}"); std::process::exit(1); }
+                Err(e) => {
+                    eprintln!("인코딩 오류: {e}");
+                    std::process::exit(1);
+                }
             }
         }
         Ops::Decode { in_file, out_file } => {
             let interactive = in_file.is_none();
-            let buf = match in_file.as_deref().map(input::read_file).unwrap_or_else(input::read_stdin) {
+            let buf = match in_file
+                .as_deref()
+                .map(input::read_file)
+                .unwrap_or_else(input::read_stdin)
+            {
                 Ok(b) => b,
-                Err(e) => { eprintln!("오류: {e}"); std::process::exit(1); }
+                Err(e) => {
+                    eprintln!("오류: {e}");
+                    std::process::exit(1);
+                }
             };
             match decode(&buf) {
                 Ok(result) => input::write_output(result, out_file.as_deref(), interactive),
-                Err(e) => { eprintln!("디코딩 오류: {e}"); std::process::exit(1); }
+                Err(e) => {
+                    eprintln!("디코딩 오류: {e}");
+                    std::process::exit(1);
+                }
             }
         }
     }
