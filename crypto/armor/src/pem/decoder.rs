@@ -35,8 +35,8 @@ pub fn decode(pem: &[u8]) -> Result<(PemLabel, SecureBuffer), ArmorError> {
         return Err(PEM(PemError::EmptyBody));
     }
 
-    let mut b64_buf = SecureBuffer::new_owned(b64_body.len())
-        .map_err(|_| PEM(PemError::AllocationError))?;
+    let mut b64_buf =
+        SecureBuffer::new_owned(b64_body.len()).map_err(|_| PEM(PemError::AllocationError))?;
     b64_buf.as_mut_slice().copy_from_slice(&b64_body);
 
     let der = b64::decode(&b64_buf).map_err(|_| PEM(PemError::Base64Error))?;
@@ -67,8 +67,8 @@ fn collect_body(mut input: &[u8]) -> Result<(PemLabel, Vec<u8>), ArmorError> {
         }
         if input.starts_with(END_PREFIX) {
             let after_prefix = &input[END_PREFIX.len()..];
-            let dash_pos = find_pattern(after_prefix, BOUNDARY_SUFFIX)
-                .ok_or(PEM(PemError::InvalidFooter))?;
+            let dash_pos =
+                find_pattern(after_prefix, BOUNDARY_SUFFIX).ok_or(PEM(PemError::InvalidFooter))?;
             let footer_label = PemLabel::from_bytes(&after_prefix[..dash_pos])?;
             return Ok((footer_label, body));
         }

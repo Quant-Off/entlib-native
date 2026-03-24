@@ -22,7 +22,7 @@ mod blamka;
 
 use blamka::block_g;
 use core::ptr::write_volatile;
-use core::sync::atomic::{compiler_fence, Ordering};
+use core::sync::atomic::{Ordering, compiler_fence};
 use entlib_native_blake::{Blake2b, blake2b_long};
 use entlib_native_secure_buffer::SecureBuffer;
 
@@ -32,10 +32,10 @@ const SYNC_POINTS: usize = 4;
 
 /// Argon2id 파라미터 및 해시 연산 구조체입니다.
 pub struct Argon2id {
-    time_cost:   u32,
+    time_cost: u32,
     memory_cost: u32,
     parallelism: u32,
-    tag_length:  u32,
+    tag_length: u32,
 }
 
 impl Argon2id {
@@ -61,7 +61,12 @@ impl Argon2id {
         if tag_length < 4 {
             return Err("tag_length must be >= 4");
         }
-        Ok(Self { time_cost, memory_cost, parallelism, tag_length })
+        Ok(Self {
+            time_cost,
+            memory_cost,
+            parallelism,
+            tag_length,
+        })
     }
 
     /// 패스워드를 해시하여 태그를 SecureBuffer로 반환하는 함수입니다.
@@ -91,8 +96,8 @@ impl Argon2id {
 
         // m' = floor(m/(4p)) * 4p — 4p의 배수
         let m_prime = (m / (4 * p)) * (4 * p);
-        let q = m_prime / p;       // 레인당 블록 수
-        let sl = q / SYNC_POINTS;  // 세그먼트 길이
+        let q = m_prime / p; // 레인당 블록 수
+        let sl = q / SYNC_POINTS; // 세그먼트 길이
 
         if sl < 2 {
             return Err("memory_cost too small for given parallelism");
@@ -100,9 +105,16 @@ impl Argon2id {
 
         // H0: 초기 512비트 해시
         let h0 = compute_h0(
-            p as u32, self.tag_length, m as u32, t as u32,
-            ARGON2_VERSION, ARGON2ID_TYPE,
-            password, salt, secret, ad,
+            p as u32,
+            self.tag_length,
+            m as u32,
+            t as u32,
+            ARGON2_VERSION,
+            ARGON2ID_TYPE,
+            password,
+            salt,
+            secret,
+            ad,
         )?;
 
         // 메모리 할당
@@ -158,8 +170,9 @@ impl Argon2id {
 // 세그먼트 채우기
 //
 
+#[allow(clippy::too_many_arguments)]
 fn fill_segment(
-    blocks: &mut Vec<[u64; 128]>,
+    blocks: &mut [[u64; 128]],
     pass: usize,
     slice: usize,
     lane: usize,
@@ -240,9 +253,7 @@ fn fill_segment(
             let x = j1.wrapping_mul(j1) >> 32;
             let y = (ref_area as u64).wrapping_mul(x) >> 32;
             let relative = ref_area - 1 - y as usize;
-            let start = if pass == 0 {
-                0
-            } else if slice == SYNC_POINTS - 1 {
+            let start = if pass == 0 || slice == SYNC_POINTS - 1 {
                 0
             } else {
                 (slice + 1) * sl
@@ -265,6 +276,7 @@ fn fill_segment(
 // 헬퍼
 //
 
+#[allow(clippy::too_many_arguments)]
 fn compute_h0(
     parallelism: u32,
     tag_length: u32,
@@ -307,8 +319,14 @@ fn copy_to_block(block: &mut [u64; 128], bytes: &[u8]) {
     for (i, word) in block.iter_mut().enumerate() {
         let s = i * 8;
         *word = u64::from_le_bytes([
-            bytes[s], bytes[s+1], bytes[s+2], bytes[s+3],
-            bytes[s+4], bytes[s+5], bytes[s+6], bytes[s+7],
+            bytes[s],
+            bytes[s + 1],
+            bytes[s + 2],
+            bytes[s + 3],
+            bytes[s + 4],
+            bytes[s + 5],
+            bytes[s + 6],
+            bytes[s + 7],
         ]);
     }
 }
@@ -338,14 +356,17 @@ mod tests {
         let tag = params.hash(&password, &salt, &secret, &ad).unwrap();
 
         let expected = [
-            0x0d, 0x64, 0x0d, 0xf5, 0x8d, 0x78, 0x76, 0x6c,
-            0x08, 0xc0, 0x37, 0xa3, 0x4a, 0x8b, 0x53, 0xc9,
-            0xd0, 0x1e, 0xf0, 0x45, 0x2d, 0x75, 0xb6, 0x5e,
-            0xb5, 0x25, 0x20, 0xe9, 0x6b, 0x01, 0xe6, 0x59,
+            0x0d, 0x64, 0x0d, 0xf5, 0x8d, 0x78, 0x76, 0x6c, 0x08, 0xc0, 0x37, 0xa3, 0x4a, 0x8b,
+            0x53, 0xc9, 0xd0, 0x1e, 0xf0, 0x45, 0x2d, 0x75, 0xb6, 0x5e, 0xb5, 0x25, 0x20, 0xe9,
+            0x6b, 0x01, 0xe6, 0x59,
         ];
-        assert_eq!(tag.as_slice(), &expected,
+        assert_eq!(
+            tag.as_slice(),
+            &expected,
             "RFC 9106 test vector mismatch\ngot:  {:02x?}\nwant: {:02x?}",
-            tag.as_slice(), &expected);
+            tag.as_slice(),
+            &expected
+        );
     }
 
     #[test]
@@ -380,8 +401,8 @@ mod tests {
     #[test]
     fn invalid_params_rejected() {
         assert!(Argon2id::new(0, 64, 1, 32).is_err()); // time_cost = 0
-        assert!(Argon2id::new(1, 4, 1, 32).is_err());  // memory too small
+        assert!(Argon2id::new(1, 4, 1, 32).is_err()); // memory too small
         assert!(Argon2id::new(1, 64, 0, 32).is_err()); // parallelism = 0
-        assert!(Argon2id::new(1, 64, 1, 3).is_err());  // tag_length < 4
+        assert!(Argon2id::new(1, 64, 1, 3).is_err()); // tag_length < 4
     }
 }

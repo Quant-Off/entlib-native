@@ -8,13 +8,25 @@
 /// 하드웨어 병렬 처리 저항이 핵심 보안 속성입니다.
 #[inline(always)]
 pub(crate) fn gb(a: u64, b: u64, c: u64, d: u64) -> (u64, u64, u64, u64) {
-    let a = a.wrapping_add(b).wrapping_add(2u64.wrapping_mul(a & 0xFFFF_FFFF).wrapping_mul(b & 0xFFFF_FFFF));
+    let a = a.wrapping_add(b).wrapping_add(
+        2u64.wrapping_mul(a & 0xFFFF_FFFF)
+            .wrapping_mul(b & 0xFFFF_FFFF),
+    );
     let d = (d ^ a).rotate_right(32);
-    let c = c.wrapping_add(d).wrapping_add(2u64.wrapping_mul(c & 0xFFFF_FFFF).wrapping_mul(d & 0xFFFF_FFFF));
+    let c = c.wrapping_add(d).wrapping_add(
+        2u64.wrapping_mul(c & 0xFFFF_FFFF)
+            .wrapping_mul(d & 0xFFFF_FFFF),
+    );
     let b = (b ^ c).rotate_right(24);
-    let a = a.wrapping_add(b).wrapping_add(2u64.wrapping_mul(a & 0xFFFF_FFFF).wrapping_mul(b & 0xFFFF_FFFF));
+    let a = a.wrapping_add(b).wrapping_add(
+        2u64.wrapping_mul(a & 0xFFFF_FFFF)
+            .wrapping_mul(b & 0xFFFF_FFFF),
+    );
     let d = (d ^ a).rotate_right(16);
-    let c = c.wrapping_add(d).wrapping_add(2u64.wrapping_mul(c & 0xFFFF_FFFF).wrapping_mul(d & 0xFFFF_FFFF));
+    let c = c.wrapping_add(d).wrapping_add(
+        2u64.wrapping_mul(c & 0xFFFF_FFFF)
+            .wrapping_mul(d & 0xFFFF_FFFF),
+    );
     let b = (b ^ c).rotate_right(63);
     (a, b, c, d)
 }
@@ -26,22 +38,46 @@ pub(crate) fn gb(a: u64, b: u64, c: u64, d: u64) -> (u64, u64, u64, u64) {
 pub(crate) fn blamka_round(v: &mut [u64]) {
     // column mixing
     let (a, b, c, d) = gb(v[0], v[4], v[8], v[12]);
-    v[0] = a; v[4] = b; v[8] = c; v[12] = d;
+    v[0] = a;
+    v[4] = b;
+    v[8] = c;
+    v[12] = d;
     let (a, b, c, d) = gb(v[1], v[5], v[9], v[13]);
-    v[1] = a; v[5] = b; v[9] = c; v[13] = d;
+    v[1] = a;
+    v[5] = b;
+    v[9] = c;
+    v[13] = d;
     let (a, b, c, d) = gb(v[2], v[6], v[10], v[14]);
-    v[2] = a; v[6] = b; v[10] = c; v[14] = d;
+    v[2] = a;
+    v[6] = b;
+    v[10] = c;
+    v[14] = d;
     let (a, b, c, d) = gb(v[3], v[7], v[11], v[15]);
-    v[3] = a; v[7] = b; v[11] = c; v[15] = d;
+    v[3] = a;
+    v[7] = b;
+    v[11] = c;
+    v[15] = d;
     // diagonal mixing
     let (a, b, c, d) = gb(v[0], v[5], v[10], v[15]);
-    v[0] = a; v[5] = b; v[10] = c; v[15] = d;
+    v[0] = a;
+    v[5] = b;
+    v[10] = c;
+    v[15] = d;
     let (a, b, c, d) = gb(v[1], v[6], v[11], v[12]);
-    v[1] = a; v[6] = b; v[11] = c; v[12] = d;
+    v[1] = a;
+    v[6] = b;
+    v[11] = c;
+    v[12] = d;
     let (a, b, c, d) = gb(v[2], v[7], v[8], v[13]);
-    v[2] = a; v[7] = b; v[8] = c; v[13] = d;
+    v[2] = a;
+    v[7] = b;
+    v[8] = c;
+    v[13] = d;
     let (a, b, c, d) = gb(v[3], v[4], v[9], v[14]);
-    v[3] = a; v[4] = b; v[9] = c; v[14] = d;
+    v[3] = a;
+    v[4] = b;
+    v[9] = c;
+    v[14] = d;
 }
 
 /// Argon2 블록 G 함수입니다.
@@ -64,21 +100,16 @@ pub(crate) fn block_g(dst: &mut [u64; 128], x: &[u64; 128], y: &[u64; 128], xor:
     // 8개 열(column) 처리: 각 열 = stride-8로 떨어진 16개 워드
     for col in 0..8 {
         let mut tmp = [0u64; 16];
-        for i in 0..16 {
-            // column j = 각 행의 j번째 16-워드 그룹에서 col번째
-            // 인덱싱: z[i*16 + col*2], z[i*16 + col*2 + 1] ... 복잡
-            // 실제 인덱싱: 블록은 8행×8열의 16-word 셀
-            // z[row*16 + col*2], z[row*16 + col*2 + 1] 로 16개 꺼냄
-            // -> (row, col*2) 와 (row, col*2+1) 를 모든 row(0..8)에서
+        for (i, item) in tmp.iter_mut().enumerate() {
             let row = i / 2;
             let word = (i % 2) + col * 2;
-            tmp[i] = z[row * 16 + word];
+            *item = z[row * 16 + word];
         }
         blamka_round(&mut tmp);
-        for i in 0..16 {
+        for (i, &item) in tmp.iter().enumerate() {
             let row = i / 2;
             let word = (i % 2) + col * 2;
-            z[row * 16 + word] = tmp[i];
+            z[row * 16 + word] = item;
         }
     }
 

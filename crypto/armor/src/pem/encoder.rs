@@ -21,8 +21,7 @@ const LINE_LEN: usize = 64;
 pub fn encode(der: &[u8], label: PemLabel) -> Result<SecureBuffer, ArmorError> {
     validate_der_envelope(der)?;
 
-    let mut src = SecureBuffer::new_owned(der.len())
-        .map_err(|_| PEM(PemError::AllocationError))?;
+    let mut src = SecureBuffer::new_owned(der.len()).map_err(|_| PEM(PemError::AllocationError))?;
     src.as_mut_slice().copy_from_slice(der);
 
     let encoded = b64::encode(&src).map_err(|_| PEM(PemError::Base64Error))?;

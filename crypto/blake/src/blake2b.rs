@@ -2,14 +2,18 @@
 //! RFC 7693 명세를 완전히 준수합니다.
 
 use core::ptr::write_volatile;
-use core::sync::atomic::{compiler_fence, Ordering};
+use core::sync::atomic::{Ordering, compiler_fence};
 use entlib_native_secure_buffer::SecureBuffer;
 
 const IV: [u64; 8] = [
-    0x6a09e667f3bcc908, 0xbb67ae8584caa73b,
-    0x3c6ef372fe94f82b, 0xa54ff53a5f1d36f1,
-    0x510e527fade682d1, 0x9b05688c2b3e6c1f,
-    0x1f83d9abfb41bd6b, 0x5be0cd19137e2179,
+    0x6a09e667f3bcc908,
+    0xbb67ae8584caa73b,
+    0x3c6ef372fe94f82b,
+    0xa54ff53a5f1d36f1,
+    0x510e527fade682d1,
+    0x9b05688c2b3e6c1f,
+    0x1f83d9abfb41bd6b,
+    0x5be0cd19137e2179,
 ];
 
 const SIGMA: [[usize; 16]; 10] = [
@@ -169,9 +173,22 @@ fn g(v: &mut [u64; 16], a: usize, b: usize, c: usize, d: usize, x: u64, y: u64) 
 
 fn compress(h: &mut [u64; 8], m: &[u64; 16], t: [u64; 2], f: [u64; 2]) {
     let mut v = [
-        h[0], h[1], h[2], h[3], h[4], h[5], h[6], h[7],
-        IV[0], IV[1], IV[2], IV[3],
-        IV[4] ^ t[0], IV[5] ^ t[1], IV[6] ^ f[0], IV[7] ^ f[1],
+        h[0],
+        h[1],
+        h[2],
+        h[3],
+        h[4],
+        h[5],
+        h[6],
+        h[7],
+        IV[0],
+        IV[1],
+        IV[2],
+        IV[3],
+        IV[4] ^ t[0],
+        IV[5] ^ t[1],
+        IV[6] ^ f[0],
+        IV[7] ^ f[1],
     ];
     for r in 0..12 {
         let s = &SIGMA[r % 10];
@@ -194,8 +211,14 @@ fn load_block(bytes: &[u8]) -> [u64; 16] {
     for (i, word) in m.iter_mut().enumerate() {
         let s = i * 8;
         *word = u64::from_le_bytes([
-            bytes[s], bytes[s+1], bytes[s+2], bytes[s+3],
-            bytes[s+4], bytes[s+5], bytes[s+6], bytes[s+7],
+            bytes[s],
+            bytes[s + 1],
+            bytes[s + 2],
+            bytes[s + 3],
+            bytes[s + 4],
+            bytes[s + 5],
+            bytes[s + 6],
+            bytes[s + 7],
         ]);
     }
     m
@@ -208,4 +231,3 @@ fn add_to_counter(t: &mut [u64; 2], n: u64) {
         t[1] = t[1].wrapping_add(1);
     }
 }
-

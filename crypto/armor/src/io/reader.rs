@@ -9,7 +9,7 @@ use std::fs;
 use std::path::Path;
 
 /// 파일 최대 읽기 크기 (1 MiB) — DoS 방어
-const MAX_FILE_BYTES: u64 = 1 * 1024 * 1024;
+const MAX_FILE_BYTES: u64 = 1024 * 1024;
 
 /// DER 파일을 읽어 SecureBuffer로 반환하는 함수입니다.
 ///
@@ -53,17 +53,16 @@ fn validate_path(path: &Path) -> Result<(), ArmorError> {
 }
 
 fn read_file_bounded(path: &Path) -> Result<SecureBuffer, ArmorError> {
-    let meta = fs::metadata(path).map_err(|e| map_read_error(e))?;
+    let meta = fs::metadata(path).map_err(map_read_error)?;
 
     if meta.len() > MAX_FILE_BYTES {
         return Err(IO(IoError::FileTooLarge));
     }
 
     let len = meta.len() as usize;
-    let content = fs::read(path).map_err(|e| map_read_error(e))?;
+    let content = fs::read(path).map_err(map_read_error)?;
 
-    let mut buf =
-        SecureBuffer::new_owned(len).map_err(|_| IO(IoError::AllocationError))?;
+    let mut buf = SecureBuffer::new_owned(len).map_err(|_| IO(IoError::AllocationError))?;
     buf.as_mut_slice().copy_from_slice(&content);
     Ok(buf)
 }

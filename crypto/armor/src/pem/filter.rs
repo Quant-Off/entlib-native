@@ -13,6 +13,8 @@ use crate::error::ArmorError::PEM;
 pub(crate) fn validate_der_envelope(der: &[u8]) -> Result<(), ArmorError> {
     let mut reader = DerReader::new(der).map_err(|_| PEM(PemError::InvalidDer))?;
     reader.read_tlv().map_err(|_| PEM(PemError::InvalidDer))?;
-    reader.expect_empty().map_err(|_| PEM(PemError::InvalidDer))?;
+    reader
+        .expect_empty()
+        .map_err(|_| PEM(PemError::InvalidDer))?;
     Ok(())
 }

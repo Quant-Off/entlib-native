@@ -25,7 +25,7 @@ impl PemLabel {
     pub(crate) fn as_bytes(&self) -> &'static [u8] {
         match self {
             Self::EncryptedPrivateKey => b"ENCRYPTED PRIVATE KEY",
-            Self::Certificate => b"CERTIFICATE",  // todo: 크레이트 격리
+            Self::Certificate => b"CERTIFICATE", // todo: 크레이트 격리
             Self::PublicKey => b"PUBLIC KEY",
             Self::CertificateRequest => b"CERTIFICATE REQUEST",
         }

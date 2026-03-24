@@ -7,22 +7,25 @@ use entlib_native_argon2id::Argon2id;
 #[test]
 fn rfc9106_b4_test_vector() {
     let password = [0x01u8; 32];
-    let salt    = [0x02u8; 16];
-    let secret  = [0x03u8; 8];
-    let ad      = [0x04u8; 12];
+    let salt = [0x02u8; 16];
+    let secret = [0x03u8; 8];
+    let ad = [0x04u8; 12];
 
     let params = Argon2id::new(3, 32, 4, 32).unwrap();
     let tag = params.hash(&password, &salt, &secret, &ad).unwrap();
 
     let expected = [
-        0x0d, 0x64, 0x0d, 0xf5, 0x8d, 0x78, 0x76, 0x6c,
-        0x08, 0xc0, 0x37, 0xa3, 0x4a, 0x8b, 0x53, 0xc9,
-        0xd0, 0x1e, 0xf0, 0x45, 0x2d, 0x75, 0xb6, 0x5e,
-        0xb5, 0x25, 0x20, 0xe9, 0x6b, 0x01, 0xe6, 0x59,
+        0x0d, 0x64, 0x0d, 0xf5, 0x8d, 0x78, 0x76, 0x6c, 0x08, 0xc0, 0x37, 0xa3, 0x4a, 0x8b, 0x53,
+        0xc9, 0xd0, 0x1e, 0xf0, 0x45, 0x2d, 0x75, 0xb6, 0x5e, 0xb5, 0x25, 0x20, 0xe9, 0x6b, 0x01,
+        0xe6, 0x59,
     ];
-    assert_eq!(tag.as_slice(), &expected,
+    assert_eq!(
+        tag.as_slice(),
+        &expected,
         "RFC 9106 B.4 벡터 불일치\ngot:  {:02x?}\nwant: {:02x?}",
-        tag.as_slice(), &expected);
+        tag.as_slice(),
+        &expected
+    );
 }
 
 //
@@ -142,16 +145,24 @@ fn different_salts_give_different_tags() {
 #[test]
 fn different_secrets_give_different_tags() {
     let params = Argon2id::new(1, 64, 1, 32).unwrap();
-    let t1 = params.hash(b"password", b"somesalt", b"secret1!", &[]).unwrap();
-    let t2 = params.hash(b"password", b"somesalt", b"secret2!", &[]).unwrap();
+    let t1 = params
+        .hash(b"password", b"somesalt", b"secret1!", &[])
+        .unwrap();
+    let t2 = params
+        .hash(b"password", b"somesalt", b"secret2!", &[])
+        .unwrap();
     assert_ne!(t1.as_slice(), t2.as_slice());
 }
 
 #[test]
 fn different_ad_give_different_tags() {
     let params = Argon2id::new(1, 64, 1, 32).unwrap();
-    let t1 = params.hash(b"password", b"somesalt", &[], b"context1").unwrap();
-    let t2 = params.hash(b"password", b"somesalt", &[], b"context2").unwrap();
+    let t1 = params
+        .hash(b"password", b"somesalt", &[], b"context1")
+        .unwrap();
+    let t2 = params
+        .hash(b"password", b"somesalt", &[], b"context2")
+        .unwrap();
     assert_ne!(t1.as_slice(), t2.as_slice());
 }
 
@@ -159,7 +170,9 @@ fn different_ad_give_different_tags() {
 fn empty_secret_and_nonempty_secret_differ() {
     let params = Argon2id::new(1, 64, 1, 32).unwrap();
     let t1 = params.hash(b"password", b"somesalt", &[], &[]).unwrap();
-    let t2 = params.hash(b"password", b"somesalt", b"secret!!", &[]).unwrap();
+    let t2 = params
+        .hash(b"password", b"somesalt", b"secret!!", &[])
+        .unwrap();
     assert_ne!(t1.as_slice(), t2.as_slice());
 }
 
@@ -178,7 +191,7 @@ fn different_time_cost_gives_different_tags() {
 
 #[test]
 fn different_memory_cost_gives_different_tags() {
-    let p1 = Argon2id::new(1, 64,  1, 32).unwrap();
+    let p1 = Argon2id::new(1, 64, 1, 32).unwrap();
     let p2 = Argon2id::new(1, 128, 1, 32).unwrap();
     let t1 = p1.hash(b"password", b"somesalt", &[], &[]).unwrap();
     let t2 = p2.hash(b"password", b"somesalt", &[], &[]).unwrap();
@@ -208,7 +221,7 @@ fn empty_password_accepted() {
 #[test]
 fn empty_password_differs_from_nonempty() {
     let params = Argon2id::new(1, 64, 1, 32).unwrap();
-    let t1 = params.hash(b"",         b"somesalt", &[], &[]).unwrap();
+    let t1 = params.hash(b"", b"somesalt", &[], &[]).unwrap();
     let t2 = params.hash(b"password", b"somesalt", &[], &[]).unwrap();
     assert_ne!(t1.as_slice(), t2.as_slice());
 }

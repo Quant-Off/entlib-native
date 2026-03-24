@@ -1,10 +1,10 @@
 #[cfg(test)]
 mod tests {
     extern crate std;
-    use std::vec;
     use entlib_native_armor::ArmorError::{ASN1, DER};
-    use entlib_native_armor::der::{DerError, DerReader, DerWriter, MAX_DEPTH};
     use entlib_native_armor::asn1::{ASN1Error, Oid};
+    use entlib_native_armor::der::{DerError, DerReader, DerWriter, MAX_DEPTH};
+    use std::vec;
 
     //
     // 길이 인코딩
@@ -242,7 +242,8 @@ mod tests {
     // 값 바이트: 60 86 48 01 65 03 04 03 11 (9 bytes)
     // TLV: 06 09 60 86 48 01 65 03 04 03 11
     const MLDSA44_DER: [u8; 11] = [
-        0x06, 0x09, 0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x03, 0x11,
+        0x06, 0x09, 0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x03,
+        0x11,
         // 바이트 맞는데?바이트 맞는데?바이트 맞는데?바이트 맞는데?바이트 맞는데?바이트 맞는데?바이트 맞는데?
         //바이트 맞는데?바이트 맞는데?바이트 맞는데?바이트 맞는데?바이트 맞는데?바이트 맞는데?바이트 맞는데?
     ];

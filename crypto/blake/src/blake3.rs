@@ -2,25 +2,23 @@
 //! BLAKE3 명세(https://github.com/BLAKE3-team/BLAKE3-specs)를 준수합니다.
 
 use core::ptr::write_volatile;
-use core::sync::atomic::{compiler_fence, Ordering};
+use core::sync::atomic::{Ordering, compiler_fence};
 use entlib_native_secure_buffer::SecureBuffer;
 
 const IV: [u32; 8] = [
-    0x6A09E667, 0xBB67AE85, 0x3C6EF372, 0xA54FF53A,
-    0x510E527F, 0x9B05688C, 0x1F83D9AB, 0x5BE0CD19,
+    0x6A09E667, 0xBB67AE85, 0x3C6EF372, 0xA54FF53A, 0x510E527F, 0x9B05688C, 0x1F83D9AB, 0x5BE0CD19,
 ];
 
-const MSG_PERMUTATION: [usize; 16] =
-    [2, 6, 3, 10, 7, 0, 4, 13, 1, 11, 12, 5, 9, 14, 15, 8];
+const MSG_PERMUTATION: [usize; 16] = [2, 6, 3, 10, 7, 0, 4, 13, 1, 11, 12, 5, 9, 14, 15, 8];
 
-const CHUNK_START:          u32 = 1 << 0;
-const CHUNK_END:            u32 = 1 << 1;
-const PARENT:               u32 = 1 << 2;
-const ROOT:                 u32 = 1 << 3;
-const KEYED_HASH:           u32 = 1 << 4;
-const BLOCK_LEN:          usize = 64;
-const CHUNK_LEN:          usize = 1024;
-pub const OUT_LEN:        usize = 32;
+const CHUNK_START: u32 = 1 << 0;
+const CHUNK_END: u32 = 1 << 1;
+const PARENT: u32 = 1 << 2;
+const ROOT: u32 = 1 << 3;
+const KEYED_HASH: u32 = 1 << 4;
+const BLOCK_LEN: usize = 64;
+const CHUNK_LEN: usize = 1024;
+pub const OUT_LEN: usize = 32;
 
 /// BLAKE3 해시 상태 구조체입니다.
 ///
@@ -93,7 +91,12 @@ impl Blake3 {
         while parent_nodes > 0 {
             parent_nodes -= 1;
             let left_cv = self.cv_stack[parent_nodes];
-            output = parent_output(&left_cv, &output.chaining_value(), &self.key_words, self.flags);
+            output = parent_output(
+                &left_cv,
+                &output.chaining_value(),
+                &self.key_words,
+                self.flags,
+            );
         }
         let mut result = SecureBuffer::new_owned(out_len)?;
         output.root_output_bytes(result.as_mut_slice());
@@ -172,7 +175,11 @@ impl ChunkState {
     }
 
     fn start_flag(&self) -> u32 {
-        if self.blocks_compressed == 0 { CHUNK_START } else { 0 }
+        if self.blocks_compressed == 0 {
+            CHUNK_START
+        } else {
+            0
+        }
     }
 
     fn update(&mut self, mut input: &[u8]) {
@@ -303,9 +310,22 @@ fn round(state: &mut [u32; 16], m: &[u32; 16]) {
 
 fn compress(cv: &[u32; 8], bw: &[u32; 16], counter: u64, bl: u32, flags: u32) -> [u32; 16] {
     let mut state = [
-        cv[0], cv[1], cv[2], cv[3], cv[4], cv[5], cv[6], cv[7],
-        IV[0], IV[1], IV[2], IV[3],
-        counter as u32, (counter >> 32) as u32, bl, flags,
+        cv[0],
+        cv[1],
+        cv[2],
+        cv[3],
+        cv[4],
+        cv[5],
+        cv[6],
+        cv[7],
+        IV[0],
+        IV[1],
+        IV[2],
+        IV[3],
+        counter as u32,
+        (counter >> 32) as u32,
+        bl,
+        flags,
     ];
     let mut m = *bw;
     for _ in 0..7 {
@@ -354,13 +374,13 @@ fn first_8_words(x: [u32; 16]) -> [u32; 8] {
 fn words_from_le_bytes_64(bytes: &[u8; BLOCK_LEN]) -> [u32; 16] {
     core::array::from_fn(|i| {
         let s = i * 4;
-        u32::from_le_bytes([bytes[s], bytes[s+1], bytes[s+2], bytes[s+3]])
+        u32::from_le_bytes([bytes[s], bytes[s + 1], bytes[s + 2], bytes[s + 3]])
     })
 }
 
 fn words_from_le_bytes_32(bytes: &[u8; 32]) -> [u32; 8] {
     core::array::from_fn(|i| {
         let s = i * 4;
-        u32::from_le_bytes([bytes[s], bytes[s+1], bytes[s+2], bytes[s+3]])
+        u32::from_le_bytes([bytes[s], bytes[s + 1], bytes[s + 2], bytes[s + 3]])
     })
 }

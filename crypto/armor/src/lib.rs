@@ -36,7 +36,7 @@
 //! assert_eq!(label, PemLabel::EncryptedPrivateKey);
 //! assert_eq!(restored.as_slice(), &der);
 //! ```
-//! 
+//!
 //! # Authors
 //! Q. T. Felix
 
@@ -48,12 +48,12 @@ extern crate std;
 
 pub mod asn1;
 pub mod der;
-pub mod pem;
 mod error;
 #[cfg(feature = "std")]
 pub mod io;
+pub mod pem;
 
 pub use error::ArmorError;
-pub use pem::{PemError, PemLabel};
 #[cfg(feature = "std")]
 pub use io::IoError;
+pub use pem::{PemError, PemLabel};
