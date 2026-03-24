@@ -38,6 +38,9 @@ Of course, this is not a formal verification, but only an internal evaluation. T
 
 The final security goal of the Entanglement Library is to obtain a grade of CC EAL5+ or higher (EAL7). This requires difficult and complex preparations such as strict design at the hardware level and formal specifications, but it is planned to reach military-grade security in the future. I am in the process of designing the architecture for this.
 
+> [!NOTE]
+> We would like to discuss security in more depth. For this, please refer to the [Security Discussion Document](SECURITY_DISCUSSION.md).
+
 ## Future Plans
 
 We need to implement a variety of supported classic cryptographic algorithm modules.
@@ -45,23 +48,22 @@ We need to implement a variety of supported classic cryptographic algorithm modu
 - AEAD
   - [ ] ChaCha20
 - Block Cipher
-  - [ ] AES (128, 192, 256)
-  - [ ] ARIA (128, 192, 256)
+  - [X] AES-256 (GCM, CBC-HMAC)
 - KDF (Key Derivation Function)
-  - [ ] PBKDF2
-  - [ ] Argon2id
+  - [X] PBKDF2
+  - [X] Argon2id
 - Digital Signature
   - [ ] RSA (2048, 4096, 8192)
   - [ ] ED25519, ED448 Signatures
   - [ ] X25519, X448 Key Agreement
 - Serializer / Encode Pipeline
   - [X] DER
-  - [ ] PEM
+  - [X] PEM
 - PKC Standard Pipeline
-  - [ ] PKCS #8
+  - [X] PKCS #8
   - [PKCS #11](https://docs.oasis-open.org/pkcs11/pkcs11-base/v2.40/os/pkcs11-base-v2.40-os.html)
     - [ ] C-API FFI Mapping
-    - [ ] Dynamic Loader (System Call-based)
+    - [ ] Dyn Loader (System Call-based)
 
 Post-Quantum Cryptography (PQC) algorithms aim to achieve the following goals.
 
