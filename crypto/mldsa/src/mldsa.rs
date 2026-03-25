@@ -249,6 +249,17 @@ impl MLDSAPublicKey {
     pub fn is_empty(&self) -> bool {
         self.bytes.is_empty()
     }
+
+    /// 인코딩된 바이트열로부터 공개 키를 복원합니다.
+    ///
+    /// # Errors
+    /// 바이트 길이가 파라미터 셋과 일치하지 않으면 `InvalidLength`.
+    pub fn from_bytes(param: MLDSAParameter, bytes: Vec<u8>) -> Result<Self, MLDSAError> {
+        if bytes.len() != param.pk_len() {
+            return Err(MLDSAError::InvalidLength("공개 키 길이 불일치"));
+        }
+        Ok(Self { param, bytes })
+    }
 }
 
 /// ML-DSA 비밀 키.
@@ -279,6 +290,33 @@ impl MLDSAPrivateKey {
     #[inline]
     pub fn is_empty(&self) -> bool {
         self.sk_buf.is_empty()
+    }
+
+    /// 인코딩된 비밀 키 바이트 슬라이스를 반환합니다.
+    ///
+    /// # Security Note
+    /// 반환된 슬라이스는 잠금 메모리(mlock)에 보관된 민감 데이터입니다.
+    /// 파일 저장 시 반드시 PKCS#8 암호화를 적용하십시오.
+    #[inline]
+    pub fn as_bytes(&self) -> &[u8] {
+        self.sk_buf.as_slice()
+    }
+
+    /// 인코딩된 바이트열로부터 비밀 키를 복원합니다.
+    ///
+    /// # Security Note
+    /// `bytes`는 호출 즉시 SecureBuffer(mlock)로 이전됩니다.
+    ///
+    /// # Errors
+    /// 바이트 길이가 파라미터 셋과 일치하지 않으면 `InvalidLength`.
+    pub fn from_bytes(param: MLDSAParameter, bytes: &[u8]) -> Result<Self, MLDSAError> {
+        if bytes.len() != param.sk_len() {
+            return Err(MLDSAError::InvalidLength("비밀 키 길이 불일치"));
+        }
+        let mut sk_buf = SecureBuffer::new_owned(bytes.len())
+            .map_err(|_| MLDSAError::InternalError("SecureBuffer 할당 실패"))?;
+        sk_buf.as_mut_slice().copy_from_slice(bytes);
+        Ok(Self { param, sk_buf })
     }
 }
 
