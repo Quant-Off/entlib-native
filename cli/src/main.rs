@@ -47,6 +47,11 @@ enum Commands {
         #[command(subcommand)]
         op: cmd::mlkem::Ops,
     },
+    /// Argon2id 비밀번호 해시 (RFC 9106)
+    Argon2id {
+        #[command(subcommand)]
+        op: cmd::argon2id::Ops,
+    },
 }
 
 fn main() {
@@ -59,5 +64,6 @@ fn main() {
         Commands::Pkcs8 { op } => cmd::pkcs8::run(op),
         Commands::MlDsa { op } => cmd::mldsa::run(op),
         Commands::MlKem { op } => cmd::mlkem::run(op),
+        Commands::Argon2id { op } => cmd::argon2id::run(op),
     }
 }

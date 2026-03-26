@@ -1,5 +1,6 @@
 use entlib_native_secure_buffer::SecureBuffer;
 
+pub mod argon2id;
 pub mod base64;
 pub mod hex;
 pub mod mldsa;

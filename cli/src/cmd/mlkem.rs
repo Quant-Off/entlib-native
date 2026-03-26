@@ -1,7 +1,7 @@
 use crate::input;
 use clap::Subcommand;
 use entlib_native_mlkem::{
-    HashDRBGRng, MLKEMDecapsulationKey, MLKEMEncapsulationKey, MLKEMParameter, MLKEM,
+    HashDRBGRng, MLKEM, MLKEMDecapsulationKey, MLKEMEncapsulationKey, MLKEMParameter,
 };
 use entlib_native_pkcs8::{
     Algorithm, DEFAULT_MEMORY_COST, DEFAULT_PARALLELISM, DEFAULT_TIME_COST, Pkcs8Params,
@@ -229,12 +229,7 @@ fn run_keygen_pkcs8(
     write_bytes(dk_pem.as_slice(), dk_out.as_deref(), "역캡슐화 키 PEM");
 }
 
-fn run_encaps(
-    algorithm: String,
-    ek_file: String,
-    ss_out: Option<String>,
-    ct_out: Option<String>,
-) {
+fn run_encaps(algorithm: String, ek_file: String, ss_out: Option<String>, ct_out: Option<String>) {
     let param = match parse_param(&algorithm) {
         Ok(p) => p,
         Err(e) => {
@@ -279,12 +274,7 @@ fn run_encaps(
     write_bytes(&ct, ct_out.as_deref(), "암호문");
 }
 
-fn run_decaps(
-    algorithm: String,
-    dk_file: String,
-    ct_file: String,
-    ss_out: Option<String>,
-) {
+fn run_decaps(algorithm: String, dk_file: String, ct_file: String, ss_out: Option<String>) {
     let param = match parse_param(&algorithm) {
         Ok(p) => p,
         Err(e) => {

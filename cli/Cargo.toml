@@ -11,6 +11,7 @@ path = "src/main.rs"
 
 [dependencies]
 clap = { version = "4.5.51", features = ["derive"] }
+entlib-native-argon2id.workspace = true
 entlib-native-base64.workspace = true
 entlib-native-hex.workspace = true
 entlib-native-sha2.workspace = true
