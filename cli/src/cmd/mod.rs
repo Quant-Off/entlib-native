@@ -3,6 +3,7 @@ use entlib_native_secure_buffer::SecureBuffer;
 pub mod base64;
 pub mod hex;
 pub mod mldsa;
+pub mod mlkem;
 pub mod pkcs8;
 pub mod sha2;
 pub mod sha3;

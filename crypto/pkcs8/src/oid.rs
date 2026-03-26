@@ -25,3 +25,16 @@ pub(crate) fn oid_mldsa65() -> Oid {
 pub(crate) fn oid_mldsa87() -> Oid {
     Oid::from_arcs(&[2, 16, 840, 1, 101, 3, 4, 3, 19]).unwrap()
 }
+
+// NIST FIPS 203 ML-KEM OID
+pub(crate) fn oid_mlkem512() -> Oid {
+    Oid::from_arcs(&[2, 16, 840, 1, 101, 3, 4, 4, 1]).unwrap()
+}
+
+pub(crate) fn oid_mlkem768() -> Oid {
+    Oid::from_arcs(&[2, 16, 840, 1, 101, 3, 4, 4, 2]).unwrap()
+}
+
+pub(crate) fn oid_mlkem1024() -> Oid {
+    Oid::from_arcs(&[2, 16, 840, 1, 101, 3, 4, 4, 3]).unwrap()
+}

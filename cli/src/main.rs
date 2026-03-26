@@ -42,6 +42,11 @@ enum Commands {
         #[command(subcommand)]
         op: cmd::mldsa::Ops,
     },
+    /// ML-KEM 키 캡슐화 (키 생성 / 캡슐화 / 역캡슐화)
+    MlKem {
+        #[command(subcommand)]
+        op: cmd::mlkem::Ops,
+    },
 }
 
 fn main() {
@@ -53,5 +58,6 @@ fn main() {
         Commands::Sha3 { op } => cmd::sha3::run(op),
         Commands::Pkcs8 { op } => cmd::pkcs8::run(op),
         Commands::MlDsa { op } => cmd::mldsa::run(op),
+        Commands::MlKem { op } => cmd::mlkem::run(op),
     }
 }
