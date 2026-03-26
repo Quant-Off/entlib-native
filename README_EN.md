@@ -67,7 +67,7 @@ We need to implement a variety of supported classic cryptographic algorithm modu
 
 Post-Quantum Cryptography (PQC) algorithms aim to achieve the following goals.
 
-- [ ] FIPS 203 (Module Lattice-based Key Encapsulation Mechanism, ML-KEM)
+- [X] FIPS 203 (Module Lattice-based Key Encapsulation Mechanism, ML-KEM)
 - [x] FIPS 204 (Module Lattice-based Digital Signature Algorithm, ML-DSA)
 - [ ] FIPS 205 (Stateless Hash-based Digital Signature Algorithm, SLH-DSA)
 
