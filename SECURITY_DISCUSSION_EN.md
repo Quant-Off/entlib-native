@@ -1,31 +1,31 @@
-# 보안성 논의
+# Security Discussion
 
 > [Korean SECURITY DISCUSSION](SECURITY_DISCUSSION.md)
 
-`entlib-native`에는 분명 데이터 관리, 상수-시간에 대한 안전한 연산을 제공합니다만, 이것을 '안전하다' 라고 말하기 전 LLVM 컴파일러에 대한 공격적 최적화 문제에 대해 논의해볼 필요가 있습니다.
+`entlib-native` clearly provides secure operations for data management and constant-time, but before we can call it 'secure', we need to discuss the problem of aggressive optimization in the LLVM compiler.
 
-## LLVM 컴파일러의 고질적인 문제
+## The Chronic Problem of the LLVM Compiler
 
-기술적으로 Rust의 백엔드인 LLVM은 코드의 평균 실행 속도 향상을 최우선으로 최적화를 수행합니다. 이 과정에서 개발자가 부채널 공격(Timing Side-Channel Attack)을 방어하기 위해 의도적으로 작성한 상수-시간 비트 연산이나 수학적 트릭을 LLVM의 `SimplifyCFG` 패스 등이 임의로 조건부 분기(예로, 어셈블리 상에서 `cmp` 후 `jmp`)로 변환해버리는 사례가 지속적으로 보고되고 있습니다.
+Technically, LLVM, the backend of Rust, performs optimizations with the top priority of improving the average execution speed of the code. In this process, there are continuous reports of cases where constant-time bit operations or mathematical tricks intentionally written by developers to defend against side-channel attacks (Timing Side-Channel Attacks) are arbitrarily converted into conditional branches (e.g., `cmp` followed by `jmp` in assembly) by LLVM's `SimplifyCFG` pass, etc.
 
-`entlib-native`와 같이 외부 의존성 없이 모든 핵심 보안 모듈을 직접 캡슐화하여 구현해야 하고, FIPS 140-2/3 및 CC EAL2+ 수준의 엄격한 검증을 통과해야 하는 환경이라면 이를 방지하기 위한 대책을 마련해야 합니다.
+Frameworks, libraries, etc. that provide cryptographic functions based on high-security principles like `entlib-native` must implement all core security modules by encapsulating them directly without external dependencies. In an environment that must pass strict verification at the level of FIPS 140-2/3 and CC EAL2 (or EAL3), strict measures must be taken to prevent this.
 
-결론만 빠르게 이야기하자면 저희가 생각한 방안으로는, 인-라인 어셈블리를 활용하는 것입니다. 이는 LLVM 최적화기가 절대 개입할 수 없는 블랙박스 구간을 만드는 가장 확실한 방법입니다. 조건부 로직이 필요한 부분에서 소프트웨어적인 비트 연산 대신, 하드웨어가 지원하는 상수-시간 조건부 이동 명령어를 직접 호출해야 합니다. 예를 들어 `x86_64` 이키텍처에선 조건부 이동(`cmov`) 명령어를 사용할 수 있고, `aarch64` 아키텍처에선 조건부 선택(`csel`) 명령어를 사용할 수 있습니다. 이러한 방식은 컴파일러의 명령어 선택 단계를 우회하므로 컴파일러 버전이 업데이트되더라도 분기문이 삽입되는 것을 완벽하게 차단할 수 있습니다.
+To get straight to the point, the solution we came up with is to use inline assembly. This is the most reliable way to create a black-box section where the LLVM optimizer can never intervene. In parts where conditional logic is needed, instead of software-based bit operations, we should directly call the constant-time conditional move instructions supported by the hardware. For example, the `x86_64` architecture can use the conditional move (`cmov`) instruction, and the `aarch64` architecture can use the conditional select (`csel`) instruction. This approach bypasses the compiler's instruction selection stage, so it can completely prevent the insertion of branch statements even if the compiler version is updated.
 
-컴파일러 베리어와 휘발성(Volatile) 연산 및 메모리 베리어에 대해 좀 더 논의할 수 있습니다. 컴파일러 베리어(`core::hint::black_box`)는 컴파일러에게 특정 값을 최적화 분석 과정에서 무시하도록 지시합니다. 이를 통해 컴파일러가 입력값을 예측하여 상수 폴딩을 하거나, 데드 코드 제거(Dead Code Elimination, DCE)를 수행하는 것을 막을 수 있습니다.
+We can discuss compiler barriers and volatile operations and memory barriers further. A compiler barrier (`core::hint::black_box`) instructs the compiler to ignore a specific value during the optimization analysis process. This can prevent the compiler from performing constant folding by predicting the input value or performing Dead Code Elimination (DCE).
 
-하지만 Rust 공식 문서에서도 명시하듯 `black_box`는 최적화를 억제할 뿐, 암호학적 상수-시간 실행을 절대적으로 보장하지 않습니다. 즉, 변수 값이 최적화되는 것은 막아도, 그 변수를 처리하는 연산 자체를 컴파일러가 분기문으로 컴파일하는 것까지 완벽히 통제할 수는 없습니다. 따라서 메인 방어 수단이 아닌 보조 수단으로만 접근해야 합니다.
+However, as the official Rust documentation also states, `black_box` only suppresses optimization and does not absolutely guarantee cryptographic constant-time execution. In other words, while it can prevent the value of a variable from being optimized, it cannot completely control the compiler from compiling the operation that processes that variable into a branch statement. Therefore, it should only be approached as a supplementary measure, not the main defense.
 
-휘발성 연산 및 메모리 베리어의 경우는 어떨까요? 이 방식에 따라 데이터의 생명 주기(할당부터 소거까지) 전반에 걸쳐 최적화를 막으려면 `core::ptr::read_volatile` 및 `write_volatile`을 사용할 수 있습니다. 포렌식 불가능한 수준의 메모리 소거를 구현할 때, 일반적인 메모리 쓰기를 사용하면 LLVM은 "이후에 사용되지 않는 메모리 쓰기"로 판단하여 소거 로직 자체를 삭제(Dead Store Elimination, DSE)해버립니다. 휘발성 연산은 컴파일러가 메모리 접근을 생략하거나 순서를 재배치하는 것을 막아줍니다.
+What about volatile operations and memory barriers? According to this approach, `core::ptr::read_volatile` and `write_volatile` can be used to prevent optimization throughout the entire lifecycle of data (from allocation to erasure). When implementing memory erasure that is impossible to forensics, if you use normal memory writes, LLVM will judge it as "a memory write that is not used afterwards" and delete the erasure logic itself (Dead Store Elimination, DSE). Volatile operations prevent the compiler from omitting or reordering memory accesses.
 
-`entlib-native`의 모든 연산에서는 분명 상수-시간 연산을 지원합니다. 결과적으로 인-라인 어셈블리 및 컴파일러 베리어의 제한적 활용, 휘발성 연산과 메모리 베리어를 사용하여 LLVM 측 최적화를 통제하는 기술적 모멘트를 보여주기도 합니다.
+All operations in `entlib-native` clearly support constant-time operations. As a result, it also shows the technical moment of controlling LLVM-side optimization by using limited use of inline assembly and compiler barriers, volatile operations, and memory barriers.
 
-## 안전하지 않은 연산에 대해
+## Regarding Unsafe Operations
 
-하지만 우리는 `entlib-native`가 LLVM 공격적 최적화 문제를 해결하기 위해 기본적으로 "안전하지 않은 연산을 사용한다." 라는 맥락에서 논의를 더 이어갈 수 있습니다. 암호학적인 안정성을 달성하기 위해선 컴파일러의 통제를 벗어나야 하지만, 이는 Rust의 핵심 가치인 "메모리 안정성"을 스스로 해제해야 하는 딜레마로 이어지기 떄문입니다.
+However, we can continue the discussion in the context that `entlib-native` basically "uses unsafe operations" to solve the problem of aggressive LLVM optimization. This is because to achieve cryptographic stability, we must escape the control of the compiler, but this leads to the dilemma of having to release Rust's core value of "memory stability" ourselves.
 
-`entlib-native`는 엄격한 보안 인증을 통과해야 하며, 이 프로젝트에서 `unsafe`의 사용은 컴파일러를 대신해 보안과 수학/논리적 무결성을 증명하고 책임진다는 명시적 선언입니다.
+`entlib-native` must pass strict security certification, and the use of `unsafe` in this project is an explicit declaration that it proves and takes responsibility for security and mathematical/logical integrity on behalf of the compiler.
 
-Rust의 "Safe"는 컴파일 타임에 소유권(Ownership), 빌림(Borrowing), 수명(Lifetime) 규칙을 강제하는 것이며, '미정의 동작(Undefined Behavior)이 없음'을 의미하지만, 타이밍 공격이나 잔류 메모리 탈취에 대해서는 무방비 상태입니다. 말인 즉슨 메모리 안전성 규칙이 오히려 부채널, DSE 등의 보안 취약점을 야기하므로, 이를 방어하기 위해 의도적으로 하드웨어 종속적인 제어권(unsafe)을 획득해야 한다고 생각됩니다. 이를 암호학적 도메인과 메모리 도메인의 분리라고 정의하겠습니다.
+"Safe" in Rust is to enforce the rules of Ownership, Borrowing, and Lifetime at compile time, and it means 'no Undefined Behavior', but it is defenseless against timing attacks or residual memory theft. In other words, the memory safety rules rather cause security vulnerabilities such as side channels and DSE, so it is thought that we must intentionally acquire hardware-dependent control (unsafe) to defend against them. We will define this as the separation of the cryptographic domain and the memory domain.
 
-안전한 추상화와 완전한 캡슐화 원칙을 지지합니다. 즉, `unsafe` 코드는 절대 전역적으로 퍼져 있어서는 안 되며, 공개 가능한 API 시그니처 뒤에 완벽하게 캡슐화되어야 합니다. 인-라인 어셈블리나 `volatile` 연산을 수행하는 코드는 최소 단위의 함수로 격리해야 하며, `unsafe` 블록에 진입하기 전, 외부로부터 들여온 데이터에 대한 경계 검사와 `null` 포인터 검사 등을 반드시 Safe 영역에서 완료해야 합니다.
+We support the principles of safe abstraction and complete encapsulation. That is, `unsafe` code should never be spread globally, but should be completely encapsulated behind a publicly available API signature. Code that performs inline assembly or `volatile` operations should be isolated into the smallest unit of function, and before entering an `unsafe` block, boundary checks and `null` pointer checks for data brought in from the outside must be completed in the Safe area.
