@@ -195,8 +195,8 @@ pub(crate) fn k_pke_decrypt<const K: usize, const DU: u32, const DV: u32>(
         .map(|i| {
             // Compress_1: nearest to 0 or q/2
             // Compress_1(x) = round(2*x / q) mod 2
-            let c1 = ((2 * w.0[i] as i64 + crate::field::Q as i64 / 2)
-                / crate::field::Q as i64) as i32
+            let c1 = ((2 * w.0[i] as i64 + crate::field::Q as i64 / 2) / crate::field::Q as i64)
+                as i32
                 & 1;
             c1 as u8
         })

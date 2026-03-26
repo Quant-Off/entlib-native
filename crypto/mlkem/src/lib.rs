@@ -449,10 +449,7 @@ impl MLKEM {
     /// # Errors
     /// - `MLKEMError::InvalidLength`: 암호문 길이 불일치
     /// - `MLKEMError::InternalError`: 내부 연산 실패
-    pub fn decaps(
-        dk: &MLKEMDecapsulationKey,
-        c: &[u8],
-    ) -> Result<SecureBuffer, MLKEMError> {
+    pub fn decaps(dk: &MLKEMDecapsulationKey, c: &[u8]) -> Result<SecureBuffer, MLKEMError> {
         if c.len() != dk.param.ct_len() {
             return Err(MLKEMError::InvalidLength("암호문 길이 불일치"));
         }
@@ -684,10 +681,10 @@ mod tests {
 
     #[test]
     fn ntt_intt_roundtrip() {
-        use crate::ntt::{N, ntt, intt};
+        use crate::ntt::{N, intt, ntt};
         let mut f = [0i32; N];
-        for i in 0..N {
-            f[i] = (i as i32 * 13 + 7) % crate::field::Q;
+        for (i, val) in f.iter_mut().enumerate() {
+            *val = (i as i32 * 13 + 7) % crate::field::Q;
         }
         let original = f;
         ntt(&mut f);
@@ -815,10 +812,8 @@ mod tests {
         let mut rng = HashDRBGRng::new_from_os(None).unwrap();
         let (ek, dk) = MLKEM::key_gen(MLKEMParameter::MLKEM768, &mut rng).unwrap();
 
-        let ek2 =
-            MLKEMEncapsulationKey::from_bytes(ek.param(), ek.as_bytes().to_vec()).unwrap();
-        let dk2 =
-            MLKEMDecapsulationKey::from_bytes(dk.param(), dk.as_bytes()).unwrap();
+        let ek2 = MLKEMEncapsulationKey::from_bytes(ek.param(), ek.as_bytes().to_vec()).unwrap();
+        let dk2 = MLKEMDecapsulationKey::from_bytes(dk.param(), dk.as_bytes()).unwrap();
 
         let (k1, ct) = MLKEM::encaps(&ek2, &mut rng).unwrap();
         let k2 = MLKEM::decaps(&dk2, &ct).unwrap();

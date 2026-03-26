@@ -87,9 +87,7 @@ pub(crate) fn intt(f: &mut [i32; N]) {
         let mut start = 0usize;
         while start < N {
             let zeta = ZETAS[k];
-            if k > 0 {
-                k -= 1;
-            }
+            k = k.saturating_sub(1);
             for j in start..start + len {
                 let t = f[j];
                 f[j] = add_q(t, f[j + len]);

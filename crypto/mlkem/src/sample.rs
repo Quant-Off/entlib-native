@@ -1,6 +1,6 @@
+use crate::error::MLKEMError;
 use crate::field::{Q, reduce_q};
 use crate::ntt::N;
-use crate::error::MLKEMError;
 use entlib_native_sha3::api::{SHAKE128, SHAKE256};
 
 /// FIPS 203 Algorithm 6: SampleNTT.
@@ -74,7 +74,7 @@ fn cbd(bytes: &[u8], eta: usize) -> Result<[i32; N], MLKEMError> {
         return Err(MLKEMError::InternalError("CBD: 입력 부족"));
     }
 
-    for i in 0..N {
+    for (i, coeff) in coeffs.iter_mut().enumerate() {
         let bit_offset = i * bits_per_coeff;
         let mut x = 0i32;
         let mut y = 0i32;
@@ -84,7 +84,7 @@ fn cbd(bytes: &[u8], eta: usize) -> Result<[i32; N], MLKEMError> {
             x += ((bytes[pos_x / 8] >> (pos_x % 8)) & 1) as i32;
             y += ((bytes[pos_y / 8] >> (pos_y % 8)) & 1) as i32;
         }
-        coeffs[i] = reduce_q(x - y);
+        *coeff = reduce_q(x - y);
     }
     Ok(coeffs)
 }
