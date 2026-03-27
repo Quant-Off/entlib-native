@@ -1,11 +1,10 @@
-//! todo: 에러(Result::Err)
-
 use core::arch::asm;
+use entlib_native_base::error::rng::RngError;
 use entlib_native_secure_buffer::SecureBuffer;
 use entlib_native_sha3::api::SHA3_256;
 
 #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
-pub fn extract_os_entropy(size: usize) -> Result<SecureBuffer, &'static str> {
+pub fn extract_os_entropy(size: usize) -> Result<SecureBuffer, RngError> {
     let mut buffer = SecureBuffer::new_owned(size)?;
     let buf_slice = buffer.as_mut_slice();
     let mut read_bytes = 0;
@@ -31,10 +30,10 @@ pub fn extract_os_entropy(size: usize) -> Result<SecureBuffer, &'static str> {
                 // EINTR
                 continue;
             }
-            return Err("Entropy extraction failed due to OS kernel error.");
+            return Err(RngError::OsKernelError);
         }
         if ret == 0 {
-            return Err("OS entropy source returned EOF unexpectedly.");
+            return Err(RngError::EntropySourceEof);
         }
         read_bytes += ret as usize;
     }
@@ -43,7 +42,7 @@ pub fn extract_os_entropy(size: usize) -> Result<SecureBuffer, &'static str> {
 }
 
 #[cfg(all(target_os = "linux", target_arch = "aarch64"))]
-pub fn extract_os_entropy(size: usize) -> Result<SecureBuffer, &'static str> {
+pub fn extract_os_entropy(size: usize) -> Result<SecureBuffer, RngError> {
     let mut buffer = SecureBuffer::new_owned(size)?;
     let buf_slice = buffer.as_mut_slice();
     let mut read_bytes = 0;
@@ -67,10 +66,10 @@ pub fn extract_os_entropy(size: usize) -> Result<SecureBuffer, &'static str> {
                 // EINTR
                 continue;
             }
-            return Err("Entropy extraction failed due to OS kernel error.");
+            return Err(RngError::OsKernelError);
         }
         if ret == 0 {
-            return Err("OS entropy source returned EOF unexpectedly.");
+            return Err(RngError::EntropySourceEof);
         }
         read_bytes += ret as usize;
     }
@@ -79,11 +78,9 @@ pub fn extract_os_entropy(size: usize) -> Result<SecureBuffer, &'static str> {
 }
 
 #[cfg(target_os = "macos")]
-pub fn extract_os_entropy(size: usize) -> Result<SecureBuffer, &'static str> {
-    // getentropy(2): macOS 10.12+, 최대 256 바이트, 단일 호출로 완전 채움
-    // no_std에서도 macOS는 항상 libSystem을 링크하므로 FFI 호출 가능
+pub fn extract_os_entropy(size: usize) -> Result<SecureBuffer, RngError> {
     if size > 256 {
-        return Err("getentropy size exceeds 256-byte limit.");
+        return Err(RngError::SizeLimitExceeded);
     }
     let mut buffer = SecureBuffer::new_owned(size)?;
     unsafe extern "C" {
@@ -91,21 +88,19 @@ pub fn extract_os_entropy(size: usize) -> Result<SecureBuffer, &'static str> {
     }
     let ret = unsafe { getentropy(buffer.as_mut_slice().as_mut_ptr(), size) };
     if ret != 0 {
-        return Err("Entropy extraction failed due to OS kernel error.");
+        return Err(RngError::OsKernelError);
     }
     Ok(buffer)
 }
 
 #[allow(dead_code)]
 #[cfg(target_arch = "x86_64")]
-pub fn extract_hardware_entropy(size: usize) -> Result<SecureBuffer, &'static str> {
-    // 8비트 단위 할당
+pub fn extract_hardware_entropy(size: usize) -> Result<SecureBuffer, RngError> {
     let mut buffer = SecureBuffer::new_owned(size)?;
     let buf_slice = buffer.as_mut_slice();
 
-    // RDSEED는 8비트 단위 추출 (8배수 검증)
     if !size.is_multiple_of(8) {
-        return Err("Hardware entropy size must be a multiple of 8 bytes.");
+        return Err(RngError::InvalidAlignment);
     }
 
     let qwords = size / 8;
@@ -134,7 +129,7 @@ pub fn extract_hardware_entropy(size: usize) -> Result<SecureBuffer, &'static st
         }
 
         if success == 0 {
-            return Err("Hardware entropy source exhausted or degraded after maximum retries.");
+            return Err(RngError::HardwareEntropyExhausted);
         }
 
         buf_slice[i * 8..(i + 1) * 8].copy_from_slice(&seed.to_ne_bytes());
@@ -144,12 +139,12 @@ pub fn extract_hardware_entropy(size: usize) -> Result<SecureBuffer, &'static st
 }
 
 #[cfg(target_arch = "aarch64")]
-pub fn extract_hardware_entropy_arm(size: usize) -> Result<SecureBuffer, &'static str> {
+pub fn extract_hardware_entropy_arm(size: usize) -> Result<SecureBuffer, RngError> {
     let mut buffer = SecureBuffer::new_owned(size)?;
     let buf_slice = buffer.as_mut_slice();
 
     if !size.is_multiple_of(8) {
-        return Err("Hardware entropy size must be a multiple of 8 bytes.");
+        return Err(RngError::InvalidAlignment);
     }
 
     let qwords = size / 8;
@@ -169,7 +164,7 @@ pub fn extract_hardware_entropy_arm(size: usize) -> Result<SecureBuffer, &'stati
         }
 
         if success == 0 {
-            return Err("ARM RNDRRS entropy source exhausted or degraded.");
+            return Err(RngError::HardwareEntropyExhausted);
         }
 
         buf_slice[i * 8..(i + 1) * 8].copy_from_slice(&seed.to_ne_bytes());
@@ -184,13 +179,17 @@ pub fn extract_hardware_entropy_arm(size: usize) -> Result<SecureBuffer, &'stati
 /// 안 됩니다. NIST SP 800-90C 지침에 따라 검증된 암호학적 해시 함수를 통해 컨디셔닝(Conditioning)
 /// 과정을 거쳐야 합니다.
 #[allow(unused)]
-pub fn condition_entropy(raw_entropy: &SecureBuffer) -> Result<SecureBuffer, &'static str> {
-    // 최소 필터링
+pub fn condition_entropy(raw_entropy: &SecureBuffer) -> Result<SecureBuffer, RngError> {
     if raw_entropy.len() < 32 {
-        return Err("Insufficient raw entropy length for 256-bit security strength.");
+        return Err(RngError::InsufficientEntropy);
     }
 
     let mut hasher = SHA3_256::new();
     hasher.update(raw_entropy.as_slice());
-    hasher.finalize()
+    hasher.finalize().map_err(|e| match e {
+        entlib_native_base::error::hash::HashError::Buffer(buf_err) => RngError::Buffer(buf_err),
+        _ => RngError::Buffer(
+            entlib_native_base::error::secure_buffer::SecureBufferError::AllocationFailed,
+        ),
+    })
 }

@@ -1,4 +1,5 @@
 use alloc::alloc::{Layout, alloc_zeroed, dealloc};
+use entlib_native_base::error::secure_buffer::SecureBufferError;
 
 #[cfg(feature = "std")]
 use std::sync::OnceLock;
@@ -211,33 +212,29 @@ impl SecureMemoryBlock {
     ///
     /// # Returns
     /// - `Ok(SecureMemoryBlock)` - 할당 및 잠금 성공 시
-    /// - `Err(&'static str)` - 메모리 할당 실패 또는 잠금 실패(리소스 제한 등) 시
+    /// - `Err(SecureBufferError)` - 메모리 할당 실패 또는 잠금 실패(리소스 제한 등) 시
     ///
     /// # Safety
     /// 내부적으로 `alloc_zeroed`를 사용하여 초기화되지 않은 메모리 접근(UB)을 방지합니다.
     /// 하지만 OS의 메모리 잠금 제한(RLIMIT_MEMLOCK 등)에 걸릴 경우 실패할 수 있습니다.
-    pub fn allocate_locked(size: usize) -> Result<Self, &'static str> {
+    pub fn allocate_locked(size: usize) -> Result<Self, SecureBufferError> {
         let capacity = align_to_page(size);
         let ps = page_size();
-        // 페이지 크기로 정렬된 레이아웃 생성
-        let layout = Layout::from_size_align(capacity, ps)
-            .map_err(|_| "Invalid memory layout: Size or alignment error")?;
+        let layout =
+            Layout::from_size_align(capacity, ps).map_err(|_| SecureBufferError::InvalidLayout)?;
 
-        // 할당 시 남는 패딩 영역의 기존 heap 찌꺼기 데이터를 0으로 덮어씀 (Zero-Initialization)
         // Safety: layout이 유효하므로 alloc_zeroed 호출은 안전함
         let ptr = unsafe { alloc_zeroed(layout) };
         if ptr.is_null() {
-            return Err("Memory allocation failed: Out of memory");
+            return Err(SecureBufferError::AllocationFailed);
         }
 
         #[cfg(feature = "std")]
         unsafe {
-            // OS별 메모리 잠금 수행
             // Q. T. Felix TODO: 베어메탈 std 환경에서 lock_memory는 사용할 수 없습니다.
             if !os_lock::lock_memory(ptr, capacity) {
-                // 잠금 실패 시, 할당했던 메모리를 즉시 해제하고 에러 반환
                 dealloc(ptr, layout);
-                return Err("OS memory lock (mlock/VirtualLock) failed. Resource limit reached.");
+                return Err(SecureBufferError::MemoryLockFailed);
             }
         }
 

@@ -42,7 +42,7 @@ pub(crate) fn sample_ntt(rho: &[u8; 32], i: u8, j: u8) -> Result<[i32; N], MLKEM
     }
 
     if count < N {
-        return Err(MLKEMError::InternalError("SampleNTT: 출력 부족"));
+        return Err(MLKEMError::InternalError);
     }
     Ok(coeffs)
 }
@@ -71,7 +71,7 @@ fn cbd(bytes: &[u8], eta: usize) -> Result<[i32; N], MLKEMError> {
     let bits_per_coeff = 2 * eta;
     let total_bits = N * bits_per_coeff;
     if bytes.len() * 8 < total_bits {
-        return Err(MLKEMError::InternalError("CBD: 입력 부족"));
+        return Err(MLKEMError::InternalError);
     }
 
     for (i, coeff) in coeffs.iter_mut().enumerate() {

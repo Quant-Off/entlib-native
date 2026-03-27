@@ -313,14 +313,12 @@ impl<const K: usize, const L: usize, const ETA: i32, const SK_LEN: usize>
         let expected_len = 32 + 32 + 64 + s1_len + s2_len + t0_len;
 
         if sk.len() != expected_len {
-            return Err(InvalidLength("skDecode: 잘못된 비밀 키 길이"));
+            return Err(InvalidLength);
         }
 
         // SK_LEN 상수와 런타임 길이 일치 검증 (파라미터 셋 오용 방지)
         if SK_LEN != expected_len {
-            return Err(InvalidLength(
-                "skDecode: SK_LEN이 파라미터 셋과 일치하지 않습니다",
-            ));
+            return Err(InvalidLength);
         }
 
         let b = sk.as_slice();

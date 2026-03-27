@@ -3,6 +3,7 @@
 
 use core::ptr::write_volatile;
 use core::sync::atomic::{Ordering, compiler_fence};
+use entlib_native_base::error::hash::HashError;
 use entlib_native_secure_buffer::SecureBuffer;
 
 const IV: [u64; 8] = [
@@ -114,7 +115,7 @@ impl Blake2b {
     ///
     /// # Security Note
     /// 내부 상태는 함수 종료 시 Drop을 통해 소거됩니다.
-    pub fn finalize(mut self) -> Result<SecureBuffer, &'static str> {
+    pub fn finalize(mut self) -> Result<SecureBuffer, HashError> {
         // 남은 바이트 수만큼 카운터 증가
         add_to_counter(&mut self.t, self.buf_len as u64);
         // 버퍼 나머지를 0으로 패딩

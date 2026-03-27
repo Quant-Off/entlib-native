@@ -8,10 +8,4 @@ license.workspace = true
 [dependencies]
 entlib-native-constant-time.workspace = true
 entlib-native-secure-buffer = { workspace = true, features = ["std"] }
-
-[dev-dependencies]
-#criterion = { version = "0.8.2", features = ["html_reports"] }
-
-#[[bench]]
-#name = "base64_bench"
-#harness = false
+entlib-native-base.workspace = true

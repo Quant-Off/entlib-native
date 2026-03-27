@@ -1,6 +1,7 @@
 pub mod base64;
 
 use base64::{ct_b64_to_bin_u8, ct_bin_to_b64_u8};
+use entlib_native_base::error::base64::Base64Error;
 use entlib_native_secure_buffer::SecureBuffer;
 
 /// RFC 4648 표준 Base64 인코딩 함수입니다.
@@ -31,7 +32,7 @@ use entlib_native_secure_buffer::SecureBuffer;
 /// assert_eq!(encoded.as_slice(), b"TWFu");
 /// // input, encoded 모두 여기서 Drop되면서 내용이 자동 소거됨
 /// ```
-pub fn encode(input: &SecureBuffer) -> Result<SecureBuffer, &'static str> {
+pub fn encode(input: &SecureBuffer) -> Result<SecureBuffer, Base64Error> {
     let input = input.as_slice();
 
     let full_groups = input.len() / 3;
@@ -106,14 +107,14 @@ pub fn encode(input: &SecureBuffer) -> Result<SecureBuffer, &'static str> {
 /// invalid.as_mut_slice().copy_from_slice(b"!!!!");
 /// assert!(decode(&invalid).is_err());
 /// ```
-pub fn decode(input: &SecureBuffer) -> Result<SecureBuffer, &'static str> {
+pub fn decode(input: &SecureBuffer) -> Result<SecureBuffer, Base64Error> {
     let input = input.as_slice();
 
     if !input.len().is_multiple_of(4) {
-        return Err("invalid base64: length must be a multiple of 4");
+        return Err(Base64Error::InvalidLength);
     }
     if input.is_empty() {
-        return SecureBuffer::new_owned(0);
+        return Ok(SecureBuffer::new_owned(0)?);
     }
 
     let num_groups = input.len() / 4;
@@ -190,7 +191,7 @@ pub fn decode(input: &SecureBuffer) -> Result<SecureBuffer, &'static str> {
 
     if invalid != 0 {
         // buf는 여기서 Drop되며 중간값을 포함한 내용 자동 소거
-        Err("invalid base64: illegal character or padding")
+        Err(Base64Error::IllegalCharacterOrPadding)
     } else {
         Ok(buf)
     }

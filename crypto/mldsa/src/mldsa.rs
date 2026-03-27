@@ -143,17 +143,13 @@ impl CtrDRBGRng {
     ///
     /// **현재 항상 `MLDSAError::NotImplemented`를 반환합니다.**
     pub fn new(_entropy_input: &[u8], _nonce: &[u8]) -> Result<Self, MLDSAError> {
-        Err(MLDSAError::NotImplemented(
-            "CTR_DRBG: AES-256 구현 완료 후 제공됩니다",
-        ))
+        Err(MLDSAError::NotImplemented)
     }
 }
 
 impl MLDSARng for CtrDRBGRng {
     fn fill_random(&mut self, _dest: &mut [u8]) -> Result<(), MLDSAError> {
-        Err(MLDSAError::NotImplemented(
-            "CTR_DRBG: AES-256 구현 완료 후 제공됩니다",
-        ))
+        Err(MLDSAError::NotImplemented)
     }
 }
 
@@ -256,7 +252,7 @@ impl MLDSAPublicKey {
     /// 바이트 길이가 파라미터 셋과 일치하지 않으면 `InvalidLength`.
     pub fn from_bytes(param: MLDSAParameter, bytes: Vec<u8>) -> Result<Self, MLDSAError> {
         if bytes.len() != param.pk_len() {
-            return Err(MLDSAError::InvalidLength("공개 키 길이 불일치"));
+            return Err(MLDSAError::InvalidLength);
         }
         Ok(Self { param, bytes })
     }
@@ -311,10 +307,10 @@ impl MLDSAPrivateKey {
     /// 바이트 길이가 파라미터 셋과 일치하지 않으면 `InvalidLength`.
     pub fn from_bytes(param: MLDSAParameter, bytes: &[u8]) -> Result<Self, MLDSAError> {
         if bytes.len() != param.sk_len() {
-            return Err(MLDSAError::InvalidLength("비밀 키 길이 불일치"));
+            return Err(MLDSAError::InvalidLength);
         }
-        let mut sk_buf = SecureBuffer::new_owned(bytes.len())
-            .map_err(|_| MLDSAError::InternalError("SecureBuffer 할당 실패"))?;
+        let mut sk_buf =
+            SecureBuffer::new_owned(bytes.len()).map_err(|_| MLDSAError::InternalError)?;
         sk_buf.as_mut_slice().copy_from_slice(bytes);
         Ok(Self { param, sk_buf })
     }
@@ -616,15 +612,6 @@ fn keygen_encode<
 
 /// `DrbgError`를 `MLDSAError::RngError`로 변환
 #[inline(always)]
-fn drbg_err(e: DrbgError) -> MLDSAError {
-    match e {
-        DrbgError::ReseedRequired => {
-            MLDSAError::RngError("RNG reseed 필요: reseed() 호출 후 재시도")
-        }
-        DrbgError::EntropyTooShort => MLDSAError::RngError("엔트로피 길이 부족"),
-        DrbgError::NonceTooShort => MLDSAError::RngError("Nonce 길이 부족"),
-        DrbgError::RequestTooLarge => MLDSAError::RngError("요청 크기 초과"),
-        DrbgError::AllocationFailed => MLDSAError::RngError("RNG 메모리 할당 실패"),
-        _ => MLDSAError::RngError("RNG 내부 오류"),
-    }
+fn drbg_err(_e: DrbgError) -> MLDSAError {
+    MLDSAError::RngError
 }

@@ -8,3 +8,4 @@ license.workspace = true
 [dependencies]
 entlib-native-blake.workspace = true
 entlib-native-secure-buffer.workspace = true
+entlib-native-base.workspace = true

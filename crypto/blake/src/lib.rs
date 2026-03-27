@@ -46,6 +46,7 @@ mod blake3;
 pub use blake2b::Blake2b;
 pub use blake3::{Blake3, OUT_LEN as BLAKE3_OUT_LEN};
 
+use entlib_native_base::error::hash::HashError;
 use entlib_native_secure_buffer::SecureBuffer;
 
 /// RFC 9106 Section 3.2에서 정의된 가변 출력 BLAKE2b 함수입니다 (H').
@@ -58,9 +59,9 @@ use entlib_native_secure_buffer::SecureBuffer;
 ///
 /// # Errors
 /// `out_len == 0` 또는 SecureBuffer 할당 실패 시 `Err`.
-pub fn blake2b_long(input: &[u8], out_len: usize) -> Result<SecureBuffer, &'static str> {
+pub fn blake2b_long(input: &[u8], out_len: usize) -> Result<SecureBuffer, HashError> {
     if out_len == 0 {
-        return Err("blake2b_long: out_len must be >= 1");
+        return Err(HashError::InvalidOutputLength);
     }
 
     let len_prefix = (out_len as u32).to_le_bytes();

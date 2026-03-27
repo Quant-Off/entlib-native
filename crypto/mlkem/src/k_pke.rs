@@ -60,8 +60,7 @@ pub(crate) fn k_pke_keygen<const K: usize, const ETA1: usize>(
 
     // 8: dk_pke = ByteEncode_12(s_hat) → SecureBuffer
     let dk_len = 384 * K;
-    let mut dk = SecureBuffer::new_owned(dk_len)
-        .map_err(|_| MLKEMError::InternalError("SecureBuffer 할당 실패"))?;
+    let mut dk = SecureBuffer::new_owned(dk_len).map_err(|_| MLKEMError::InternalError)?;
     {
         let dk_bytes = dk.as_mut_slice();
         for i in 0..K {
@@ -91,7 +90,7 @@ pub(crate) fn k_pke_encrypt<
 ) -> Result<Vec<u8>, MLKEMError> {
     let expected_ek_len = 384 * K + 32;
     if ek.len() != expected_ek_len {
-        return Err(MLKEMError::InvalidLength("k_pke_encrypt: ek 길이 불일치"));
+        return Err(MLKEMError::InvalidLength);
     }
 
     // 1: Decode t_hat and rho from ek
@@ -161,10 +160,10 @@ pub(crate) fn k_pke_decrypt<const K: usize, const DU: u32, const DV: u32>(
     let c1_len = 32 * DU as usize * K;
     let c2_len = 32 * DV as usize;
     if c.len() != c1_len + c2_len {
-        return Err(MLKEMError::InvalidLength("k_pke_decrypt: c 길이 불일치"));
+        return Err(MLKEMError::InvalidLength);
     }
     if dk.len() != 384 * K {
-        return Err(MLKEMError::InvalidLength("k_pke_decrypt: dk 길이 불일치"));
+        return Err(MLKEMError::InvalidLength);
     }
 
     // 1: u = Decompress_du(ByteDecode_du(c1))

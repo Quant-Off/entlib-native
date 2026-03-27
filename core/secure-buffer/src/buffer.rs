@@ -1,5 +1,6 @@
 use crate::memory::SecureMemoryBlock;
 use crate::zeroize::{SecureZeroize, Zeroizer};
+use entlib_native_base::error::secure_buffer::SecureBufferError;
 
 /// 군사급 보안 요구사항을 충족하는 고수준 보안 버퍼입니다.
 ///
@@ -31,8 +32,8 @@ impl SecureBuffer {
     ///
     /// # Returns
     /// - `Ok(SecureBuffer)` - 할당 및 잠금 성공 시
-    /// - `Err(&'static str)` - 메모리 할당 실패 또는 OS 리소스 제한 도달 시
-    pub fn new_owned(size: usize) -> Result<Self, &'static str> {
+    /// - `Err(SecureBufferError)` - 메모리 할당 실패 또는 OS 리소스 제한 도달 시
+    pub fn new_owned(size: usize) -> Result<Self, SecureBufferError> {
         let block = SecureMemoryBlock::allocate_locked(size)?;
 
         Ok(Self {
@@ -56,24 +57,20 @@ impl SecureBuffer {
     /// - `ptr`은 유효한 메모리 주소를 가리켜야 합니다.
     /// - `len`은 해당 메모리 영역의 올바른 크기여야 합니다.
     /// - 호출자는 `ptr`이 가리키는 메모리가 `len`만큼 유효함을 보장해야 합니다.
-    pub unsafe fn from_raw_parts(ptr: *mut u8, len: usize) -> Result<Self, &'static str> {
+    pub unsafe fn from_raw_parts(ptr: *mut u8, len: usize) -> Result<Self, SecureBufferError> {
         let ps = crate::memory::page_size();
-        // 외부에서 주입된 메모리가 페이지 경계에 맞게 정렬되었는지 강제 검증 (Zero-Trust)
         if !(ptr as usize).is_multiple_of(ps) {
-            return Err("Security Violation: External memory pointer is not page-aligned.");
+            return Err(SecureBufferError::PageAlignmentViolation);
         }
         if !len.is_multiple_of(ps) {
-            return Err(
-                "Security Violation: External memory length is not a multiple of PAGE_SIZE.",
-            );
+            return Err(SecureBufferError::PageAlignmentViolation);
         }
 
         #[cfg(feature = "std")]
         unsafe {
             // Q. T. Felix TODO: 베어메탈 std 환경에서 lock_memory는 사용할 수 없습니다.
-            // 외부 메모리라도 Rust 쪽에서 사용 중에는 스왑되지 않도록 잠금 시도
             if !crate::memory::os_lock::lock_memory(ptr, len) {
-                return Err("Failed to lock external memory segment.");
+                return Err(SecureBufferError::MemoryLockFailed);
             }
         }
 

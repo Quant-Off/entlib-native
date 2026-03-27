@@ -70,7 +70,7 @@ fn rej_ntt_poly(seed: &[u8; 34]) -> Result<Poly, MLDSAError> {
 
     if count < N {
         // 극단적으로 운이 나빠 840바이트 내에서 256개를 채우지 못한 경우 방어 로직
-        return Err(InternalError("거절 샘플링 중 SHAKE128 출력이 부족합니다!"));
+        return Err(InternalError);
     }
 
     Ok(poly)
@@ -162,9 +162,7 @@ fn rej_bounded_poly<const ETA: i32>(rho_prime: &[u8; 64], nonce: u16) -> Result<
     }
 
     if count < N {
-        return Err(InternalError(
-            "RejBoundedPoly 실행 중 SHAKE256 출력이 부족합니다!",
-        ));
+        return Err(InternalError);
     }
 
     Ok(poly)

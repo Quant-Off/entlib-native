@@ -5,14 +5,15 @@ mod kcmvp_cavp_test {
     use std::path::Path;
 
     /// 외부 입력에 대한 엄격한 16진수 디코딩 (Zero-Trust 검증)
-    fn decode_hex(hex_str: &str) -> Result<Vec<u8>, &'static str> {
+    fn decode_hex(hex_str: &str) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
         if !hex_str.len().is_multiple_of(2) {
-            return Err("Hex string length must be even");
+            return Err("Hex string length must be even".into());
         }
         (0..hex_str.len())
             .step_by(2)
             .map(|i| {
-                u8::from_str_radix(&hex_str[i..i + 2], 16).map_err(|_| "Invalid hex character")
+                u8::from_str_radix(&hex_str[i..i + 2], 16)
+                    .map_err(|e| -> Box<dyn std::error::Error> { Box::new(e) })
             })
             .collect()
     }
@@ -54,7 +55,7 @@ mod kcmvp_cavp_test {
     }
 
     impl Sha3Variant {
-        fn hash(&self, msg: &[u8], bit_len: usize) -> Result<Vec<u8>, &'static str> {
+        fn hash(&self, msg: &[u8], bit_len: usize) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
             match self {
                 Sha3Variant::Sha3_224 => Ok(compute_sha3!(SHA3_224, msg, bit_len)),
                 Sha3Variant::Sha3_256 => Ok(compute_sha3!(SHA3_256, msg, bit_len)),
@@ -80,10 +81,9 @@ mod kcmvp_cavp_test {
         req_path: &str,
         rsp_path: &str,
         variant: Sha3Variant,
-    ) -> Result<(), &'static str> {
-        let req_file = File::open(Path::new(req_path)).map_err(|_| "Failed to open .req file")?;
-        let rsp_file =
-            File::create(Path::new(rsp_path)).map_err(|_| "Failed to create .rsp file")?;
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let req_file = File::open(Path::new(req_path))?;
+        let rsp_file = File::create(Path::new(rsp_path))?;
 
         let reader = BufReader::new(req_file);
         let mut writer = BufWriter::new(rsp_file);
@@ -91,19 +91,19 @@ mod kcmvp_cavp_test {
         let mut current_len: Option<usize> = None;
 
         for line in reader.lines() {
-            let line = line.map_err(|_| "IO Read Error")?;
+            let line = line?;
             let trimmed = line.trim();
 
             if trimmed.starts_with('#') || trimmed.is_empty() {
-                writeln!(writer, "{}", line).map_err(|_| "IO Write Error")?;
+                writeln!(writer, "{}", line)?;
                 continue;
             }
 
             if let Some(len_str) = trimmed.strip_prefix("Len = ") {
-                current_len = Some(len_str.parse::<usize>().map_err(|_| "Invalid Len value")?);
-                writeln!(writer, "{}", trimmed).map_err(|_| "IO Write Error")?;
+                current_len = Some(len_str.parse::<usize>()?);
+                writeln!(writer, "{}", trimmed)?;
             } else if let Some(msg_str) = trimmed.strip_prefix("Msg = ") {
-                writeln!(writer, "{}", trimmed).map_err(|_| "IO Write Error")?;
+                writeln!(writer, "{}", trimmed)?;
 
                 let bit_len = current_len.take().ok_or("Msg found before Len")?;
 
@@ -115,14 +115,14 @@ mod kcmvp_cavp_test {
                 };
 
                 let md = variant.hash(&msg_bytes, bit_len)?;
-                writeln!(writer, "MD = {}", encode_hex(&md)).map_err(|_| "IO Write Error")?;
+                writeln!(writer, "MD = {}", encode_hex(&md))?;
             } else {
                 // 그 외 헤더 정보 유지
-                writeln!(writer, "{}", trimmed).map_err(|_| "IO Write Error")?;
+                writeln!(writer, "{}", trimmed)?;
             }
         }
 
-        writer.flush().map_err(|_| "Failed to flush .rsp file")?;
+        writer.flush()?;
         Ok(())
     }
 
@@ -132,10 +132,9 @@ mod kcmvp_cavp_test {
         req_path: &str,
         rsp_path: &str,
         variant: Sha3Variant,
-    ) -> Result<(), &'static str> {
-        let req_file = File::open(Path::new(req_path)).map_err(|_| "Failed to open .req file")?;
-        let rsp_file =
-            File::create(Path::new(rsp_path)).map_err(|_| "Failed to create .rsp file")?;
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let req_file = File::open(Path::new(req_path))?;
+        let rsp_file = File::create(Path::new(rsp_path))?;
 
         let reader = BufReader::new(req_file);
         let mut writer = BufWriter::new(rsp_file);
@@ -146,18 +145,18 @@ mod kcmvp_cavp_test {
         let n_blocks = (r_bits / n_bits) + 1; // N = floor(r/n) + 1
 
         for line in reader.lines() {
-            let line = line.map_err(|_| "IO Read Error")?;
+            let line = line?;
             let trimmed = line.trim();
 
             if trimmed.starts_with("Seed = ") {
                 let seed_str = trimmed.strip_prefix("Seed = ").unwrap();
                 let mut current_seed = decode_hex(seed_str)?;
 
-                writeln!(writer, "{}", trimmed).map_err(|_| "IO Write Error")?;
+                writeln!(writer, "{}", trimmed)?;
 
                 // 100개의 체크포인트(MD) 생성 루프
                 for count in 0..100 {
-                    writeln!(writer, "COUNT = {}", count).map_err(|_| "IO Write Error")?;
+                    writeln!(writer, "COUNT = {}", count)?;
 
                     // 초기 MD 배열 (크기 N)을 Seed로 모두 채움
                     let mut md_history: Vec<Vec<u8>> = vec![current_seed.clone(); n_blocks];
@@ -189,16 +188,15 @@ mod kcmvp_cavp_test {
                     // 1,000회 완료 후의 최신 MD를 다음 루프의 Seed로 설정
                     current_seed = md_history[n_blocks - 1].clone();
 
-                    writeln!(writer, "MD = {}", encode_hex(&current_seed))
-                        .map_err(|_| "IO Write Error")?;
-                    writeln!(writer).map_err(|_| "IO Write Error")?;
+                    writeln!(writer, "MD = {}", encode_hex(&current_seed))?;
+                    writeln!(writer)?;
                 }
             } else if trimmed.starts_with('#') || trimmed.is_empty() || trimmed.starts_with('[') {
-                writeln!(writer, "{}", line).map_err(|_| "IO Write Error")?;
+                writeln!(writer, "{}", line)?;
             }
         }
 
-        writer.flush().map_err(|_| "Failed to flush .rsp file")?;
+        writer.flush()?;
         Ok(())
     }
 

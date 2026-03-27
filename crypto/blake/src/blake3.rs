@@ -3,6 +3,7 @@
 
 use core::ptr::write_volatile;
 use core::sync::atomic::{Ordering, compiler_fence};
+use entlib_native_base::error::hash::HashError;
 use entlib_native_secure_buffer::SecureBuffer;
 
 const IV: [u32; 8] = [
@@ -77,7 +78,7 @@ impl Blake3 {
     }
 
     /// 32바이트 해시를 SecureBuffer로 반환하는 함수입니다.
-    pub fn finalize(self) -> Result<SecureBuffer, &'static str> {
+    pub fn finalize(self) -> Result<SecureBuffer, HashError> {
         self.finalize_xof(OUT_LEN)
     }
 
@@ -85,7 +86,7 @@ impl Blake3 {
     ///
     /// # Security Note
     /// XOF 출력은 ROOT 플래그와 카운터 모드로 무제한 확장됩니다.
-    pub fn finalize_xof(self, out_len: usize) -> Result<SecureBuffer, &'static str> {
+    pub fn finalize_xof(self, out_len: usize) -> Result<SecureBuffer, HashError> {
         let mut output = self.chunk_state.output();
         let mut parent_nodes = self.cv_stack_len;
         while parent_nodes > 0 {

@@ -275,9 +275,7 @@ fn sample_in_ball(c_tilde: &[u8], tau: usize) -> Result<Poly, MLDSAError> {
         // j ≤ i가 될 때까지 바이트 소비
         let j = loop {
             if idx >= data.len() {
-                return Err(MLDSAError::InternalError(
-                    "SampleInBall: SHAKE256 출력 소진 (극히 드문 경우)",
-                ));
+                return Err(MLDSAError::InternalError);
             }
             let candidate = data[idx] as usize;
             idx += 1;
@@ -616,9 +614,7 @@ pub(crate) fn verify_internal_impl<
     }
 
     // 1: (ρ, t1) ← pkDecode(pk)
-    let pk_arr: &[u8; PK_LEN] = pk_bytes
-        .try_into()
-        .map_err(|_| MLDSAError::InvalidLength("verify: pk 길이 변환 실패"))?;
+    let pk_arr: &[u8; PK_LEN] = pk_bytes.try_into().map_err(|_| MLDSAError::InvalidLength)?;
     let pk = <MLDSAPublicKey<K> as MLDSAPublicKeyTrait<K, PK_LEN>>::pk_decode(pk_arr);
 
     // 2: (c~, z, h) ← sigDecode(σ)

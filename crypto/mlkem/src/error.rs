@@ -1,15 +1,26 @@
+use entlib_native_base::error::hash::HashError;
+use entlib_native_base::error::secure_buffer::SecureBufferError;
+
 #[derive(Debug)]
 pub enum MLKEMError {
-    InvalidLength(&'static str),
-    InternalError(&'static str),
-    RngError(&'static str),
+    InvalidLength,
+    InternalError,
+    RngError,
     InvalidEncapsulationKey,
     InvalidDecapsulationKey,
-    NotImplemented(&'static str),
+    NotImplemented,
+    Hash(HashError),
+    Buffer(SecureBufferError),
 }
 
-impl From<&'static str> for MLKEMError {
-    fn from(s: &'static str) -> Self {
-        MLKEMError::InternalError(s)
+impl From<HashError> for MLKEMError {
+    fn from(e: HashError) -> Self {
+        MLKEMError::Hash(e)
+    }
+}
+
+impl From<SecureBufferError> for MLKEMError {
+    fn from(e: SecureBufferError) -> Self {
+        MLKEMError::Buffer(e)
     }
 }

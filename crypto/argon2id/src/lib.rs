@@ -23,6 +23,7 @@ mod blamka;
 use blamka::block_g;
 use core::ptr::write_volatile;
 use core::sync::atomic::{Ordering, compiler_fence};
+use entlib_native_base::error::argon2id::Argon2idError;
 use entlib_native_blake::{Blake2b, blake2b_long};
 use entlib_native_secure_buffer::SecureBuffer;
 
@@ -48,18 +49,18 @@ impl Argon2id {
         memory_cost: u32,
         parallelism: u32,
         tag_length: u32,
-    ) -> Result<Self, &'static str> {
+    ) -> Result<Self, Argon2idError> {
         if parallelism == 0 || parallelism > 0x00FF_FFFF {
-            return Err("parallelism must be 1..=2^24-1");
+            return Err(Argon2idError::InvalidParameter);
         }
         if time_cost == 0 {
-            return Err("time_cost must be >= 1");
+            return Err(Argon2idError::InvalidParameter);
         }
         if memory_cost < 8 * parallelism {
-            return Err("memory_cost must be >= 8*parallelism");
+            return Err(Argon2idError::InvalidParameter);
         }
         if tag_length < 4 {
-            return Err("tag_length must be >= 4");
+            return Err(Argon2idError::InvalidParameter);
         }
         Ok(Self {
             time_cost,
@@ -85,9 +86,9 @@ impl Argon2id {
         salt: &[u8],
         secret: &[u8],
         ad: &[u8],
-    ) -> Result<SecureBuffer, &'static str> {
+    ) -> Result<SecureBuffer, Argon2idError> {
         if salt.len() < 8 {
-            return Err("salt must be >= 8 bytes");
+            return Err(Argon2idError::InvalidParameter);
         }
 
         let p = self.parallelism as usize;
@@ -100,7 +101,7 @@ impl Argon2id {
         let sl = q / SYNC_POINTS; // 세그먼트 길이
 
         if sl < 2 {
-            return Err("memory_cost too small for given parallelism");
+            return Err(Argon2idError::InvalidParameter);
         }
 
         // H0: 초기 512비트 해시
@@ -288,7 +289,7 @@ fn compute_h0(
     salt: &[u8],
     secret: &[u8],
     ad: &[u8],
-) -> Result<SecureBuffer, &'static str> {
+) -> Result<SecureBuffer, Argon2idError> {
     let mut h = Blake2b::new(64);
     h.update(&parallelism.to_le_bytes());
     h.update(&tag_length.to_le_bytes());
@@ -304,7 +305,7 @@ fn compute_h0(
     h.update(secret);
     h.update(&(ad.len() as u32).to_le_bytes());
     h.update(ad);
-    h.finalize()
+    Ok(h.finalize()?)
 }
 
 fn concat_h0(h0: &[u8], idx: u32, lane: u32) -> Vec<u8> {

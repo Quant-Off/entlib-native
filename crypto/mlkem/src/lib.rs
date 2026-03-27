@@ -158,17 +158,13 @@ impl CtrDRBGRng {
     ///
     /// **현재 항상 `MLKEMError::NotImplemented`를 반환합니다.**
     pub fn new(_entropy_input: &[u8], _nonce: &[u8]) -> Result<Self, MLKEMError> {
-        Err(MLKEMError::NotImplemented(
-            "CTR_DRBG: AES-256 구현 완료 후 제공됩니다",
-        ))
+        Err(MLKEMError::NotImplemented)
     }
 }
 
 impl MLKEMRng for CtrDRBGRng {
     fn fill_random(&mut self, _dest: &mut [u8]) -> Result<(), MLKEMError> {
-        Err(MLKEMError::NotImplemented(
-            "CTR_DRBG: AES-256 구현 완료 후 제공됩니다",
-        ))
+        Err(MLKEMError::NotImplemented)
     }
 }
 
@@ -282,7 +278,7 @@ impl MLKEMEncapsulationKey {
     /// - `InvalidEncapsulationKey`: 모듈러스 검사 실패
     pub fn from_bytes(param: MLKEMParameter, bytes: Vec<u8>) -> Result<Self, MLKEMError> {
         if bytes.len() != param.ek_len() {
-            return Err(MLKEMError::InvalidLength("캡슐화 키 길이 불일치"));
+            return Err(MLKEMError::InvalidLength);
         }
         if !validate_ek_coefficients(&bytes, param.k()) {
             return Err(MLKEMError::InvalidEncapsulationKey);
@@ -347,7 +343,7 @@ impl MLKEMDecapsulationKey {
     /// - `InvalidDecapsulationKey`: 해시 검증 실패
     pub fn from_bytes(param: MLKEMParameter, bytes: &[u8]) -> Result<Self, MLKEMError> {
         if bytes.len() != param.dk_len() {
-            return Err(MLKEMError::InvalidLength("역캡슐화 키 길이 불일치"));
+            return Err(MLKEMError::InvalidLength);
         }
         let k = param.k();
         let embedded_ek = &bytes[384 * k..768 * k + 32];
@@ -356,8 +352,8 @@ impl MLKEMDecapsulationKey {
         if embedded_h != computed_h.as_slice() {
             return Err(MLKEMError::InvalidDecapsulationKey);
         }
-        let mut dk_buf = SecureBuffer::new_owned(bytes.len())
-            .map_err(|_| MLKEMError::InternalError("SecureBuffer 할당 실패"))?;
+        let mut dk_buf =
+            SecureBuffer::new_owned(bytes.len()).map_err(|_| MLKEMError::InternalError)?;
         dk_buf.as_mut_slice().copy_from_slice(bytes);
         Ok(Self { param, dk_buf })
     }
@@ -451,7 +447,7 @@ impl MLKEM {
     /// - `MLKEMError::InternalError`: 내부 연산 실패
     pub fn decaps(dk: &MLKEMDecapsulationKey, c: &[u8]) -> Result<SecureBuffer, MLKEMError> {
         if c.len() != dk.param.ct_len() {
-            return Err(MLKEMError::InvalidLength("암호문 길이 불일치"));
+            return Err(MLKEMError::InvalidLength);
         }
 
         Self::decaps_internal(dk.param, dk.dk_buf.as_slice(), c)
@@ -528,8 +524,7 @@ fn keygen_impl<const K: usize, const ETA1: usize>(
     let h_ek = sha3_256(&ek)?;
 
     let dk_len = 768 * K + 96;
-    let mut dk = SecureBuffer::new_owned(dk_len)
-        .map_err(|_| MLKEMError::InternalError("SecureBuffer 할당 실패"))?;
+    let mut dk = SecureBuffer::new_owned(dk_len).map_err(|_| MLKEMError::InternalError)?;
     {
         let s = dk.as_mut_slice();
         s[..384 * K].copy_from_slice(dk_pke.as_slice());
@@ -564,8 +559,7 @@ fn encaps_impl<
 
     let c = k_pke_encrypt::<K, ETA1, ETA2, DU, DV>(ek, m, &r)?;
 
-    let mut k_buf = SecureBuffer::new_owned(32)
-        .map_err(|_| MLKEMError::InternalError("SecureBuffer 할당 실패"))?;
+    let mut k_buf = SecureBuffer::new_owned(32).map_err(|_| MLKEMError::InternalError)?;
     k_buf.as_mut_slice().copy_from_slice(&k_bytes);
 
     Ok((k_buf, c))
@@ -619,8 +613,7 @@ fn decaps_impl<
         k_out[i] = u8::ct_select(&k_prime[i], &k_bar[i], eq);
     }
 
-    let mut k_buf = SecureBuffer::new_owned(32)
-        .map_err(|_| MLKEMError::InternalError("SecureBuffer 할당 실패"))?;
+    let mut k_buf = SecureBuffer::new_owned(32).map_err(|_| MLKEMError::InternalError)?;
     k_buf.as_mut_slice().copy_from_slice(&k_out);
 
     Ok(k_buf)
@@ -662,17 +655,8 @@ fn validate_ek_coefficients(ek: &[u8], k: usize) -> bool {
 
 /// `DrbgError`를 `MLKEMError::RngError`로 변환
 #[inline(always)]
-fn drbg_err(e: DrbgError) -> MLKEMError {
-    match e {
-        DrbgError::ReseedRequired => {
-            MLKEMError::RngError("RNG reseed 필요: reseed() 호출 후 재시도")
-        }
-        DrbgError::EntropyTooShort => MLKEMError::RngError("엔트로피 길이 부족"),
-        DrbgError::NonceTooShort => MLKEMError::RngError("Nonce 길이 부족"),
-        DrbgError::RequestTooLarge => MLKEMError::RngError("요청 크기 초과"),
-        DrbgError::AllocationFailed => MLKEMError::RngError("RNG 메모리 할당 실패"),
-        _ => MLKEMError::RngError("RNG 내부 오류"),
-    }
+fn drbg_err(_e: DrbgError) -> MLKEMError {
+    MLKEMError::RngError
 }
 
 #[cfg(test)]
@@ -783,13 +767,13 @@ mod tests {
     #[test]
     fn invalid_ek_length() {
         let result = MLKEMEncapsulationKey::from_bytes(MLKEMParameter::MLKEM768, vec![0u8; 100]);
-        assert!(matches!(result, Err(MLKEMError::InvalidLength(_))));
+        assert!(matches!(result, Err(MLKEMError::InvalidLength)));
     }
 
     #[test]
     fn invalid_dk_length() {
         let result = MLKEMDecapsulationKey::from_bytes(MLKEMParameter::MLKEM768, &[0u8; 100]);
-        assert!(matches!(result, Err(MLKEMError::InvalidLength(_))));
+        assert!(matches!(result, Err(MLKEMError::InvalidLength)));
     }
 
     #[test]
@@ -797,7 +781,7 @@ mod tests {
         let mut rng = HashDRBGRng::new_from_os(None).unwrap();
         let (_, dk) = MLKEM::key_gen(MLKEMParameter::MLKEM768, &mut rng).unwrap();
         let result = MLKEM::decaps(&dk, &[0u8; 100]);
-        assert!(matches!(result, Err(MLKEMError::InvalidLength(_))));
+        assert!(matches!(result, Err(MLKEMError::InvalidLength)));
     }
 
     #[test]
