@@ -27,6 +27,7 @@ entlib-native-quantum-util = { path = "internal/quantum-util", version = "2.0.0"
 ### CORE DEPENDENCIES ###
 entlib-native-rng =           { path = "core/rng",           version = "2.0.0" }
 entlib-native-hex =           { path = "core/hex",           version = "2.0.0" }
+entlib-native-base =          { path = "core/base",          version = "2.0.0" }
 entlib-native-result =        { path = "core/result",        version = "2.0.0" }
 entlib-native-base64 =        { path = "core/base64",        version = "2.0.0" }
 entlib-native-secure-buffer = { path = "core/secure-buffer", version = "2.0.0" }
