@@ -52,6 +52,11 @@ enum Commands {
         #[command(subcommand)]
         op: cmd::argon2id::Ops,
     },
+    /// BLAKE 해시 (BLAKE2b / BLAKE3)
+    Blake {
+        #[command(subcommand)]
+        op: cmd::blake::Ops,
+    },
 }
 
 fn main() {
@@ -65,5 +70,6 @@ fn main() {
         Commands::MlDsa { op } => cmd::mldsa::run(op),
         Commands::MlKem { op } => cmd::mlkem::run(op),
         Commands::Argon2id { op } => cmd::argon2id::run(op),
+        Commands::Blake { op } => cmd::blake::run(op),
     }
 }

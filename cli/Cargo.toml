@@ -13,6 +13,7 @@ path = "src/main.rs"
 clap = { version = "4.5.51", features = ["derive"] }
 entlib-native-argon2id.workspace = true
 entlib-native-base64.workspace = true
+entlib-native-blake.workspace = true
 entlib-native-hex.workspace = true
 entlib-native-sha2.workspace = true
 entlib-native-sha3.workspace = true
