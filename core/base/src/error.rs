@@ -145,7 +145,9 @@ pub mod secure_buffer {
                 SecureBufferError::AllocationFailed => f.write_str("allocation failed"),
                 SecureBufferError::InvalidLayout => f.write_str("invalid layout"),
                 SecureBufferError::MemoryLockFailed => f.write_str("memory lock failed"),
-                SecureBufferError::PageAlignmentViolation => f.write_str("page alignment violation"),
+                SecureBufferError::PageAlignmentViolation => {
+                    f.write_str("page alignment violation")
+                }
             }
         }
     }
@@ -252,7 +254,9 @@ pub mod base64 {
         fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
             match self {
                 Base64Error::InvalidLength => f.write_str("invalid length"),
-                Base64Error::IllegalCharacterOrPadding => f.write_str("illegal character or padding"),
+                Base64Error::IllegalCharacterOrPadding => {
+                    f.write_str("illegal character or padding")
+                }
                 Base64Error::Buffer(e) => write!(f, "{}", e),
             }
         }
@@ -279,9 +283,9 @@ pub mod base64 {
 }
 
 pub mod mldsa {
+    use crate::error::hash::HashError;
     use crate::error::secure_buffer::SecureBufferError;
     use crate::error::{EntLibState, ToExternalError};
-    use crate::error::hash::HashError;
 
     #[derive(Debug)]
     pub enum MLDSAError {
@@ -308,21 +312,15 @@ pub mod mldsa {
     impl ToExternalError for MLDSAError {
         fn to_fips_error(&self) -> EntLibState {
             match self {
-                MLDSAError::InvalidLength | MLDSAError::ContextTooLong => {
-                    EntLibState::InvalidInput
-                }
+                MLDSAError::InvalidLength | MLDSAError::ContextTooLong => EntLibState::InvalidInput,
 
                 MLDSAError::InvalidSignature | MLDSAError::SigningFailed | MLDSAError::Hash(_) => {
                     EntLibState::OperationFailed
                 }
 
-                MLDSAError::RngError | MLDSAError::Buffer(_) => {
-                    EntLibState::ResourceError
-                }
+                MLDSAError::RngError | MLDSAError::Buffer(_) => EntLibState::ResourceError,
 
-                MLDSAError::InternalError | MLDSAError::NotImplemented => {
-                    EntLibState::FatalError
-                }
+                MLDSAError::InternalError | MLDSAError::NotImplemented => EntLibState::FatalError,
             }
         }
     }
