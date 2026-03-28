@@ -10,3 +10,4 @@ std = []
 
 [dependencies]
 entlib-native-result.workspace = true
+entlib-native-base.workspace = true

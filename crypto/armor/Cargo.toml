@@ -1,0 +1,18 @@
+[package]
+name = "entlib-native-armor"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[features]
+default = ["std"]
+std = ["entlib-native-secure-buffer/std"]
+
+[dependencies]
+entlib-native-secure-buffer.workspace = true
+entlib-native-constant-time.workspace = true
+entlib-native-base64.workspace = true
+
+[dev-dependencies]
+entlib-native-hex.workspace = true

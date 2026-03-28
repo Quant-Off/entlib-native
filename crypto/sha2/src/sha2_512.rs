@@ -1,6 +1,7 @@
 use crate::Sha512State;
 use core::ptr::write_volatile;
 use core::sync::atomic::{Ordering, compiler_fence};
+use entlib_native_base::error::hash::HashError;
 use entlib_native_constant_time::traits::{ConstantTimeEq, ConstantTimeSelect};
 use entlib_native_secure_buffer::SecureBuffer;
 
@@ -228,7 +229,7 @@ impl Sha512State {
     }
 
     /// 해시 연산 종료 및 다이제스트(digest) 반환
-    pub(crate) fn finalize(mut self) -> Result<SecureBuffer, &'static str> {
+    pub(crate) fn finalize(mut self) -> Result<SecureBuffer, HashError> {
         let len = self.buffer_len;
         self.buffer.as_mut_slice()[len] = 0x80;
         self.buffer_len += 1;

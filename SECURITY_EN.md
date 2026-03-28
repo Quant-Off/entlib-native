@@ -22,15 +22,6 @@ If you discover a complex security vulnerability, data residue issue, or memory-
 > [!NOTE]
 > If you need a PGP key for secure communication, please check the [KEYS](KEYS) file in the repository or request it.
 
-### Processing Procedure
-
-Reported vulnerabilities are handled through the following procedure:
-
-1. **Receipt Confirmation:** We will send a confirmation email to the reporter within 48 hours.
-2. **Analysis and Verification:** The Quant team will analyze the impact and reproducibility of the vulnerability in detail.
-3. **Patch Development:** If the problem is confirmed, we will develop a hotfix for `entlib-native` or `entanglementlib`.
-4. **Disclosure and Distribution:** After the patch is completed and released, we will disclose the vulnerability information at an appropriate time in consultation with the reporter.
-
 ## Security Focus Areas
 
 This project places particular importance on security in the following areas:
@@ -51,7 +42,8 @@ The following items are generally excluded from security vulnerability reports, 
 * **Experimental Features:** Bugs in features explicitly marked as "Experimental".
 * **User Environment Issues:** Problems caused by defects in the user's OS or hardware itself.
 
-You can find more details in the [Contribution Document](CONTRIBUTION_EN.md).
+> [!TIP]
+> You can find more details in the [Contribution Document](CONTRIBUTION_EN.md).
 
 ## Acknowledgments
 

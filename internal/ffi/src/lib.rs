@@ -1,3 +1,4 @@
+use entlib_native_base::error::secure_buffer::SecureBufferError;
 use entlib_native_result::EntLibResult;
 use entlib_native_secure_buffer::SecureBuffer;
 use std::mem::ManuallyDrop;
@@ -27,7 +28,9 @@ impl FFIStandard {
     /// # Safety
     /// 이 함수는 `ptr`이 유효하고 `len`만큼 접근 가능하며,
     /// OS 페이지 크기(PAGE_SIZE)에 맞게 정렬되어 있음을 가정합니다.
-    pub unsafe fn into_domain_buffer(&self) -> Result<ManuallyDrop<SecureBuffer>, &'static str> {
+    pub unsafe fn into_domain_buffer(
+        &self,
+    ) -> Result<ManuallyDrop<SecureBuffer>, SecureBufferError> {
         // from_raw_parts를 통해 메모리 검증 및 래핑
         // 이 과정에서 정렬 검사 및 OS 메모리 잠금(lock_memory) 수행
         let buffer = unsafe { SecureBuffer::from_raw_parts(self.ptr, self.len)? };
