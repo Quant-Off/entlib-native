@@ -1,6 +1,7 @@
 use super::hex_encode;
 use crate::input;
 use clap::Subcommand;
+use entlib_native_blake::file::{blake2b as blake2b_file, blake3 as blake3_file};
 use entlib_native_blake::{Blake2b, Blake3};
 
 #[derive(Subcommand)]
@@ -16,6 +17,32 @@ pub(crate) enum Ops {
         #[arg(long)]
         out_file: Option<String>,
         /// raw 바이너리 출력 (기본: hex)
+        #[arg(long)]
+        raw: bool,
+    },
+    /// BLAKE2b 파일 스트리밍 해시
+    #[command(name = "2b-file")]
+    Blake2bFile {
+        /// 출력 바이트 수 (1-64, 기본: 32)
+        #[arg(long, default_value_t = 32)]
+        output_len: usize,
+        /// 해시할 파일 경로
+        file: String,
+        #[arg(long)]
+        out_file: Option<String>,
+        #[arg(long)]
+        raw: bool,
+    },
+    /// BLAKE3 파일 스트리밍 해시
+    #[command(name = "3-file")]
+    Blake3File {
+        /// 출력 바이트 수 (기본: 32)
+        #[arg(long, default_value_t = 32)]
+        output_len: usize,
+        /// 해시할 파일 경로
+        file: String,
+        #[arg(long)]
+        out_file: Option<String>,
         #[arg(long)]
         raw: bool,
     },
@@ -37,6 +64,48 @@ pub(crate) enum Ops {
 
 pub(crate) fn run(op: Ops) {
     match op {
+        Ops::Blake2bFile {
+            output_len,
+            file,
+            out_file,
+            raw,
+        } => {
+            if !(1..=64).contains(&output_len) {
+                eprintln!("output_len은 1-64 범위여야 합니다");
+                std::process::exit(1);
+            }
+            match blake2b_file::hash_file(&file, output_len) {
+                Ok(d) => {
+                    let result = if raw { d } else { hex_encode(d) };
+                    input::write_output(result, out_file.as_deref(), false);
+                }
+                Err(e) => {
+                    eprintln!("파일 해시 오류: {e}");
+                    std::process::exit(1);
+                }
+            }
+        }
+        Ops::Blake3File {
+            output_len,
+            file,
+            out_file,
+            raw,
+        } => {
+            if output_len == 0 {
+                eprintln!("output_len은 1 이상이어야 합니다");
+                std::process::exit(1);
+            }
+            match blake3_file::hash_file(&file, output_len) {
+                Ok(d) => {
+                    let result = if raw { d } else { hex_encode(d) };
+                    input::write_output(result, out_file.as_deref(), false);
+                }
+                Err(e) => {
+                    eprintln!("파일 해시 오류: {e}");
+                    std::process::exit(1);
+                }
+            }
+        }
         Ops::Blake2b {
             output_len,
             in_file,
