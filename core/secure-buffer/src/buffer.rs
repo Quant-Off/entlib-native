@@ -94,6 +94,11 @@ impl SecureBuffer {
         self.len == 0
     }
 
+    #[inline(always)]
+    pub fn capacity(&self) -> usize {
+        self.capacity
+    }
+
     /// 버퍼의 내용을 읽기 전용 슬라이스로 반환합니다.
     ///
     /// # Security Note
