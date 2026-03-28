@@ -1,5 +1,5 @@
 [workspace]
-members = ["internal/*", "crypto/*", "core/*", "cli"]
+members = ["internal/*", "crypto/*", "core/*", "cli", "canary"]
 resolver = "2"
 
 [workspace.package]
