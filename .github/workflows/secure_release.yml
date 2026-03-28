@@ -1,0 +1,132 @@
+name: Secure Release & Publish Pipeline
+
+on:
+  pull_request:
+    branches: [ "fix/build-wf" ]
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  verify-and-release:
+    name: Cryptographic Verification and Source Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Import Public Key (Trust Anchor)
+        run: gpg --import ./public/public-key.asc
+
+      - name: Verify PGP Signature
+        run: |
+          cd ./target/dist
+          gpg --verify RELEASE_HASHES.txt.asc RELEASE_HASHES.txt
+
+      - name: Extract Tag Version
+        id: version
+        run: echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+        with:
+          name: "entlib-native ${{ steps.version.outputs.tag }}"
+          body: |
+            ## Source Distribution
+
+            | File | Description |
+            |------|-------------|
+            | `entlib-native-${{ steps.version.outputs.tag }}-source.tar.gz` | Source archive (tar.gz) |
+            | `entlib-native-${{ steps.version.outputs.tag }}-source.zip` | Source archive (zip) |
+            | `RELEASE_HASHES.txt` | SHA3-512 + BLAKE3 checksums |
+            | `RELEASE_HASHES.txt.asc` | PGP detached signature |
+            | `public-key.asc` | PGP public key (Trust Anchor) |
+
+            ## Verify Integrity
+
+            ```bash
+            gpg --import public-key.asc
+            gpg --verify RELEASE_HASHES.txt.asc RELEASE_HASHES.txt
+            ```
+          files: |
+            ./target/dist/entlib-native-*-source.tar.gz
+            ./target/dist/entlib-native-*-source.zip
+            ./target/dist/RELEASE_HASHES.txt
+            ./target/dist/RELEASE_HASHES.txt.asc
+            ./target/dist/public-key.asc
+
+  publish-trust-anchor:
+    name: Publish Trust Anchor to GitHub Pages
+    needs: verify-and-release
+    runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Extract Tag Version
+        id: version
+        run: echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+
+      - name: Build Pages Site
+        env:
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          mkdir -p _site/keys "_site/releases/${RELEASE_TAG}"
+
+          cp ./public/public-key.asc _site/keys/public-key.asc
+
+          cp ./target/dist/RELEASE_HASHES.txt \
+             "_site/releases/${RELEASE_TAG}/RELEASE_HASHES.txt"
+          cp ./target/dist/RELEASE_HASHES.txt.asc \
+             "_site/releases/${RELEASE_TAG}/RELEASE_HASHES.txt.asc"
+
+          cat > _site/index.html << 'PAGE'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head><meta charset="utf-8"><title>entlib-native Trust Anchor</title></head>
+          <body>
+          <h1>entlib-native Trust Anchor</h1>
+          <h2>PGP Public Key</h2>
+          <p><a href="keys/public-key.asc">public-key.asc</a></p>
+          <h2>Verification</h2>
+          <pre>
+          # 1. Import the public key
+          curl -sO https://quant-off.github.io/entlib-native/keys/public-key.asc
+          gpg --import public-key.asc
+
+          # 2. Download the release hashes and signature
+          VERSION="vX.Y.Z"
+          curl -sO "https://quant-off.github.io/entlib-native/releases/${VERSION}/RELEASE_HASHES.txt"
+          curl -sO "https://quant-off.github.io/entlib-native/releases/${VERSION}/RELEASE_HASHES.txt.asc"
+
+          # 3. Verify the signature
+          gpg --verify RELEASE_HASHES.txt.asc RELEASE_HASHES.txt
+          </pre>
+          </body>
+          </html>
+          PAGE
+
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
