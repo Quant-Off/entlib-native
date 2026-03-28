@@ -42,6 +42,7 @@
 
 mod blake2b;
 mod blake3;
+pub mod file;
 
 pub use blake2b::Blake2b;
 pub use blake3::{Blake3, OUT_LEN as BLAKE3_OUT_LEN};
