@@ -1,0 +1,13 @@
+[package]
+name = "canary"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "entlib-canary"
+path = "src/main.rs"
+
+[dependencies]
+entlib-native-secure-buffer.workspace = true
