@@ -2,7 +2,7 @@ name: Secure Release & Publish Pipeline
 
 on:
   pull_request:
-    branches: [ "feature/*" ]
+    branches: [ master ]
   push:
     tags:
       - 'v*.*.*'
@@ -13,8 +13,8 @@ permissions:
   id-token: write
 
 jobs:
-  verify-and-release:
-    name: Cryptographic Verification and Source Release
+  verify-integrity:
+    name: Source Integrity Verification
     runs-on: ubuntu-latest
 
     steps:
@@ -23,13 +23,72 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Build entlib-native
+        run: cargo build --release
+
+      - name: Generate Source Archives
+        run: |
+          VERSION=$(git describe --tags --exact-match 2>/dev/null || echo "dev")
+          ARCHIVE_NAME="entlib-native-${VERSION}-source"
+          mkdir -p target/dist
+          git archive \
+            --format=tar.gz \
+            --prefix="${ARCHIVE_NAME}/" \
+            -o "target/dist/${ARCHIVE_NAME}.tar.gz" \
+            HEAD
+          git archive \
+            --format=zip \
+            --prefix="${ARCHIVE_NAME}/" \
+            -o "target/dist/${ARCHIVE_NAME}.zip" \
+            HEAD
+          cp ./public/public-key.asc target/dist/public-key.asc
+          echo "[+] Source archives generated"
+          ls -lh target/dist/
+
       - name: Import Public Key (Trust Anchor)
         run: gpg --import ./public/public-key.asc
 
       - name: Verify PGP Signature
         run: |
-          cd ./target/dist
-          gpg --verify RELEASE_HASHES.txt.asc RELEASE_HASHES.txt
+          echo "[*] Verifying PGP signature of RELEASE_HASHES.txt..."
+          gpg --verify ./public/RELEASE_HASHES.txt.asc ./public/RELEASE_HASHES.txt
+          echo "[+] PGP signature verification passed"
+
+  create-release:
+    name: Create GitHub Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: verify-integrity
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build entlib-native
+        run: cargo build --release
+
+      - name: Prepare Release Artifacts
+        env:
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+        run: |
+          VERSION=$(git describe --tags --exact-match)
+          ARCHIVE_NAME="entlib-native-${VERSION}-source"
+          mkdir -p target/dist
+          git archive \
+            --format=tar.gz \
+            --prefix="${ARCHIVE_NAME}/" \
+            -o "target/dist/${ARCHIVE_NAME}.tar.gz" \
+            HEAD
+          git archive \
+            --format=zip \
+            --prefix="${ARCHIVE_NAME}/" \
+            -o "target/dist/${ARCHIVE_NAME}.zip" \
+            HEAD
+          cp ./public/public-key.asc target/dist/public-key.asc
+          cp ./public/RELEASE_HASHES.txt target/dist/RELEASE_HASHES.txt
+          cp ./public/RELEASE_HASHES.txt.asc target/dist/RELEASE_HASHES.txt.asc
 
       - name: Extract Tag Version
         id: version
@@ -39,7 +98,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_TAG: ${{ steps.version.outputs.tag }}
         with:
           name: "entlib-native ${{ steps.version.outputs.tag }}"
           body: |
@@ -68,7 +126,8 @@ jobs:
 
   publish-trust-anchor:
     name: Publish Trust Anchor to GitHub Pages
-    needs: verify-and-release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: create-release
     runs-on: ubuntu-latest
 
     environment:
@@ -91,9 +150,9 @@ jobs:
 
           cp ./public/public-key.asc _site/keys/public-key.asc
 
-          cp ./target/dist/RELEASE_HASHES.txt \
+          cp ./public/RELEASE_HASHES.txt \
              "_site/releases/${RELEASE_TAG}/RELEASE_HASHES.txt"
-          cp ./target/dist/RELEASE_HASHES.txt.asc \
+          cp ./public/RELEASE_HASHES.txt.asc \
              "_site/releases/${RELEASE_TAG}/RELEASE_HASHES.txt.asc"
 
           cat > _site/index.html << 'PAGE'
