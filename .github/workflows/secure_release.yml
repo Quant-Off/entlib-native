@@ -2,7 +2,7 @@ name: Secure Release & Publish Pipeline
 
 on:
   pull_request:
-    branches: [ "fix/build-wf" ]
+    branches: [ "feature/*" ]
   push:
     tags:
       - 'v*.*.*'
