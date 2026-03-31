@@ -1,0 +1,116 @@
+module ConstantTime where
+
+type Choice = [8]
+
+from_mask_normalized : [8] -> Choice
+from_mask_normalized m = -is_nonzero
+  where
+    msb_set = m || (-m)
+    is_nonzero = msb_set >> 7
+
+choice_not : Choice -> Choice
+choice_not c = ~c
+
+choice_unwrap : Choice -> [8]
+choice_unwrap c = c
+
+ct_eq_u64 : [64] -> [64] -> Choice
+ct_eq_u64 a b = from_mask_normalized mask
+  where
+    v = a ^ b
+    msb = (v || (-v)) >> 63
+    msb_u8 : [8]
+    msb_u8 = drop`{56} msb
+    mask = -(msb_u8 ^ 0x01)
+
+ct_ne_u64 : [64] -> [64] -> Choice
+ct_ne_u64 a b = choice_not (ct_eq_u64 a b)
+
+ct_is_ge_u64 : [64] -> [64] -> Choice
+ct_is_ge_u64 a b = from_mask_normalized mask
+  where
+    sub = a - b
+    borrow = (~a && b) || (~(a ^ b) && sub)
+    borrow_msb : [8]
+    borrow_msb = drop`{56} (borrow >> 63)
+    mask = -(borrow_msb ^ 0x01)
+
+ct_is_negative_u64 : [64] -> Choice
+ct_is_negative_u64 a = from_mask_normalized (-(masked))
+  where
+    msb_u8 : [8]
+    msb_u8 = drop`{56} (a >> 63)
+    masked = msb_u8 && 0x01
+
+ct_is_zero_u64 : [64] -> Choice
+ct_is_zero_u64 a = ct_eq_u64 a 0
+
+ct_select_u64 : [64] -> [64] -> Choice -> [64]
+ct_select_u64 a b c = (a && mask) || (b && ~mask)
+  where mask = sext_8_64 c
+
+ct_swap_u64 : [64] -> [64] -> Choice -> ([64], [64])
+ct_swap_u64 a b c = (a ^ t, b ^ t)
+  where
+    mask = sext_8_64 c
+    t = (a ^ b) && mask
+
+sext_8_64 : [8] -> [64]
+sext_8_64 x = ext || lo
+  where
+    lo : [64]
+    lo = (zero : [56]) # x
+    s : [64]
+    s = (zero : [56]) # (x >> 7)
+    ext = (-s) && 0xFFFFFFFFFFFFFF00
+
+// === Specification Correctness Properties ===
+
+property from_mask_is_boolean m =
+  from_mask_normalized m == 0x00 \/ from_mask_normalized m == 0xFF
+
+property ct_eq_correct (a : [64]) (b : [64]) =
+  (a == b) == (ct_eq_u64 a b == (0xFF : Choice))
+
+property ct_eq_reflexive (a : [64]) =
+  ct_eq_u64 a a == (0xFF : Choice)
+
+property ct_eq_symmetric (a : [64]) (b : [64]) =
+  ct_eq_u64 a b == ct_eq_u64 b a
+
+property ct_ne_correct (a : [64]) (b : [64]) =
+  (a != b) == (ct_ne_u64 a b == (0xFF : Choice))
+
+property ct_is_ge_correct (a : [64]) (b : [64]) =
+  (a >= b) == (ct_is_ge_u64 a b == (0xFF : Choice))
+
+property ct_is_ge_reflexive (a : [64]) =
+  ct_is_ge_u64 a a == (0xFF : Choice)
+
+property ct_is_ge_antisymmetric (a : [64]) (b : [64]) =
+  (ct_is_ge_u64 a b == (0xFF : Choice) /\ ct_is_ge_u64 b a == (0xFF : Choice)) ==> a == b
+
+property ct_is_ge_total (a : [64]) (b : [64]) =
+  ct_is_ge_u64 a b == (0xFF : Choice) \/ ct_is_ge_u64 b a == (0xFF : Choice)
+
+property ct_is_zero_correct (a : [64]) =
+  (a == 0) == (ct_is_zero_u64 a == (0xFF : Choice))
+
+property ct_is_negative_correct (a : [64]) =
+  (a >> 63 == 1) == (ct_is_negative_u64 a == (0xFF : Choice))
+
+property ct_select_true (a : [64]) (b : [64]) =
+  ct_select_u64 a b 0xFF == a
+
+property ct_select_false (a : [64]) (b : [64]) =
+  ct_select_u64 a b 0x00 == b
+
+property ct_swap_true (a : [64]) (b : [64]) =
+  ct_swap_u64 a b 0xFF == (b, a)
+
+property ct_swap_false (a : [64]) (b : [64]) =
+  ct_swap_u64 a b 0x00 == (a, b)
+
+property choice_not_involution c =
+  (c == (0x00 : Choice) \/ c == (0xFF : Choice)) ==>
+    choice_not (choice_not c) == c

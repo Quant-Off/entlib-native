@@ -7,21 +7,18 @@ license.workspace = true
 
 [dependencies]
 
-[dev-dependencies]
-dudect-bencher = "0.6.0"
-rand = "0.10.0"
-
 [build-dependencies]
 cc = "1.0.106"
 
 [features]
 default = []
 audit_mode = []
+saw_verify = ["audit_mode"]
 valgrind_taint_audit = []
 
-[[bench]]
-name = "dudect_audit"
-harness = false
+[[bin]]
+name = "dudect-eval"
+path = "dudect/main.rs"
 
 [[test]]
 name = "taint_audit"

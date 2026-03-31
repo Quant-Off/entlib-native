@@ -45,7 +45,14 @@ impl Choice {
     /// * `0xFF` - True
     #[inline(always)]
     pub fn unwrap_u8(self) -> u8 {
-        core::hint::black_box(self.0)
+        #[cfg(not(feature = "saw_verify"))]
+        {
+            core::hint::black_box(self.0)
+        }
+        #[cfg(feature = "saw_verify")]
+        {
+            self.0
+        }
     }
 
     /// `Choice` 값을 논리적으로 반전(NOT)합니다.
