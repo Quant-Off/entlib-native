@@ -19,43 +19,28 @@ macro_rules! impl_constant_time_for_uint {
         impl ConstantTimeEq for $t {
             #[inline(always)]
             fn ct_eq(&self, other: &Self) -> Choice {
-                // XOR 연산
-                // 두 값이 같으면 v는 0, 다르면 0이 아닌 값이 됨
                 let v = *self ^ *other;
-
-                // OR와 2의 보수(wrapping_neg) 활용
-                // v가 0이면 v | v.wrapping_neg() 도 0임
-                // v가 0이 아니면, v | v.wrapping_neg() 의 최상위 비트(MSB)는 항상 1이 됨
-                // 이를 통해 MSB를 LSB 위치로 이동시킴
+                // v == 0 iff equal; (v | -v) has MSB set iff v != 0
                 let msb = (v | v.wrapping_neg()) >> (<$t>::BITS - 1);
-
-                // 마스크 생성
-                // v가 0(같음)이면 msb는 0. msb ^ 1 은 1. 1의 2의 보수는 0xFF (True)
-                // v가 0이 아님(다름)이면 msb는 1. msb ^ 1 은 0. 0의 2의 보수는 0x00 (False)
-                let mask = ((msb as u8) ^ 1).wrapping_neg();
-
-                Choice::from_mask_normalized(mask)
+                // msb == 0 (equal)   → (0 ^ 1).wrapping_neg() = 0xFF
+                // msb == 1 (unequal) → (1 ^ 1).wrapping_neg() = 0x00
+                let mask = ((msb as u8) ^ 1u8).wrapping_neg();
+                // black_box prevents LLVM from replacing the bitmask chain
+                // with a conditional branch (e.g. SETE optimised to JE).
+                Choice::from_mask(core::hint::black_box(mask))
             }
 
             #[inline(always)]
             fn ct_is_ge(&self, other: &Self) -> Choice {
-                // 부호 없는 정수의 대소 비교(self >= other)를 상수-시간으로 판별하기 위해
-                // 뺄셈 연산의 언더플로우(Borrow) 발생 여부를 비트 논리로 계산
-                // Borrow 방정식: (~A & B) | (~(A ^ B) & (A - B))
-                // 결과의 최상위 비트(MSB)가 1이면 self < other (언더플로우 발생), 0이면 self >= other
+                // Borrow equation: (~A & B) | (~(A ^ B) & (A - B))
+                // MSB of borrow == 1  →  self < other (underflow occurred)
                 let sub = self.wrapping_sub(*other);
                 let borrow = (!*self & *other) | (!(*self ^ *other) & sub);
-
-                // 최상위 비트(MSB) 추출
-                // 이전 <u32>::BITS 하드코딩으로 인한 치명적 결함을 동적 타입 크기(<$t>::BITS)로 해결
                 let borrow_msb = (borrow >> (<$t>::BITS - 1)) as u8;
-
-                // 마스크 생성
-                // borrow_msb가 0 (self >= other) -> 0 ^ 1 = 1 -> wrapping_neg(1) = 0xFF (True)
-                // borrow_msb가 1 (self < other)  -> 1 ^ 1 = 0 -> wrapping_neg(0) = 0x00 (False)
-                let mask = (borrow_msb ^ 1).wrapping_neg();
-
-                Choice::from_mask_normalized(mask)
+                // borrow_msb == 0 → self >= other → mask = 0xFF
+                // borrow_msb == 1 → self <  other → mask = 0x00
+                let mask = (borrow_msb ^ 1u8).wrapping_neg();
+                Choice::from_mask(core::hint::black_box(mask))
             }
         }
 
@@ -97,13 +82,11 @@ macro_rules! impl_constant_time_for_uint {
         impl ConstantTimeIsNegative for $t {
             #[inline(always)]
             fn ct_is_negative(&self) -> Choice {
-                // MSB(최상위 비트)를 LSB 위치로 이동시켜 0 또는 1을 추출
-                // 예: u8에서 *self >> 7, u64에서 *self >> 63
-                let msb = (*self >> (<$t>::BITS - 1)) as u8 & 1;
-
-                // 1u8.wrapping_neg() = 0xFF (True), 0u8.wrapping_neg() = 0x00 (False)
-                // 단일 NEG 명령어로 컴파일되어 분기가 없음
-                Choice::from_mask_normalized(msb.wrapping_neg())
+                // Logical right-shift extracts the MSB as 0 or 1.
+                // msb == 1 → wrapping_neg → 0xFF (True)
+                // msb == 0 → wrapping_neg → 0x00 (False)
+                let msb = (*self >> (<$t>::BITS - 1)) as u8 & 1u8;
+                Choice::from_mask(core::hint::black_box(msb.wrapping_neg()))
             }
         }
     };
@@ -149,13 +132,10 @@ macro_rules! impl_constant_time_for_sint {
         impl ConstantTimeIsNegative for $s_type {
             #[inline(always)]
             fn ct_is_negative(&self) -> Choice {
-                // 산술 시프트로 인한 마스크 오염(예: 0x02) 방지를 위해
-                // 부호 없는 정수로 변환 후 논리 시프트 강제
+                // Cast to unsigned to force logical (not arithmetic) right-shift.
                 let u_val = *self as $u_type;
-                let msb = (u_val >> (<$s_type>::BITS - 1)) as u8 & 1;
-
-                // 단일 NEG 명령어로 분기 없이 마스크 생성 (0x00 또는 0xFF 보장)
-                Choice::from_mask_normalized(msb.wrapping_neg())
+                let msb = (u_val >> (<$s_type>::BITS - 1)) as u8 & 1u8;
+                Choice::from_mask(core::hint::black_box(msb.wrapping_neg()))
             }
         }
 

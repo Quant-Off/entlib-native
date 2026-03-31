@@ -176,28 +176,30 @@ fn main() {
     println!("{sep}");
 
     // ─── u64 ──────────────────────────────────────────────────────────────────
+    // 양 클래스 모두 동일한 횟수의 PRNG 호출 수행 (비대칭 PRNG 호출은
+    // CPU 마이크로-아키텍처 상태 편차를 유발하여 위음성 DudeCT FAIL의 원인이 됨)
     println!("\n[u64 :: ConstantTimeEq / ct_ne / ct_is_ge]");
     ok &= dudect("ct_eq   equal vs. unequal", warmup, &mut rng, |cls, rng| {
         let a = rng.u64();
-        let b = if cls == 0 { a } else { rng.u64() };
+        let r = rng.u64(); // 양 클래스 동일하게 2회 호출
+        let b = if cls == 0 { a } else { r };
         let t0 = tsc();
         let _ = black_box(black_box(a).ct_eq(&black_box(b)));
         tsc().saturating_sub(t0)
     });
     ok &= dudect("ct_ne   equal vs. unequal", warmup, &mut rng, |cls, rng| {
         let a = rng.u64();
-        let b = if cls == 0 { a } else { rng.u64() };
+        let r = rng.u64();
+        let b = if cls == 0 { a } else { r };
         let t0 = tsc();
         let _ = black_box(black_box(a).ct_ne(&black_box(b)));
         tsc().saturating_sub(t0)
     });
-    ok &= dudect("ct_is_ge  MSB=1 vs. random", warmup, &mut rng, |cls, rng| {
-        let a: u64 = if cls == 0 {
-            rng.u64() | 0x8000_0000_0000_0000
-        } else {
-            rng.u64() & 0x7fff_ffff_ffff_ffff
-        };
-        let b = rng.u64();
+    ok &= dudect("ct_is_ge  equal vs. random", warmup, &mut rng, |cls, rng| {
+        let a = rng.u64();
+        let r = rng.u64();
+        // cls=0: a >= a (항상 True), cls=1: a >= r (임의 결과)
+        let b = if cls == 0 { a } else { r };
         let t0 = tsc();
         let _ = black_box(black_box(a).ct_is_ge(&black_box(b)));
         tsc().saturating_sub(t0)
@@ -207,7 +209,8 @@ fn main() {
     println!("\n[u32 :: ConstantTimeEq]");
     ok &= dudect("ct_eq   equal vs. unequal", warmup, &mut rng, |cls, rng| {
         let a = rng.u64() as u32;
-        let b: u32 = if cls == 0 { a } else { rng.u64() as u32 };
+        let r = rng.u64() as u32;
+        let b: u32 = if cls == 0 { a } else { r };
         let t0 = tsc();
         let _ = black_box(black_box(a).ct_eq(&black_box(b)));
         tsc().saturating_sub(t0)
@@ -217,7 +220,8 @@ fn main() {
     println!("\n[u8 :: ConstantTimeEq]");
     ok &= dudect("ct_eq   equal vs. unequal", warmup, &mut rng, |cls, rng| {
         let a = rng.u64() as u8;
-        let b: u8 = if cls == 0 { a } else { rng.u64() as u8 };
+        let r = rng.u64() as u8;
+        let b: u8 = if cls == 0 { a } else { r };
         let t0 = tsc();
         let _ = black_box(black_box(a).ct_eq(&black_box(b)));
         tsc().saturating_sub(t0)
@@ -260,7 +264,8 @@ fn main() {
     // ─── ConstantTimeIsZero ───────────────────────────────────────────────────
     println!("\n[u64 :: ConstantTimeIsZero]");
     ok &= dudect("ct_is_zero  0 vs. nonzero", warmup, &mut rng, |cls, rng| {
-        let v: u64 = if cls == 0 { 0 } else { rng.u64() | 1 };
+        let r = rng.u64(); // 양 클래스 동일하게 1회 호출
+        let v: u64 = if cls == 0 { 0 } else { r | 1 };
         let t0 = tsc();
         let _ = black_box(black_box(v).ct_is_zero());
         tsc().saturating_sub(t0)
@@ -269,10 +274,11 @@ fn main() {
     // ─── ConstantTimeIsNegative (u64 MSB) ────────────────────────────────────
     println!("\n[u64 :: ConstantTimeIsNegative]");
     ok &= dudect("ct_is_negative  MSB=1 vs. MSB=0", warmup, &mut rng, |cls, rng| {
+        let r = rng.u64();
         let v: u64 = if cls == 0 {
-            rng.u64() | 0x8000_0000_0000_0000
+            r | 0x8000_0000_0000_0000   // MSB 강제 설정
         } else {
-            rng.u64() & 0x7fff_ffff_ffff_ffff
+            r & 0x7fff_ffff_ffff_ffff   // MSB 강제 소거
         };
         let t0 = tsc();
         let _ = black_box(black_box(v).ct_is_negative());
@@ -283,27 +289,27 @@ fn main() {
     println!("\n[i64 :: ConstantTimeEq / ct_is_ge / ct_is_negative]");
     ok &= dudect("ct_eq   equal vs. unequal", warmup, &mut rng, |cls, rng| {
         let a = rng.u64() as i64;
-        let b: i64 = if cls == 0 { a } else { rng.u64() as i64 };
+        let r = rng.u64() as i64;
+        let b: i64 = if cls == 0 { a } else { r };
         let t0 = tsc();
         let _ = black_box(black_box(a).ct_eq(&black_box(b)));
         tsc().saturating_sub(t0)
     });
-    ok &= dudect("ct_is_ge  positive vs. negative", warmup, &mut rng, |cls, rng| {
-        let a: i64 = if cls == 0 {
-            (rng.u64() >> 1) as i64          // 항상 양수
-        } else {
-            !((rng.u64() >> 1) as i64)       // 항상 음수
-        };
-        let b: i64 = rng.u64() as i64;
+    ok &= dudect("ct_is_ge  equal vs. random", warmup, &mut rng, |cls, rng| {
+        let a = rng.u64() as i64;
+        let r = rng.u64() as i64;
+        let b: i64 = if cls == 0 { a } else { r };
         let t0 = tsc();
         let _ = black_box(black_box(a).ct_is_ge(&black_box(b)));
         tsc().saturating_sub(t0)
     });
-    ok &= dudect("ct_is_negative  negative vs. positive", warmup, &mut rng, |cls, rng| {
+    ok &= dudect("ct_is_negative  MSB=1 vs. MSB=0", warmup, &mut rng, |cls, rng| {
+        let r = rng.u64();
+        // 부호 없는 비트로 MSB 제어 후 i64로 해석
         let v: i64 = if cls == 0 {
-            !((rng.u64() >> 1) as i64)
+            (r | 0x8000_0000_0000_0000) as i64   // 항상 음수
         } else {
-            (rng.u64() >> 1) as i64
+            (r & 0x7fff_ffff_ffff_ffff) as i64   // 항상 양수
         };
         let t0 = tsc();
         let _ = black_box(black_box(v).ct_is_negative());
