@@ -44,7 +44,7 @@ impl Choice {
     /// 대체하는 것을 방지하는 상수-시간 경계로 작동합니다.
     #[inline(always)]
     pub(crate) fn from_mask(mask: u8) -> Self {
-        Choice(core::hint::black_box(mask))
+        Choice(mask)
     }
 
     /// 내부 값을 반환합니다. 컴파일러 최적화를 방지하기 위해 `black_box`를 사용합니다.

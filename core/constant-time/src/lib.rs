@@ -19,28 +19,19 @@ macro_rules! impl_constant_time_for_uint {
         impl ConstantTimeEq for $t {
             #[inline(always)]
             fn ct_eq(&self, other: &Self) -> Choice {
-                let v = *self ^ *other;
-                // v == 0 iff equal; (v | -v) has MSB set iff v != 0
+                let v = core::hint::black_box(*self ^ *other);
                 let msb = (v | v.wrapping_neg()) >> (<$t>::BITS - 1);
-                // msb == 0 (equal)   → (0 ^ 1).wrapping_neg() = 0xFF
-                // msb == 1 (unequal) → (1 ^ 1).wrapping_neg() = 0x00
                 let mask = ((msb as u8) ^ 1u8).wrapping_neg();
-                // black_box prevents LLVM from replacing the bitmask chain
-                // with a conditional branch (e.g. SETE optimised to JE).
-                Choice::from_mask(core::hint::black_box(mask))
+                Choice::from_mask(mask)
             }
 
             #[inline(always)]
             fn ct_is_ge(&self, other: &Self) -> Choice {
-                // Borrow equation: (~A & B) | (~(A ^ B) & (A - B))
-                // MSB of borrow == 1  →  self < other (underflow occurred)
                 let sub = self.wrapping_sub(*other);
-                let borrow = (!*self & *other) | (!(*self ^ *other) & sub);
+                let borrow = core::hint::black_box((!*self & *other) | (!(*self ^ *other) & sub));
                 let borrow_msb = (borrow >> (<$t>::BITS - 1)) as u8;
-                // borrow_msb == 0 → self >= other → mask = 0xFF
-                // borrow_msb == 1 → self <  other → mask = 0x00
                 let mask = (borrow_msb ^ 1u8).wrapping_neg();
-                Choice::from_mask(core::hint::black_box(mask))
+                Choice::from_mask(mask)
             }
         }
 
@@ -82,11 +73,8 @@ macro_rules! impl_constant_time_for_uint {
         impl ConstantTimeIsNegative for $t {
             #[inline(always)]
             fn ct_is_negative(&self) -> Choice {
-                // Logical right-shift extracts the MSB as 0 or 1.
-                // msb == 1 → wrapping_neg → 0xFF (True)
-                // msb == 0 → wrapping_neg → 0x00 (False)
-                let msb = (*self >> (<$t>::BITS - 1)) as u8 & 1u8;
-                Choice::from_mask(core::hint::black_box(msb.wrapping_neg()))
+                let msb = core::hint::black_box((*self >> (<$t>::BITS - 1)) as u8 & 1u8);
+                Choice::from_mask(msb.wrapping_neg())
             }
         }
     };
@@ -132,10 +120,9 @@ macro_rules! impl_constant_time_for_sint {
         impl ConstantTimeIsNegative for $s_type {
             #[inline(always)]
             fn ct_is_negative(&self) -> Choice {
-                // Cast to unsigned to force logical (not arithmetic) right-shift.
                 let u_val = *self as $u_type;
-                let msb = (u_val >> (<$s_type>::BITS - 1)) as u8 & 1u8;
-                Choice::from_mask(core::hint::black_box(msb.wrapping_neg()))
+                let msb = core::hint::black_box((u_val >> (<$s_type>::BITS - 1)) as u8 & 1u8);
+                Choice::from_mask(msb.wrapping_neg())
             }
         }
 
