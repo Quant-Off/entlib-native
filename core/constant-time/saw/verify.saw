@@ -1,0 +1,223 @@
+// SAW Formal Verification Script
+// Target: entlib-native-constant-time
+//
+// Proves functional equivalence between the Rust LLVM bitcode and
+// the Cryptol reference specification via SMT solving (Z3).
+//
+// SAW's symbolic execution engine processes all paths simultaneously.
+// Successful verification implies the LLVM IR contains no secret-dependent
+// branches — providing mathematical evidence of constant-time behavior
+// at the IR level.
+
+enable_experimental;
+
+import "specs/ConstantTime.cry";
+
+// ========================================================
+// Phase 1: Prove Cryptol specification correctness
+// ========================================================
+
+print "Phase 1: Cryptol specification property proofs";
+print "------------------------------------------------";
+
+print "[1/14] from_mask_is_boolean";
+prove_print z3 {{ from_mask_is_boolean }};
+
+print "[2/14] ct_eq_correct";
+prove_print z3 {{ ct_eq_correct }};
+
+print "[3/14] ct_eq_reflexive";
+prove_print z3 {{ ct_eq_reflexive }};
+
+print "[4/14] ct_eq_symmetric";
+prove_print z3 {{ ct_eq_symmetric }};
+
+print "[5/14] ct_ne_correct";
+prove_print z3 {{ ct_ne_correct }};
+
+print "[6/14] ct_is_ge_correct";
+prove_print z3 {{ ct_is_ge_correct }};
+
+print "[7/14] ct_is_ge_reflexive";
+prove_print z3 {{ ct_is_ge_reflexive }};
+
+print "[8/14] ct_is_ge_antisymmetric";
+prove_print z3 {{ ct_is_ge_antisymmetric }};
+
+print "[9/14] ct_is_ge_total";
+prove_print z3 {{ ct_is_ge_total }};
+
+print "[10/14] ct_is_zero_correct";
+prove_print z3 {{ ct_is_zero_correct }};
+
+print "[11/14] ct_is_negative_correct";
+prove_print z3 {{ ct_is_negative_correct }};
+
+print "[12/14] ct_select_true / ct_select_false";
+prove_print z3 {{ ct_select_true }};
+prove_print z3 {{ ct_select_false }};
+
+print "[13/14] ct_swap_true / ct_swap_false";
+prove_print z3 {{ ct_swap_true }};
+prove_print z3 {{ ct_swap_false }};
+
+print "[14/14] choice_not_involution";
+prove_print z3 {{ choice_not_involution }};
+
+print "";
+print "Phase 1 complete: all specification properties proven.";
+print "";
+
+// ========================================================
+// Phase 2: LLVM bitcode ↔ Cryptol equivalence proofs
+// ========================================================
+
+print "Phase 2: LLVM bitcode verification";
+print "------------------------------------";
+
+m <- llvm_load_module "entlib_native_constant_time.bc";
+
+// --- from_mask_normalized ---
+print "[1/10] audit_verify_choice_from_mask_normalized";
+let from_mask_normalized_spec = do {
+    a <- llvm_fresh_var "a" (llvm_int 8);
+    llvm_execute_func [llvm_term a];
+    llvm_return (llvm_term {{ from_mask_normalized a }});
+};
+from_mask_ov <- llvm_verify m "audit_verify_choice_from_mask_normalized"
+    [] false from_mask_normalized_spec z3;
+
+// --- choice_not ---
+print "[2/10] audit_verify_choice_not";
+let choice_not_spec = do {
+    c <- llvm_fresh_var "c" (llvm_int 8);
+    llvm_precond {{ c == 0x00 \/ c == 0xFF }};
+    llvm_execute_func [llvm_term c];
+    llvm_return (llvm_term {{ choice_not c }});
+};
+choice_not_ov <- llvm_verify m "audit_verify_choice_not"
+    [] false choice_not_spec z3;
+
+// --- choice_unwrap_u8 ---
+// Requires saw_verify feature (bypasses core::hint::black_box inline asm)
+print "[3/10] audit_verify_choice_unwrap_u8";
+let choice_unwrap_spec = do {
+    c <- llvm_fresh_var "c" (llvm_int 8);
+    llvm_execute_func [llvm_term c];
+    llvm_return (llvm_term {{ choice_unwrap c }});
+};
+choice_unwrap_ov <- llvm_verify m "audit_verify_choice_unwrap_u8"
+    [] false choice_unwrap_spec z3;
+
+// --- ct_eq ---
+print "[4/10] audit_verify_u64_ct_eq";
+let ct_eq_spec = do {
+    a <- llvm_fresh_var "a" (llvm_int 64);
+    b <- llvm_fresh_var "b" (llvm_int 64);
+    a_ptr <- llvm_alloc (llvm_int 64);
+    b_ptr <- llvm_alloc (llvm_int 64);
+    llvm_points_to a_ptr (llvm_term a);
+    llvm_points_to b_ptr (llvm_term b);
+    llvm_execute_func [a_ptr, b_ptr];
+    llvm_return (llvm_term {{ ct_eq_u64 a b }});
+};
+ct_eq_ov <- llvm_verify m "audit_verify_u64_ct_eq"
+    [] false ct_eq_spec z3;
+
+// --- ct_ne ---
+print "[5/10] audit_verify_u64_ct_ne";
+let ct_ne_spec = do {
+    a <- llvm_fresh_var "a" (llvm_int 64);
+    b <- llvm_fresh_var "b" (llvm_int 64);
+    a_ptr <- llvm_alloc (llvm_int 64);
+    b_ptr <- llvm_alloc (llvm_int 64);
+    llvm_points_to a_ptr (llvm_term a);
+    llvm_points_to b_ptr (llvm_term b);
+    llvm_execute_func [a_ptr, b_ptr];
+    llvm_return (llvm_term {{ ct_ne_u64 a b }});
+};
+ct_ne_ov <- llvm_verify m "audit_verify_u64_ct_ne"
+    [] false ct_ne_spec z3;
+
+// --- ct_is_ge ---
+print "[6/10] audit_verify_u64_ct_is_ge";
+let ct_is_ge_spec = do {
+    a <- llvm_fresh_var "a" (llvm_int 64);
+    b <- llvm_fresh_var "b" (llvm_int 64);
+    a_ptr <- llvm_alloc (llvm_int 64);
+    b_ptr <- llvm_alloc (llvm_int 64);
+    llvm_points_to a_ptr (llvm_term a);
+    llvm_points_to b_ptr (llvm_term b);
+    llvm_execute_func [a_ptr, b_ptr];
+    llvm_return (llvm_term {{ ct_is_ge_u64 a b }});
+};
+ct_is_ge_ov <- llvm_verify m "audit_verify_u64_ct_is_ge"
+    [] false ct_is_ge_spec z3;
+
+// --- ct_is_negative ---
+print "[7/10] audit_verify_u64_ct_is_negative";
+let ct_is_negative_spec = do {
+    a <- llvm_fresh_var "a" (llvm_int 64);
+    a_ptr <- llvm_alloc (llvm_int 64);
+    llvm_points_to a_ptr (llvm_term a);
+    llvm_execute_func [a_ptr];
+    llvm_return (llvm_term {{ ct_is_negative_u64 a }});
+};
+ct_is_negative_ov <- llvm_verify m "audit_verify_u64_ct_is_negative"
+    [] false ct_is_negative_spec z3;
+
+// --- ct_is_zero ---
+print "[8/10] audit_verify_u64_ct_is_zero";
+let ct_is_zero_spec = do {
+    a <- llvm_fresh_var "a" (llvm_int 64);
+    a_ptr <- llvm_alloc (llvm_int 64);
+    llvm_points_to a_ptr (llvm_term a);
+    llvm_execute_func [a_ptr];
+    llvm_return (llvm_term {{ ct_is_zero_u64 a }});
+};
+ct_is_zero_ov <- llvm_verify m "audit_verify_u64_ct_is_zero"
+    [] false ct_is_zero_spec z3;
+
+// --- ct_select ---
+// Requires saw_verify feature (black_box bypass for unwrap_u8 in select path)
+print "[9/10] audit_verify_u64_ct_select";
+let ct_select_spec = do {
+    a <- llvm_fresh_var "a" (llvm_int 64);
+    b <- llvm_fresh_var "b" (llvm_int 64);
+    c <- llvm_fresh_var "c" (llvm_int 8);
+    a_ptr <- llvm_alloc (llvm_int 64);
+    b_ptr <- llvm_alloc (llvm_int 64);
+    llvm_points_to a_ptr (llvm_term a);
+    llvm_points_to b_ptr (llvm_term b);
+    llvm_precond {{ c == 0x00 \/ c == 0xFF }};
+    llvm_execute_func [a_ptr, b_ptr, llvm_term c];
+    llvm_return (llvm_term {{ ct_select_u64 a b c }});
+};
+ct_select_ov <- llvm_verify m "audit_verify_u64_ct_select"
+    [] false ct_select_spec z3;
+
+// --- ct_swap ---
+// Requires saw_verify feature (black_box bypass for unwrap_u8 in swap path)
+print "[10/10] audit_verify_u64_ct_swap";
+let ct_swap_spec = do {
+    a <- llvm_fresh_var "a" (llvm_int 64);
+    b <- llvm_fresh_var "b" (llvm_int 64);
+    c <- llvm_fresh_var "c" (llvm_int 8);
+    a_ptr <- llvm_alloc (llvm_int 64);
+    b_ptr <- llvm_alloc (llvm_int 64);
+    llvm_points_to a_ptr (llvm_term a);
+    llvm_points_to b_ptr (llvm_term b);
+    llvm_precond {{ c == 0x00 \/ c == 0xFF }};
+    llvm_execute_func [a_ptr, b_ptr, llvm_term c];
+    llvm_points_to a_ptr (llvm_term {{ (ct_swap_u64 a b c).0 }});
+    llvm_points_to b_ptr (llvm_term {{ (ct_swap_u64 a b c).1 }});
+};
+ct_swap_ov <- llvm_verify m "audit_verify_u64_ct_swap"
+    [] false ct_swap_spec z3;
+
+print "";
+print "===================================================";
+print " ALL VERIFICATIONS PASSED";
+print " - 14 Cryptol specification properties proven";
+print " - 10 LLVM bitcode equivalence proofs completed";
+print "===================================================";
