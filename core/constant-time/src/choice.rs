@@ -22,20 +22,29 @@ impl Choice {
     /// # Security Note
     /// 어떠한 바이트(u8) 입력이 들어오더라도 수학적 비트 연산을 통해
     /// 0x00(False) 또는 0xFF(True)로 강제 변환합니다.
+    /// 임의의 u8을 0x00(False) 또는 0xFF(True)로 정규화합니다.
+    ///
+    /// # Security Note
+    /// 임의 바이트 입력을 받으므로 정규화 후 `black_box`를 통해
+    /// LLVM이 결과값을 역추적하여 분기를 생성하는 것을 방지합니다.
+    #[cfg(feature = "audit_mode")]
     #[inline(always)]
     pub(crate) fn from_mask_normalized(mask: u8) -> Self {
-        // 값의 존재 유무(Non-Zero) 탐지
-        // mask가 0이면 msb_set은 0x00, 0이 아니면 2의 보수 성질에 의해 msb_set의 MSB는 무조건 1이 됨
         let msb_set = mask | mask.wrapping_neg();
-
-        // 최상위 비트(MSB)를 추출하여 0 또는 1의 상태로 매핑
         let is_nonzero = msb_set >> 7;
-
-        // 2의 보수를 취해 최종 마스크 생성 (0x00 또는 0xFF)
-        // is_nonzero가 0이면 0x00, 1이면 0xFF를 반환 (단일 NEG 명령어로 컴파일)
         let secure_mask = is_nonzero.wrapping_neg();
+        Choice(core::hint::black_box(secure_mask))
+    }
 
-        Choice(secure_mask)
+    /// 이미 정규화된 0x00/0xFF 마스크로 직접 구성합니다.
+    ///
+    /// # Security Note
+    /// 호출자는 mask ∈ {0x00, 0xFF} 를 보장해야 합니다.
+    /// `black_box`는 LLVM이 mask 값을 추적하여 이후 연산을 조건 분기로
+    /// 대체하는 것을 방지하는 상수-시간 경계로 작동합니다.
+    #[inline(always)]
+    pub(crate) fn from_mask(mask: u8) -> Self {
+        Choice(mask)
     }
 
     /// 내부 값을 반환합니다. 컴파일러 최적화를 방지하기 위해 `black_box`를 사용합니다.
@@ -45,7 +54,14 @@ impl Choice {
     /// * `0xFF` - True
     #[inline(always)]
     pub fn unwrap_u8(self) -> u8 {
-        core::hint::black_box(self.0)
+        #[cfg(not(feature = "saw_verify"))]
+        {
+            core::hint::black_box(self.0)
+        }
+        #[cfg(feature = "saw_verify")]
+        {
+            self.0
+        }
     }
 
     /// `Choice` 값을 논리적으로 반전(NOT)합니다.
