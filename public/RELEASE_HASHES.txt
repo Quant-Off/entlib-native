@@ -1,0 +1,4 @@
+SHA3-512  ./entlib-native-dev-source.tar.gz : 6b7f36dc2dae00c9fde2368f8c8d94505c29dfabc8426a825866e9fd26f0bccb360677ed2a9ccc4b25aa50b07e933d6a7d88dcf73df7de24ff4065cadf4e0846
+BLAKE3    ./entlib-native-dev-source.tar.gz : d19e1f445997446bf99b0697bd846b872a252bdbbad819b5d8b4c23106ca9281
+SHA3-512  ./entlib-native-dev-source.zip : 012a9dc5d51ca2928a8ddd6d542f3cbf8a71e06827742e917a638b2a82d11bb43e4d8ee4c8c510a5713542d9b23f0fcbb9c33a79f520c2d271e7304281314945
+BLAKE3    ./entlib-native-dev-source.zip : df88ed5354a2502b60311f430af41751aeb795ba8d6d3e76f6ce0c56486858c6

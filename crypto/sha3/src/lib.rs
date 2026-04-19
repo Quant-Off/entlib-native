@@ -1,4 +1,5 @@
 pub mod api;
+pub mod file;
 mod keccak;
 
 use core::ptr::write_volatile;

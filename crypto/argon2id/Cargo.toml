@@ -1,0 +1,11 @@
+[package]
+name = "entlib-native-argon2id"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+entlib-native-blake.workspace = true
+entlib-native-secure-buffer.workspace = true
+entlib-native-base.workspace = true

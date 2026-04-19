@@ -1,6 +1,7 @@
 mod hex;
 
 use crate::hex::{decode_hex_core_ct, encode_hex_core_ct};
+use entlib_native_base::error::hex::HexError;
 use entlib_native_secure_buffer::SecureBuffer;
 
 /// 군사급 보안 요구사항을 충족하는 상수 시간 Hex 인코딩 함수입니다.
@@ -13,7 +14,7 @@ use entlib_native_secure_buffer::SecureBuffer;
 /// # Returns
 /// - `Ok(SecureBuffer)` - Hex 인코딩이 완료된 새 버퍼 (OS 레벨 잠금 완료)
 /// - `Err` - 메모리 할당 실패 시
-pub fn encode(input: &SecureBuffer) -> Result<SecureBuffer, &'static str> {
+pub fn encode(input: &SecureBuffer) -> Result<SecureBuffer, HexError> {
     // 1. 읽기 전용 및 쓰기 전용 슬라이스 확보
     // 내부 데이터를 다룰 때 as_slice 및 as_mut_slice를 통해 반환된 슬라이스는 SecureBuffer의 수명에 묶여 있습니다.
     let input_slice = input.as_slice();
@@ -42,7 +43,7 @@ pub fn encode(input: &SecureBuffer) -> Result<SecureBuffer, &'static str> {
 /// # Returns
 /// - `Ok(SecureBuffer)` - 디코딩이 완료된 새 버퍼 (OS 레벨 잠금 완료)
 /// - `Err` - 메모리 할당 실패 또는 유효하지 않은 Hex 문자열 입력 시
-pub fn decode(input: &SecureBuffer) -> Result<SecureBuffer, &'static str> {
+pub fn decode(input: &SecureBuffer) -> Result<SecureBuffer, HexError> {
     // 1. 읽기 전용 슬라이스 확보
     let input_slice = input.as_slice();
 
@@ -67,6 +68,6 @@ pub fn decode(input: &SecureBuffer) -> Result<SecureBuffer, &'static str> {
         // 이때 할당된 전체 capacity에 대해 Zeroizer::zeroize_raw가 수행되어 불완전한 데이터가 물리적으로 소거됩니다.
 
         // 타이밍/패딩 오라클 공격 방지를 위해 에러 원인(위치, 발생한 문자 등)을 상세히 밝히지 않고 균일한 메시지를 반환합니다.
-        Err("Security Violation: Invalid hex encoding detected.")
+        Err(HexError::IllegalCharacter)
     }
 }

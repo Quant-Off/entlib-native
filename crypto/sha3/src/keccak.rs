@@ -1,6 +1,7 @@
 use crate::KeccakState;
 use core::ptr::write_volatile;
 use core::sync::atomic::{Ordering, compiler_fence};
+use entlib_native_base::error::hash::HashError;
 use entlib_native_constant_time::traits::{ConstantTimeEq, ConstantTimeSelect};
 use entlib_native_secure_buffer::SecureBuffer;
 
@@ -242,7 +243,7 @@ impl KeccakState {
         mut self,
         output_len: usize,
         last_byte_opt: Option<(u8, usize)>,
-    ) -> Result<SecureBuffer, &'static str> {
+    ) -> Result<SecureBuffer, HashError> {
         self.pad(last_byte_opt);
 
         let mut out_buf = SecureBuffer::new_owned(output_len)?;

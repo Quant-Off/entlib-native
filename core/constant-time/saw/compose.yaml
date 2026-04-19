@@ -1,0 +1,52 @@
+services:
+  saw-verify:
+    build:
+      context: ../../..
+      dockerfile: core/constant-time/saw/Dockerfile
+    working_dir: /workspace
+    command:
+      - bash
+      - -c
+      - |
+        set -euo pipefail
+        echo "=== entlib-native-constant-time SAW Formal Verification ==="
+        echo ""
+
+        SYSROOT=$$(rustc --print sysroot)
+        TARGET_TRIPLE=$$(rustc -vV | awk '/^host:/{print $2}')
+        LLVM_NM="$${SYSROOT}/lib/rustlib/$${TARGET_TRIPLE}/bin/llvm-nm"
+
+        echo "=== Version Diagnostics ==="
+        rustc -vV
+        saw --version 2>&1 | head -5 || true
+        "$${LLVM_NM}" --version 2>&1 | head -2
+        echo ""
+
+        echo "Building LLVM bitcode (saw_verify)..."
+        cargo rustc --release \
+          --features "saw_verify" \
+          -p entlib-native-constant-time \
+          -- --emit=llvm-bc -C lto=off -C codegen-units=1
+
+        BC=$$(find target/release/deps -name 'entlib_native_constant_time-*.bc' -type f \
+               -printf '%T@ %p\n' | sort -rn | head -1 | awk '{print $$2}')
+        if [ -z "$$BC" ]; then
+          echo "ERROR: bitcode not found"
+          exit 1
+        fi
+        echo "Bitcode: $$BC ($(wc -c < "$$BC") bytes)"
+
+        echo "Verifying audit_verify_* symbols..."
+        SYMS=$$("$${LLVM_NM}" "$$BC" 2>&1 | grep 'audit_verify' || true)
+        if [ -z "$$SYMS" ]; then
+          echo "ERROR: no audit_verify_* symbols in bitcode."
+          echo "All symbols:"
+          "$${LLVM_NM}" "$$BC" 2>&1 || true
+          exit 1
+        fi
+        echo "$$SYMS"
+        echo ""
+
+        cd core/constant-time/saw
+        cp "/workspace/$$BC" entlib_native_constant_time.bc
+        saw verify.saw

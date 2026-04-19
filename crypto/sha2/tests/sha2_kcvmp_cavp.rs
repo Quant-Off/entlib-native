@@ -2,13 +2,14 @@ mod kcmvp_cavp_test {
     use std::fs::File;
     use std::io::{BufRead, BufReader, BufWriter, Write};
 
+    use entlib_native_base::error::hash::HashError;
     use entlib_native_secure_buffer::SecureBuffer;
     use entlib_native_sha2::api::{SHA224, SHA256, SHA384, SHA512};
 
     pub trait CavpHash {
         fn new() -> Self;
         fn update(&mut self, data: &[u8]);
-        fn finalize(self) -> Result<SecureBuffer, &'static str>;
+        fn finalize(self) -> Result<SecureBuffer, HashError>;
     }
 
     macro_rules! impl_cavp_hash {
@@ -20,7 +21,7 @@ mod kcmvp_cavp_test {
                 fn update(&mut self, data: &[u8]) {
                     self.update(data);
                 }
-                fn finalize(self) -> Result<SecureBuffer, &'static str> {
+                fn finalize(self) -> Result<SecureBuffer, HashError> {
                     self.finalize()
                 }
             }

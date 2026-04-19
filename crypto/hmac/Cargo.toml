@@ -10,6 +10,7 @@ entlib-native-secure-buffer.workspace = true
 entlib-native-constant-time.workspace = true
 entlib-native-sha2.workspace = true
 entlib-native-sha3.workspace = true
+entlib-native-base.workspace = true
 
 [dev-dependencies]
 entlib-native-hex.workspace = true

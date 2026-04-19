@@ -1,4 +1,5 @@
 use alloc::alloc::{Layout, alloc_zeroed, dealloc};
+use entlib_native_base::error::secure_buffer::SecureBufferError;
 
 #[cfg(feature = "std")]
 use std::sync::OnceLock;
@@ -8,9 +9,15 @@ pub(crate) fn page_size() -> usize {
     #[cfg(feature = "std")]
     {
         static OS_PAGE_SIZE: OnceLock<usize> = OnceLock::new();
-        *OS_PAGE_SIZE.get_or_init(|| unsafe {
+        *OS_PAGE_SIZE.get_or_init(|| {
             #[cfg(unix)]
+            {
                 // 커널 계층과 직접 통신하여 페이지 크기 획득
+                // Linux: fetch_os_page_size()는 raw syscall을 사용하는 unsafe fn
+                // 그 외 Unix(macOS 등): POSIX getpagesize() 래퍼이므로 safe fn
+                #[cfg(target_os = "linux")]
+                let size = unsafe { fetch_os_page_size() };
+                #[cfg(not(target_os = "linux"))]
                 let size = fetch_os_page_size();
 
                 // 변조된 커널 응답 방어 (최소 4kb 및 2배수 확인)
@@ -18,7 +25,8 @@ pub(crate) fn page_size() -> usize {
                     panic!("Security Violation: 안전하지 않거나 변조된 OS 페이지 크기가 감지되었습니다! ({})", size);
                 }
                 size
-        })
+            }
+        }) // Q. T. Felix TODO: 베어메탈 환경 대응이 필요합니다.
     }
 
     #[cfg(not(feature = "std"))]
@@ -153,10 +161,10 @@ unsafe fn fetch_os_page_size() -> usize {
 #[cfg(all(feature = "std", unix, not(target_os = "linux")))]
 fn fetch_os_page_size() -> usize {
     unsafe extern "C" {
-        fn get_pagesize() -> core::ffi::c_int;
+        fn getpagesize() -> core::ffi::c_int;
     }
 
-    let size = unsafe { get_pagesize() };
+    let size = unsafe { getpagesize() };
 
     // 비정상적인 OS 응답 방어
     if size <= 0 {
@@ -204,32 +212,29 @@ impl SecureMemoryBlock {
     ///
     /// # Returns
     /// - `Ok(SecureMemoryBlock)` - 할당 및 잠금 성공 시
-    /// - `Err(&'static str)` - 메모리 할당 실패 또는 잠금 실패(리소스 제한 등) 시
+    /// - `Err(SecureBufferError)` - 메모리 할당 실패 또는 잠금 실패(리소스 제한 등) 시
     ///
     /// # Safety
     /// 내부적으로 `alloc_zeroed`를 사용하여 초기화되지 않은 메모리 접근(UB)을 방지합니다.
     /// 하지만 OS의 메모리 잠금 제한(RLIMIT_MEMLOCK 등)에 걸릴 경우 실패할 수 있습니다.
-    pub fn allocate_locked(size: usize) -> Result<Self, &'static str> {
+    pub fn allocate_locked(size: usize) -> Result<Self, SecureBufferError> {
         let capacity = align_to_page(size);
         let ps = page_size();
-        // 페이지 크기로 정렬된 레이아웃 생성
-        let layout = Layout::from_size_align(capacity, ps)
-            .map_err(|_| "Invalid memory layout: Size or alignment error")?;
+        let layout =
+            Layout::from_size_align(capacity, ps).map_err(|_| SecureBufferError::InvalidLayout)?;
 
-        // 할당 시 남는 패딩 영역의 기존 heap 찌꺼기 데이터를 0으로 덮어씀 (Zero-Initialization)
         // Safety: layout이 유효하므로 alloc_zeroed 호출은 안전함
         let ptr = unsafe { alloc_zeroed(layout) };
         if ptr.is_null() {
-            return Err("Memory allocation failed: Out of memory");
+            return Err(SecureBufferError::AllocationFailed);
         }
 
         #[cfg(feature = "std")]
         unsafe {
-            // OS별 메모리 잠금 수행
+            // Q. T. Felix TODO: 베어메탈 std 환경에서 lock_memory는 사용할 수 없습니다.
             if !os_lock::lock_memory(ptr, capacity) {
-                // 잠금 실패 시, 할당했던 메모리를 즉시 해제하고 에러 반환
                 dealloc(ptr, layout);
-                return Err("OS memory lock (mlock/VirtualLock) failed. Resource limit reached.");
+                return Err(SecureBufferError::MemoryLockFailed);
             }
         }
 
@@ -250,6 +255,7 @@ impl SecureMemoryBlock {
         #[cfg(feature = "std")]
         // 메모리 잠금 해제 (페이지 아웃 허용)
         unsafe {
+            // Q. T. Felix TODO: 베어메탈 std 환경에서 unlock_memory는 사용할 수 없습니다.
             os_lock::unlock_memory(self.ptr, self.capacity);
         }
 
@@ -299,8 +305,8 @@ pub(crate) mod os_lock {
             }
 
             unsafe extern "C" {
-                fn get_rlimit(resource: i32, rlim: *mut Rlimit) -> i32;
-                fn set_rlimit(resource: i32, rlim: *const Rlimit) -> i32;
+                fn getrlimit(resource: i32, rlim: *mut Rlimit) -> i32;
+                fn setrlimit(resource: i32, rlim: *const Rlimit) -> i32;
             }
 
             const RLIMIT_MEMLOCK: i32 = 8;
@@ -312,12 +318,12 @@ pub(crate) mod os_lock {
             };
 
             unsafe {
-                if get_rlimit(RLIMIT_MEMLOCK, &mut rlim) == 0 {
+                if getrlimit(RLIMIT_MEMLOCK, &mut rlim) == 0 {
                     rlim.rlim_cur = RLIM_INFINITY;
                     rlim.rlim_max = RLIM_INFINITY;
 
                     // 한도 상향 성공 시 2차 잠금 재시도
-                    if set_rlimit(RLIMIT_MEMLOCK, &rlim) == 0 {
+                    if setrlimit(RLIMIT_MEMLOCK, &rlim) == 0 {
                         return mlock(ptr as *const c_void, len) == 0;
                     }
                 }

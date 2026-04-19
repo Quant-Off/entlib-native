@@ -1,0 +1,11 @@
+[package]
+name = "entlib-native-blake"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+entlib-native-secure-buffer.workspace = true
+entlib-native-constant-time.workspace = true
+entlib-native-base.workspace = true

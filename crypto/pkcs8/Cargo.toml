@@ -1,0 +1,12 @@
+[package]
+name = "entlib-native-pkcs8"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+entlib-native-armor.workspace = true
+entlib-native-aes.workspace = true
+entlib-native-argon2id.workspace = true
+entlib-native-secure-buffer.workspace = true

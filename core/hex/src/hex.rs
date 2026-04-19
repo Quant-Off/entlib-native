@@ -81,10 +81,11 @@ fn decode_nibble_ct(c: u8) -> (u8, Choice) {
 
     // 6. 상수 시간 선택 (Constant-Time Select)
     // 기본값 0에서 시작하여 조건이 참(0xFF)일 때만 해당 값을 덮어씁니다.
+    // ct_select(a, b, choice): choice=0xFF → a, choice=0x00 → b
     let mut result = 0u8;
-    result = u8::ct_select(&result, &val_digit, is_digit);
-    result = u8::ct_select(&result, &val_lower, is_lower_hex);
-    result = u8::ct_select(&result, &val_upper, is_upper_hex);
+    result = u8::ct_select(&val_digit, &result, is_digit);
+    result = u8::ct_select(&val_lower, &result, is_lower_hex);
+    result = u8::ct_select(&val_upper, &result, is_upper_hex);
 
     (result, is_valid)
 }
@@ -124,7 +125,7 @@ pub(crate) fn decode_hex_core_ct(input: &[u8], output: &mut [u8]) -> Choice {
         let decoded_byte = (high_nibble << 4) | low_nibble;
 
         // 유효하지 않은 바이트인 경우 출력 버퍼에 0을 기록하여 쓰레기값 생성을 방지합니다.
-        output[i] = u8::ct_select(&0, &decoded_byte, byte_valid);
+        output[i] = u8::ct_select(&decoded_byte, &0, byte_valid);
     }
 
     all_valid
