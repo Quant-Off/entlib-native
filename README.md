@@ -3,6 +3,7 @@
 [![Version](https://img.shields.io/badge/version-2.0.0-blue?style=for-the-badge)](https://github.com/Quant-Off/entlib-native)
 [![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)](LICENSE)
 [![Language](https://img.shields.io/badge/language-Rust-000000?style=for-the-badge)](https://github.com/Quant-Off/entlib-native)
+[![Qu4nt-Space-Discord](https://img.shields.io/badge/Qu4nt_Space-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://github.com/Quant-Off/)
 
 ![lol](entanglementlib-logo.png)
 
